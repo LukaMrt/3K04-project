@@ -21,6 +21,7 @@ Need for tech demo
 3.) UML Model
 	- covers structure (domain/class model) 
 	- covers behaviour (use case, activity, state machine)
+
 4.) Ethical Dimensions
 	- can point to how it shaped requirements
 	- patient safety, privacy of medication records, controlled access, 	  account-ability/auditability

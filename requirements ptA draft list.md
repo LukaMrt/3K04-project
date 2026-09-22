@@ -66,6 +66,14 @@
 
 • inventory updates;
 
+&#x09; - The ADC shall associate each medication with a unique identifier 	and storage location.
+
+&#x09; - The ADC shall allow authorized personnel to correct an inventory 	discrepancy and record the correction.
+
+&#x09; - The ADC shall flag a medication as unavailable if its recorded 	quantity cannot be confirmed.
+
+&#x09; - The ADC shall retain inventory information across a software 	restart.
+
 &#x09; - Must update inventory after inserting
 
 &#x09; - Must have intuitive and efficient logging system
@@ -108,15 +116,27 @@
 
 • fault detection;
 
-&#x09; - 4 different types of alarms for different faults: info, warning, error, critical 
+&#x09; - 4 different types of alarms for different faults: info, warning, 	error, critical 
 
-&#x09; - Must send a ping every 30s to ensure ptB is updated on ptA status (online, offline, fault, maintenance, disconnected)
+&#x09; - Must send a ping every 30s to ensure ptB is updated on ptA 	status (online, offline, fault, maintenance, disconnected)
 
-&#x09; 
+&#x09; - Must be able to restart/sleep/shutdown and retain ADC 	information on startup
+
+&#x09; - The ADC shall detect when a drawer fails to close after a 	dispensing or replenishment operation.
+
+&#x09; - The ADC shall detect when a drawer fails to unlock following an 	authorized access request.
+
+&#x09; - The ADC shall prevent dispensing from a compartment with an 		unresolved hardware fault.
+
+&#x09; - The ADC shall record the cause and timestamp of each detected 	fault.
+
+&#x09; - The ADC shall allow authorized maintenance personnel to clear a 	fault after the underlying problem has been resolved.
+
+&#x09; - The ADC shall prevent a fault from being cleared while its 	triggering condition remains present.
 
 • operational modes;
 
-&#x09; - 
+&#x09; 
 
 • communication with external systems
 
@@ -124,9 +144,21 @@
 
 &#x09; - individual ADCs need to be able to communicate with ptB
 
-&#x09; - ptB should be able to send commands to ADCs (lock, unlock, maintenance, fault etc)
+&#x09; - ptB should be able to send commands to ADCs (lock, unlock, 	maintenance, fault etc)
 
-&#x09; - should send logs of used/inserted medication from each system to ptB
+&#x09; - should send logs of used/inserted medication from each system to 	ptB
+
+&#x09; - The ADC shall detect when communication with the Monitoring 	System is lost.
+
+&#x09; - The ADC shall store operational events locally when the 	Monitoring System is unavailable.
+
+&#x09; - The ADC shall transmit stored events to the Monitoring System 	when communication is restored.
+
+&#x09; - The ADC shall prevent previously transmitted events from being 	processed as new events during synchronization.
+
+&#x09; - The ADC shall validate incoming commands before executing them.
+
+&#x09; - The ADC shall send the outcome of each accepted command to the 	Monitoring System.
 
 
 
@@ -136,13 +168,45 @@
 
 **non functional requirements draft list**
 
-&#x20;- 
+
+
+**• Access Control:** 
+
+&#x09; - User sessions 
+
+&#x09;	 - starts when login information is entered
+
+&#x09;	 - ends when
+
+&#x09;		- medication(s) are dispensed
+
+&#x09;		- 60 seconds of inactivity
+
+&#x09; - 
+
+**• Medication Inventory Management:** 
 
 
 
+**• Medication Dispensing:** 
 
 
 
+**• Event Logging:** 
+
+
+
+**• Fault Detection:** 
+
+
+
+**• Operational Mode Management:** 
+
+
+
+**• External Communication:** 
+
+&#x20;- Each ADC must send a ping every 30s to ptB
 
 
 
