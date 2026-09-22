@@ -20,10 +20,8 @@ Need for tech demo
 	- each with acceptance criteria (e.g., Given/When/Then)
 3.) UML Model
 	- covers structure (domain/class model) 
-	- covers behaviour (use case, activity, state machine
+	- covers behaviour (use case, activity, state machine)
 4.) Ethical Dimensions
 	- can point to how it shaped requirements
 	- patient safety, privacy of medication records, controlled access, 	  account-ability/auditability
-5.) Functional requirements: organized by capability, each uniquely identified, atomic, un-ambiguous, and verifiable.
-	– For those working on the ADC: authentication, inventory management,	  dispensing, event logging, fault detection, operational modes, 	  external communication.
-6.) Non-functional requirements: safety, security, reliability, availability, performance, trace-ability/auditability, usability.
+
