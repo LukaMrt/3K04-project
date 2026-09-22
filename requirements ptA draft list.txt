@@ -1,0 +1,101 @@
+functional requirements draft list
+• access control enforcement;
+	 - Must have 2 or more forms of security measures
+	 - Must have multiple mediums of security measures(physical, 		   digital, multi device etc)
+	 - Must have a white and black list of users
+	 - Must track previous users / attempted user logins
+	 - Must have different ranks of authorization (higher rank needed 	   for more important contents)
+• medication dispensing operations;
+	 - Must be able to dispense medication
+		 - Must have a limit for a certain time period
+		 - Must dispense only if authorized user / rank / logins
+		 - Must have no errors for empty case
+		 - Must have no errors for full case
+		 - Must dispense selected medication and amount only
+		 - Must have time delay safe implementation
+		 - Must dispense efficiently
+		 - Must dispense without error(negligible error)
+
+	 - Must be able to insert medication in the ADC
+		 - Must have no errors for empty case
+		 - Must have no errors for full case
+		 - Must be able to insert efficiently
+		 - Must insert without error(negligible error)
+
+
+• inventory updates;
+	 - Must update inventory after inserting
+	 - Must have intuitive and efficient logging system
+	 	- Automatic or Manual Logging system??
+	 - Must take medication only, no foreign objects
+	 - Must have security settings options for each medication
+	 - Must have information about temperature, storage 			   conditions, etc?
+	 - Must update inventory after dispensing
+		 - Manually or Automatically?
+	 - Must have intuitive and efficient logging system
+		 - Automatic or Manual Logging system??
+• local event logging;
+	 - Must send activity / faults to ptB
+	 - Must have internal log of ADC activity/faults
+	 - Must give logs only to authorized users / rank / logins
+• fault detection;
+• operational modes;
+• communication with external systems
+
+
+
+non functional requirements draft list
+ - 
+
+
+
+
+
+
+stakeholders + needs list draft list
+ - nurses
+	 - Needs to insert medication in the ADC
+	 - Needs to withdraw medication from the ADC
+	 - Needs to store multiple types of medication in the ADC?
+	 - Needs to rely on medication not going missing
+	 	- Needs the system to be secure from unauthorized use
+			- needs system to have an unbreakable security 				  system
+			- needs system to have white and black list
+		- Needs the system to store medication properly
+		- needs the system to track activities/faults
+		- Needs system to track who has used ADC
+		- Needs alert system for unauthorized use
+	 - Needs to efficiently withdraw/insert medication w/o hassle
+	 - Needs system to quickly fix faults/reset after error or miscalculation
+	 - Needs system to indicate which medication(s) are stored
+ - doctors
+	 - Needs to know which personnel are using what machines
+	 - Needs different level access to the ADCs?
+
+ - pharmacists
+	 - Needs to have different levels of ADC security based on medication type(controlled substance, easily overdosed medication, something mundane)
+	 - Needs access to system
+	 - Needs secure system to get medication to nurses/doctors/patients
+
+ - patients + friends or family (not allowed in)
+	 - ADC cannot be easily hacked into
+		- 2FA?
+	 - ADC cannot be accessed by family members
+ - technicians / IT Admins
+	 - needs to show all activity/faults/users for a large time period
+	 - needs to have a backup of all system activity
+	 - Easily Fixable/maintained
+	 - 
+ - thieves/unauthorized users (not allowed in)
+	 - cannot be tampered with
+	 - blackbox like coding structure
+	 - security system has multiple multimodal checks
+	 - camera to show activity?
+	 - attempted break-ins are recorded and deocumented and immediately alerted of
+	 - 
+ - hospitals (device must be trustful enough to be used by hospital)
+	 - Must have a certain percentage proven track record of working in a similar hospital setting
+	 - Must 
+ - Law Enforcement (device must track activities/failures)
+ - Inventory Managers (Device should be able to track medication for Part B to give Inventory Managers information)
+

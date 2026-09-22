@@ -1,0 +1,29 @@
+3K04 deliverable 1 documentation notes
+
+- establish 
+	- what your system must do
+	- whom your system is for 
+	- document and model it clearly
+
+
+Need for tech demo 
+1.) Requirements
+	- clear, unambiguous, verifiable
+	- traceable to a stakeholder/scenario
+	1.) Functional requirements: organized by capability, each uniquely 	identified, atomic, un-ambiguous, and verifiable.
+		– For those working on the ADC: authentication, inventory 		  management, dispensing, event logging, fault detection, 		  operational modes, external communication.
+	2.) Non-functional requirements: safety, security, reliability, 	availability, performance, trace-ability/auditability, usability.
+2.) User Story
+	- role ->goal ->benefit
+	- meaningful acceptance criteria that a tester could check
+	- requirements expressed as stories in the form ”As a <role >, I 	  want <goal> so that <benefit >”
+	- each with acceptance criteria (e.g., Given/When/Then)
+3.) UML Model
+	- covers structure (domain/class model) 
+	- covers behaviour (use case, activity, state machine
+4.) Ethical Dimensions
+	- can point to how it shaped requirements
+	- patient safety, privacy of medication records, controlled access, 	  account-ability/auditability
+5.) Functional requirements: organized by capability, each uniquely identified, atomic, un-ambiguous, and verifiable.
+	– For those working on the ADC: authentication, inventory management,	  dispensing, event logging, fault detection, operational modes, 	  external communication.
+6.) Non-functional requirements: safety, security, reliability, availability, performance, trace-ability/auditability, usability.
