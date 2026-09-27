@@ -4,14 +4,16 @@
 
 - **FR-COM-01** The system shall register an ADC that provides its identifier, contact address and location (floor included).
 - **FR-COM-02** The system shall reject a registration request whose ADC identifier is already registered.
-- **FR-COM-03** The system shall record the reception time of each heartbeat sent by a registered ADC, heartbeats being expected every 30 seconds.
+- **FR-COM-03** The system shall record the reception time of each heartbeat sent by a registered ADC, heartbeats being expected at most 30 seconds apart.
 - **FR-COM-04** The system shall send a command to a specific registered ADC.
 - **FR-COM-05** The system shall send configuration information to a specific registered ADC.
 - **FR-COM-06** The system shall mark a command as "failed" and notify the sending user when the target ADC has not acknowledged it within 10 seconds.
+- **FR-COM-07** The system shall accept, in each heartbeat of a registered ADC, the ADC's current status, its complete inventory and the transactions (alarms, dispensing activities) the ADC has not yet had acknowledged.
+- **FR-COM-08** The system shall ignore a transaction whose identifier has already been received.
 
 ## Inventory Supervision (INV)
 
-- **FR-INV-01** The system shall store each inventory update received from a registered ADC.
+- **FR-INV-01** The system shall store the complete inventory contained in each heartbeat of a registered ADC.
 - **FR-INV-02** The system shall display the current inventory of a selected ADC to an authorized user.
 - **FR-INV-03** The system shall flag an ADC as "Low Stock" for a medication when that medication's quantity falls below the threshold configured for that ADC.
 - **FR-INV-04** The system shall list, for a flagged medication, the other ADCs located on the same floor whose stock of that medication is above their threshold.
@@ -21,7 +23,7 @@
 ## Alarm Management (ALM)
 
 - **FR-ALM-01** The system shall record each alarm received from a registered ADC with its timestamp, originating ADC, alarm type and severity.
-- **FR-ALM-02** The system shall reject and log an alarm message that is missing at least one of the following fields: originating ADC, alarm type, severity.
+- **FR-ALM-02** The system shall reject and log an alarm transaction that is missing at least one of the following fields: originating ADC, alarm type, severity.
 - **FR-ALM-03** The system shall assign each alarm one of four severity levels: info, warning, error, critical.
 - **FR-ALM-04** The system shall display all unacknowledged alarms to authorized users.
 - **FR-ALM-05** The system shall allow an authorized user to acknowledge an active alarm.
@@ -61,7 +63,7 @@
 
 ## Request Handling (REQ)
 
-- **FR-REQ-01** The system shall acknowledge each event received from a registered ADC (heartbeat, inventory update, alarm) upon receipt.
+- **FR-REQ-01** The system shall acknowledge each heartbeat received from a registered ADC with the list of transaction identifiers it contained.
 
 ## User Management (USR)
 

@@ -10,12 +10,12 @@
 
 - **NFR-SEC-01** The system shall require authentication before displaying the dashboard, patient-related data and medication-related data.
 - **NFR-SEC-02** The system shall restrict alarm acknowledgement and ADC commands to the roles permitted for them.
-- **NFR-SEC-03** The system shall discard any event sent by an ADC that is not registered.
+- **NFR-SEC-03** The system shall discard any heartbeat sent by an ADC that is not registered.
 - **NFR-SEC-04** The system shall display patient identifiers in reports only to users holding one of the following roles: pharmacist, administrator.
 
 ## Reliability (REL) — how often may it fail?
 
-- **NFR-REL-01** The system shall make every event it has acknowledged to an ADC retrievable from the historical data.
+- **NFR-REL-01** The system shall make every transaction it has acknowledged to an ADC retrievable from the historical data.
 - **NFR-REL-02** The system shall have fewer than 1 unplanned outage per 1,000 hours of operation.
 
 ## Availability (AVL) — when must it be usable?

@@ -32,19 +32,19 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Start((" ")) --> Receive("ADC sends an alarm message")
+    Start((" ")) --> Receive("Receive a heartbeat containing an alarm transaction<br/>(sent immediately by the ADC when it raises the alarm)")
     Receive --> Registered{"Sending ADC<br/>registered?"}
-    Registered -- "no" --> Discard("Discard the message and log it<br/>(NFR-SEC-03)")
+    Registered -- "no" --> Discard("Discard the heartbeat and log it<br/>(NFR-SEC-03)")
     Discard --> EndA(((" ")))
-    Registered -- "yes" --> Complete{"ADC, type and<br/>severity present?"}
-    Complete -- "no" --> Reject("Reject the message and log it<br/>(FR-ALM-02)")
-    Reject --> EndB(((" ")))
-    Complete -- "yes" --> Fork[" "]
-    Fork --> Record("Record the alarm with timestamp,<br/>ADC, type and severity<br/>(FR-ALM-01)")
-    Fork --> Ack("Acknowledge the event to the ADC<br/>(FR-REQ-01)")
-    Record --> Join[" "]
-    Ack --> Join
-    Join --> Display("Display the alarm within 2 s with a text<br/>severity label, a visual cue and an audible cue<br/>(FR-ALM-04, NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)")
+    Registered -- "yes" --> Ack("Acknowledge the heartbeat, listing<br/>its transaction identifiers<br/>(FR-REQ-01)")
+    Ack --> Duplicate{"Transaction identifier<br/>already received?"}
+    Duplicate -- "yes" --> Ignore("Ignore the transaction<br/>(FR-COM-08)")
+    Ignore --> EndB(((" ")))
+    Duplicate -- "no" --> Complete{"ADC, type and<br/>severity present?"}
+    Complete -- "no" --> Reject("Reject the alarm and log it<br/>(FR-ALM-02)")
+    Reject --> EndC(((" ")))
+    Complete -- "yes" --> Record("Record the alarm with timestamp,<br/>ADC, type and severity<br/>(FR-ALM-01)")
+    Record --> Display("Display the alarm within 2 s with a text<br/>severity label, a visual cue and an audible cue<br/>(FR-ALM-04, NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)")
     Display --> UserAck("A user requests to acknowledge the alarm")
     UserAck --> Permitted{"User's role<br/>permitted?"}
     Permitted -- "no" --> Denied("Display a permission message<br/>(NFR-SEC-02)")
@@ -54,14 +54,12 @@ flowchart TD
     Already -- "no" --> Mark("Mark the alarm acknowledged with the user ID<br/>and log user, action, ADC and time<br/>(FR-ALM-05, NFR-AUD-01)")
     Inform --> M{" "}
     Mark --> M
-    M --> EndC(((" ")))
+    M --> EndD(((" ")))
 
     classDef initial fill:#000,stroke:#000;
     classDef final fill:#000,stroke:#000;
-    classDef bar fill:#000,stroke:#000,color:#000;
     class Start initial;
-    class EndA,EndB,EndC final;
-    class Fork,Join bar;
+    class EndA,EndB,EndC,EndD final;
 ```
 
 ## 3. ADC Communication Failure (Scenario 3)
@@ -71,7 +69,8 @@ flowchart TD
     Start((" ")) --> Wait("Wait for the next heartbeat<br/>of a registered ADC")
     Wait --> Within45{"Heartbeat received<br/>within 45 s?"}
     Within45 -- "yes" --> RecordHb("Record the heartbeat reception time<br/>(FR-COM-03)")
-    RecordHb --> ShowState("Display the operational state<br/>reported by the ADC<br/>(FR-HLT-01)")
+    RecordHb --> Store("Store the reported status, the complete inventory<br/>and the transactions not yet received<br/>(FR-COM-07, FR-COM-08, FR-INV-01)")
+    Store --> ShowState("Display the operational state<br/>reported by the ADC<br/>(FR-HLT-01)")
     ShowState --> Wait
     Within45 -- "no" --> Unreachable("Mark the ADC 'unreachable' and label its data 'stale'<br/>(FR-HLT-02, NFR-SAF-01, NFR-SAF-03)")
     Unreachable --> Within75{"Heartbeat received<br/>before 75 s in total?"}

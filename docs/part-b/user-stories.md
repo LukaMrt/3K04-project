@@ -20,8 +20,8 @@
 
 **Scenario 3 — Unregistered device (off-normal)**
 - **GIVEN** no ADC with identifier "ADC-999" is registered
-- **WHEN** ADC-999 sends an inventory update
-- **THEN** the update is discarded and the discard is logged
+- **WHEN** ADC-999 sends a heartbeat containing an inventory
+- **THEN** the heartbeat is discarded and the discard is logged
 - **AND** no inventory for ADC-999 appears on the dashboard
 
 ### US-COM-02 — Send a command to a cabinet
@@ -73,22 +73,28 @@
 
 ## Theme: Request Handling (REQ)
 
-### US-REQ-01 — Confirm event delivery to the cabinet
-**Traces to:** FR-REQ-01, NFR-REL-01, NFR-SEC-03
+### US-REQ-01 — Confirm transaction delivery to the cabinet
+**Traces to:** FR-REQ-01, FR-COM-07, FR-COM-08, NFR-REL-01, NFR-SEC-03
 
-**As the** ADC team (Part A), **I want** every event our cabinet sends to be acknowledged **so that** the cabinet knows when it can stop retrying a transmission.
+**As the** ADC team (Part A), **I want** every transaction our cabinet sends to be acknowledged by its identifier **so that** the cabinet can safely remove it from memory and never lose one during a network outage.
 
-**Scenario 1 — Event acknowledged (normal)**
-- **GIVEN** ADC-101 is registered
-- **WHEN** ADC-101 sends an alarm event
-- **THEN** the system returns an acknowledgement referencing that event to ADC-101
+**Scenario 1 — Heartbeat acknowledged (normal)**
+- **GIVEN** ADC-101 is registered and holds 2 unacknowledged transactions (one alarm, one dispensing activity)
+- **WHEN** ADC-101 sends a heartbeat containing its status, its complete inventory and these 2 transactions
+- **THEN** the system returns an acknowledgement listing the 2 transaction identifiers
 
-**Scenario 2 — Acknowledged event is kept (normal)**
-- **GIVEN** the system has acknowledged an inventory update from ADC-101
+**Scenario 2 — Acknowledged transaction is kept (normal)**
+- **GIVEN** the system has acknowledged a dispensing activity from ADC-101
 - **WHEN** a Pharmacist views the event history of ADC-101
-- **THEN** that inventory update appears in the history
+- **THEN** that dispensing activity appears in the history
 
-**Scenario 3 — Unregistered sender (off-normal)**
+**Scenario 3 — Transaction sent twice (off-normal)**
+- **GIVEN** the acknowledgement of a heartbeat was lost on the network
+- **WHEN** ADC-101 sends the same dispensing activity again in its next heartbeat
+- **THEN** the dispensing activity appears only once in the history
+- **AND** its identifier is listed again in the acknowledgement
+
+**Scenario 4 — Unregistered sender (off-normal)**
 - **GIVEN** ADC-999 is not registered
 - **WHEN** ADC-999 sends a heartbeat
 - **THEN** no acknowledgement is returned and the heartbeat is logged as discarded
@@ -187,15 +193,15 @@
 
 **Scenario 1 — Alarm reaches the dashboard (normal)**
 - **GIVEN** ADC-101 is online
-- **WHEN** ADC-101 raises a "tamper" alarm of severity critical at 10:00:00
+- **WHEN** a heartbeat from ADC-101 containing a critical "tamper" alarm is received at 10:00:00
 - **THEN** the dashboard shows "Tamper – ADC-101 – CRITICAL" before 10:00:02
 - **AND** the alarm is presented with both a visual cue and an audible cue
 - **AND** the severity is shown as a text label, not only as a colour
 
 **Scenario 2 — Incomplete alarm (off-normal)**
 - **GIVEN** ADC-101 is online
-- **WHEN** ADC-101 sends an alarm message with no severity
-- **THEN** the message is rejected and logged
+- **WHEN** ADC-101 sends a heartbeat containing an alarm with no severity
+- **THEN** the alarm is rejected and logged
 - **AND** no alarm is displayed on the dashboard
 
 **Scenario 3 — Many cabinets connected (normal, load)**
@@ -281,7 +287,7 @@
 - **AND** the dashboard remains accessible to logged-in users
 
 ### US-HLT-03 — Know when a cabinet is back
-**Traces to:** FR-HLT-05
+**Traces to:** FR-HLT-05, FR-COM-07, FR-INV-01
 
 **As a** Technician, **I want** a cabinet to return to its normal state as soon as it communicates again **so that** I do not travel to fix a cabinet that has already recovered.
 
@@ -299,6 +305,12 @@
 - **GIVEN** ADC-101 is "OFFLINE"
 - **WHEN** ADC-101 sends a heartbeat reporting the state "fault"
 - **THEN** ADC-101 is shown as "FAULT", not "ONLINE"
+
+**Scenario 4 — Catching up after an outage (off-normal)**
+- **GIVEN** ADC-101 was "OFFLINE" for 10 minutes and 3 medications were withdrawn meanwhile
+- **WHEN** ADC-101's first heartbeat after the outage is received
+- **THEN** the 3 dispensing activities appear in ADC-101's history
+- **AND** ADC-101's displayed inventory matches the complete inventory contained in that heartbeat
 
 ## Theme: Operator Dashboard (DSH)
 

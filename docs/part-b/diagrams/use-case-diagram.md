@@ -74,9 +74,8 @@ flowchart LR
 
     subgraph MS["Hospital Monitoring System — ADC Communication"]
         RegisterADC(["Register ADC"])
-        Heartbeat(["Send Heartbeat"])
-        SubmitEvent(["Submit Event<br/>(inventory / alarm / status)"])
-        AckEvent(["Acknowledge Event Receipt"])
+        Heartbeat(["Send Heartbeat<br/>(status, inventory, transactions)"])
+        AckEvent(["Acknowledge Transactions"])
         SendCmd(["Send Command to ADC"])
         SendConfig(["Send Configuration to ADC"])
         AuditLog(["Log Audit Trail"])
@@ -88,7 +87,6 @@ flowchart LR
 
     ADC --- RegisterADC
     ADC --- Heartbeat
-    ADC --- SubmitEvent
     Technician --- SendCmd
     Admin --- SendCmd
     Admin --- SendConfig
@@ -97,14 +95,14 @@ flowchart LR
     SendConfig --- ADC2
     AckEvent --- ADC2
 
-    SubmitEvent -. "&lt;&lt;include&gt;&gt;" .-> AckEvent
+    Heartbeat -. "&lt;&lt;include&gt;&gt;" .-> AckEvent
     SendCmd -. "&lt;&lt;include&gt;&gt;" .-> AuditLog
     SendConfig -. "&lt;&lt;include&gt;&gt;" .-> AuditLog
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
     class ADC,ADC2,Technician,Admin actor;
-    class RegisterADC,Heartbeat,SubmitEvent,AckEvent,SendCmd,SendConfig,AuditLog usecase;
+    class RegisterADC,Heartbeat,AckEvent,SendCmd,SendConfig,AuditLog usecase;
     style Primary fill:none,stroke:none;
     style Secondary fill:none,stroke:none;
     style MS fill:none,stroke:#334,stroke-width:2px;
