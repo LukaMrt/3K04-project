@@ -1,36 +1,48 @@
 # Non-Functional Requirements — Part B (Hospital Monitoring System)
 
-## Safety
+## Safety (SAF) — what must never happen?
 
-- **NFR1** The system shall never present stale ADC status information as current without indicating when it was last updated.
+- **NFR-SAF-01** The system shall label as "stale", together with its last-update time, any ADC status that has not been updated for more than 45 seconds.
+- **NFR-SAF-02** The system shall never display an alarm as acknowledged unless a user has explicitly acknowledged it.
+- **NFR-SAF-03** The system shall display an ADC as "online" only while it is marked neither "unreachable" (FR-HLT-02) nor "offline" (FR-HLT-03).
 
-## Security
+## Security & Privacy (SEC) — who may do what?
 
-- **NFR2** The system shall require authentication before granting access to the dashboard or to any patient-related or medication-related data.
-- **NFR3** The system shall restrict actions (e.g., acknowledging an alarm, sending a command to an ADC) to users whose role permits them.
-- **NFR4** The system shall only accept events from ADCs that have completed the registration process.
+- **NFR-SEC-01** The system shall require authentication before displaying the dashboard, patient-related data and medication-related data.
+- **NFR-SEC-02** The system shall restrict alarm acknowledgement and ADC commands to the roles permitted for them.
+- **NFR-SEC-03** The system shall discard any event sent by an ADC that is not registered.
+- **NFR-SEC-04** The system shall display patient identifiers in reports only to users holding one of the following roles: pharmacist, administrator.
 
-## Reliability
+## Reliability (REL) — how often may it fail?
 
-- **NFR5** The system shall not lose an event (ping, inventory update, alarm) received from a registered ADC.
-- **NFR6** The system shall correctly detect an ADC as offline within a bounded, defined time after its last ping.
+- **NFR-REL-01** The system shall make every event it has acknowledged to an ADC retrievable from the historical data.
+- **NFR-REL-02** The system shall have fewer than 1 unplanned outage per 1,000 hours of operation.
 
-## Availability
+## Availability (AVL) — when must it be usable?
 
-- **NFR7** The system shall remain available to operator users, and shall keep operating normally for still-connected ADCs, even while one or more ADCs are offline.
-- **NFR8** The system shall be able to run continuously without requiring a restart during normal operation.
+- **NFR-AVL-01** The system shall remain available to operator users while one or more ADCs are offline.
+- **NFR-AVL-02** The system shall keep processing events from connected ADCs while one or more other ADCs are offline.
+- **NFR-AVL-03** The system shall be available to operator users at least 99.5% of each calendar month, excluding scheduled maintenance windows.
+- **NFR-AVL-04** The system shall operate for at least 30 consecutive days without requiring a restart.
 
-## Performance
+## Performance (PRF) — how fast?
 
-- **NFR9** The system shall reflect a newly received alarm on the dashboard within 2 seconds of receipt.
-- **NFR10** The system shall support a variable number of simultaneously connected ADCs without significant degradation in response time.
+- **NFR-PRF-01** The system shall display a newly received alarm on the dashboard within 2 seconds of its receipt.
+- **NFR-PRF-02** The system shall meet NFR-PRF-01 with up to 50 simultaneously connected ADCs.
 
-## Traceability / Auditability
+## Traceability / Auditability (AUD) — can we reconstruct what happened?
 
-- **NFR11** The system shall record, for every sensitive action (alarm acknowledgment, command sent to an ADC), the identity of the user, the action, and the timestamp.
-- **NFR12** The system shall retain historical event data in a way that allows it to be reviewed later without alteration.
+- **NFR-AUD-01** The system shall log every alarm acknowledgement and every ADC command with the user ID, the action, the target ADC and the timestamp.
+- **NFR-AUD-02** The system shall prevent every user role from modifying historical data.
+- **NFR-AUD-03** The system shall prevent every user role from deleting historical data.
 
-## Usability
+## Usability (USA) — can the intended user do it correctly?
 
-- **NFR13** The system shall present ADC status and alarms in a way that lets a user identify a cabinet requiring attention without navigating through unrelated information.
-- **NFR14** The system shall use consistent terminology and status labels across the dashboard, reports, and history views.
+- **NFR-USA-01** The system shall show on the dashboard's main view, without further navigation, every ADC in at least one of the following situations: unreachable, offline, in fault, flagged "Low Stock", holding an unacknowledged critical alarm.
+- **NFR-USA-02** The system shall use the same label for a given status value on the dashboard, in reports and in history views.
+- **NFR-USA-03** The system shall allow a trained user to acknowledge an active alarm in under 15 seconds from its appearance on the dashboard.
+
+## Accessibility (ACC)
+
+- **NFR-ACC-01** The system shall present every new alarm with both a visual cue and an audible cue.
+- **NFR-ACC-02** The system shall display every status and severity value as a text label, never by colour alone.
