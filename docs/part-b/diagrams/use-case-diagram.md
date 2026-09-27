@@ -95,9 +95,9 @@ flowchart LR
     SendConfig --- ADC2
     AckEvent --- ADC2
 
-    Heartbeat -. "&lt;&lt;include&gt;&gt;" .-> AckEvent
-    SendCmd -. "&lt;&lt;include&gt;&gt;" .-> AuditLog
-    SendConfig -. "&lt;&lt;include&gt;&gt;" .-> AuditLog
+    Heartbeat -. "«include»" .-> AckEvent
+    SendCmd -. "«include»" .-> AuditLog
+    SendConfig -. "«include»" .-> AuditLog
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
@@ -132,9 +132,9 @@ flowchart LR
     Technician --- ViewDash
     Admin --- ViewDash
 
-    ViewDash -. "&lt;&lt;include&gt;&gt;" .-> MonitorHealth
-    FilterSort -. "&lt;&lt;extend&gt;&gt;" .-> ViewDash
-    DetectOffline -. "&lt;&lt;extend&gt;&gt;" .-> MonitorHealth
+    ViewDash -. "«include»" .-> MonitorHealth
+    FilterSort -. "«extend»" .-> ViewDash
+    DetectOffline -. "«extend»" .-> MonitorHealth
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
@@ -165,8 +165,8 @@ flowchart LR
     Pharmacist --- ViewInv
     Pharmacist --- ViewAggInv
 
-    LowStock -. "&lt;&lt;extend&gt;&gt;" .-> ViewInv
-    SameFloor -. "&lt;&lt;extend&gt;&gt;" .-> ViewInv
+    LowStock -. "«extend»" .-> ViewInv
+    SameFloor -. "«extend»" .-> ViewInv
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
@@ -202,8 +202,8 @@ flowchart LR
     Pharmacist --- AckAlarm
     Technician --- AckAlarm
 
-    AckAlarm -. "&lt;&lt;extend&gt;&gt;" .-> ViewAlarms
-    AckAlarm -. "&lt;&lt;include&gt;&gt;" .-> AuditLog
+    AckAlarm -. "«extend»" .-> ViewAlarms
+    AckAlarm -. "«include»" .-> AuditLog
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
@@ -242,7 +242,7 @@ flowchart LR
     RiskMgmt --- ViewHistory
     RiskMgmt --- GenAlarmReport
 
-    ExportAlarmReport -. "&lt;&lt;extend&gt;&gt;" .-> GenAlarmReport
+    ExportAlarmReport -. "«extend»" .-> GenAlarmReport
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
