@@ -9,7 +9,7 @@
 - **FR-COM-05** The system shall send configuration information to a specific registered ADC.
 - **FR-COM-06** The system shall mark a command as "failed" and notify the sending user when the target ADC has not acknowledged it within 10 seconds.
 - **FR-COM-07** The system shall accept, in each heartbeat of a registered ADC, the ADC's current status, its complete inventory and the transactions (alarms, dispensing activities) the ADC has not yet had acknowledged.
-- **FR-COM-08** The system shall ignore a transaction whose identifier has already been received.
+- **FR-COM-08** The system shall not record again a transaction whose identifier has already been received.
 
 ## Inventory Supervision (INV)
 
@@ -63,7 +63,7 @@
 
 ## Request Handling (REQ)
 
-- **FR-REQ-01** The system shall acknowledge each heartbeat received from a registered ADC with the list of transaction identifiers it contained.
+- **FR-REQ-01** The system shall acknowledge each heartbeat received from a registered ADC with, for each transaction it contained, the transaction identifier and a status (received, rejected).
 
 ## User Management (USR)
 

@@ -9,7 +9,7 @@
 | FR-COM-05  | Send configuration to an ADC                              | US-COM-03                                  |           | Administrator                    |
 | FR-COM-06  | Mark unacknowledged command as failed (10 s)              | US-COM-02, US-COM-03                       |           | Technician                       |
 | FR-COM-07  | Heartbeat carries status, inventory, pending transactions | US-REQ-01, US-HLT-03                       |           | ADC team (Part A); Scenario 3    |
-| FR-COM-08  | Ignore duplicate transaction identifiers                  | US-REQ-01                                  |           | ADC team (Part A)                |
+| FR-COM-08  | Do not record duplicate transactions again                | US-REQ-01                                  |           | ADC team (Part A)                |
 | FR-INV-01  | Store inventory from each heartbeat                       | US-INV-01, US-HLT-03                       |           | Pharmacist                       |
 | FR-INV-02  | Display a cabinet's inventory                             | US-INV-01                                  |           | Pharmacist; Scenario 1           |
 | FR-INV-03  | Flag low stock below threshold                            | US-INV-02                                  |           | Pharmacist; Scenario 1           |
@@ -42,7 +42,7 @@
 | FR-HLT-03  | Mark offline after 75 s                                   | US-HLT-02                                  |           | Technician; Scenario 3           |
 | FR-HLT-04  | Communication alert when offline                          | US-HLT-02                                  |           | Technician; Scenario 3           |
 | FR-HLT-05  | Recover state on heartbeat                                | US-HLT-03                                  |           | Technician                       |
-| FR-REQ-01  | Acknowledge heartbeat with transaction IDs                | US-REQ-01                                  |           | ADC team (Part A)                |
+| FR-REQ-01  | Acknowledge heartbeat with a status per transaction       | US-REQ-01, US-ALM-01                       |           | ADC team (Part A)                |
 | FR-USR-01  | Authenticate before dashboard access                      | US-USR-01                                  |           | Hospital privacy officer         |
 | FR-USR-02  | Grant functions by role                                   | US-USR-02                                  |           | Administrator                    |
 | NFR-SAF-01 | Label status stale after 45 s                             | US-INV-01, US-HLT-02, US-DSH-01            |           | Patient; Nurse                   |

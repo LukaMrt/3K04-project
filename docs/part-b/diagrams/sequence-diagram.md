@@ -30,9 +30,9 @@ sequenceDiagram
 
     loop at most every 30 s
         ADC->>CommMgr: heartbeat(status, complete inventory, unacknowledged transactions) (FR-COM-07)
-        CommMgr-->>ADC: acknowledgement(received transaction IDs) (FR-REQ-01)
+        CommMgr->>CommMgr: skip transaction IDs already received (FR-COM-08)
+        CommMgr-->>ADC: acknowledgement(status per transaction ID: received / rejected) (FR-REQ-01)
         Note over ADC: removes the acknowledged transactions from memory
-        CommMgr->>CommMgr: ignore transaction IDs already received (FR-COM-08)
         CommMgr->>HealthMon: reception time and reported status (FR-COM-03)
         CommMgr->>InvSup: complete inventory (FR-INV-01)
         CommMgr->>HistStore: new dispensing activities (FR-HIS-02)
@@ -41,8 +41,8 @@ sequenceDiagram
 
     opt acknowledgement lost on the network
         ADC->>CommMgr: next heartbeat resends the same transactions
-        CommMgr->>CommMgr: already received, ignored (FR-COM-08)
-        CommMgr-->>ADC: acknowledgement lists them again
+        CommMgr->>CommMgr: already received, not recorded again (FR-COM-08)
+        CommMgr-->>ADC: acknowledgement lists them again as "received"
     end
 
     opt no heartbeat for 45 s
@@ -53,7 +53,7 @@ sequenceDiagram
         end
         opt ADC communicates again
             ADC->>CommMgr: heartbeat(status, complete inventory, transactions kept during the outage)
-            CommMgr-->>ADC: acknowledgement(received transaction IDs)
+            CommMgr-->>ADC: acknowledgement(status per transaction ID)
             CommMgr->>InvSup: complete inventory, resynchronised (FR-INV-01)
             CommMgr->>HistStore: transactions kept during the outage
             CommMgr->>HealthMon: reception time and reported status
@@ -76,14 +76,15 @@ sequenceDiagram
 
     Note over ADC: raises an alarm and sends a heartbeat immediately, without waiting for the 30 s period
     ADC->>CommMgr: heartbeat(status, inventory, transactions including the new alarm)
-    CommMgr-->>ADC: acknowledgement(received transaction IDs) (FR-REQ-01)
     alt ADC, type and severity present
+        CommMgr-->>ADC: acknowledgement(alarm ID: "received") (FR-REQ-01)
         CommMgr->>AlarmMgr: forward new alarm
         AlarmMgr->>HistStore: record alarm with timestamp, ADC, type, severity (FR-ALM-01)
         AlarmMgr->>Dashboard: push unacknowledged alarm (FR-ALM-04)
         Dashboard-->>User: alarm within 2 s, text severity label, visual and audible cue (NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)
     else a field is missing
         CommMgr->>CommMgr: reject and log the alarm (FR-ALM-02)
+        CommMgr-->>ADC: acknowledgement(alarm ID: "rejected") (FR-REQ-01)
     end
 
     User->>Dashboard: acknowledge the alarm

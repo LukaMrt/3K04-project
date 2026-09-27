@@ -36,15 +36,17 @@ flowchart TD
     Receive --> Registered{"Sending ADC<br/>registered?"}
     Registered -- "no" --> Discard("Discard the heartbeat and log it<br/>(NFR-SEC-03)")
     Discard --> EndA(((" ")))
-    Registered -- "yes" --> Ack("Acknowledge the heartbeat, listing<br/>its transaction identifiers<br/>(FR-REQ-01)")
-    Ack --> Duplicate{"Transaction identifier<br/>already received?"}
-    Duplicate -- "yes" --> Ignore("Ignore the transaction<br/>(FR-COM-08)")
-    Ignore --> EndB(((" ")))
+    Registered -- "yes" --> Duplicate{"Transaction identifier<br/>already received?"}
+    Duplicate -- "yes" --> Skip("Do not record it again<br/>(FR-COM-08)")
+    Skip --> AckDup("Acknowledge the transaction as 'received'<br/>(FR-REQ-01)")
+    AckDup --> EndB(((" ")))
     Duplicate -- "no" --> Complete{"ADC, type and<br/>severity present?"}
     Complete -- "no" --> Reject("Reject the alarm and log it<br/>(FR-ALM-02)")
-    Reject --> EndC(((" ")))
+    Reject --> AckRej("Acknowledge the transaction as 'rejected'<br/>(FR-REQ-01)")
+    AckRej --> EndC(((" ")))
     Complete -- "yes" --> Record("Record the alarm with timestamp,<br/>ADC, type and severity<br/>(FR-ALM-01)")
-    Record --> Display("Display the alarm within 2 s with a text<br/>severity label, a visual cue and an audible cue<br/>(FR-ALM-04, NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)")
+    Record --> AckOk("Acknowledge the transaction as 'received'<br/>(FR-REQ-01)")
+    AckOk --> Display("Display the alarm within 2 s with a text<br/>severity label, a visual cue and an audible cue<br/>(FR-ALM-04, NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)")
     Display --> UserAck("A user requests to acknowledge the alarm")
     UserAck --> Permitted{"User's role<br/>permitted?"}
     Permitted -- "no" --> Denied("Display a permission message<br/>(NFR-SEC-02)")

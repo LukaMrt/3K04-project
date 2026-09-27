@@ -81,7 +81,7 @@
 **Scenario 1 — Heartbeat acknowledged (normal)**
 - **GIVEN** ADC-101 is registered and holds 2 unacknowledged transactions (one alarm, one dispensing activity)
 - **WHEN** ADC-101 sends a heartbeat containing its status, its complete inventory and these 2 transactions
-- **THEN** the system returns an acknowledgement listing the 2 transaction identifiers
+- **THEN** the system returns an acknowledgement listing the 2 transaction identifiers, each with the status "received"
 
 **Scenario 2 — Acknowledged transaction is kept (normal)**
 - **GIVEN** the system has acknowledged a dispensing activity from ADC-101
@@ -92,7 +92,7 @@
 - **GIVEN** the acknowledgement of a heartbeat was lost on the network
 - **WHEN** ADC-101 sends the same dispensing activity again in its next heartbeat
 - **THEN** the dispensing activity appears only once in the history
-- **AND** its identifier is listed again in the acknowledgement
+- **AND** its identifier is listed again in the acknowledgement with the status "received"
 
 **Scenario 4 — Unregistered sender (off-normal)**
 - **GIVEN** ADC-999 is not registered
@@ -187,7 +187,7 @@
 ## Theme: Alarm Management (ALM)
 
 ### US-ALM-01 — See cabinet alarms as soon as they happen
-**Traces to:** FR-ALM-01, FR-ALM-02, FR-ALM-03, FR-ALM-04, NFR-PRF-01, NFR-PRF-02, NFR-ACC-01, NFR-ACC-02
+**Traces to:** FR-REQ-01, FR-ALM-01, FR-ALM-02, FR-ALM-03, FR-ALM-04, NFR-PRF-01, NFR-PRF-02, NFR-ACC-01, NFR-ACC-02
 
 **As a** Nurse, **I want** to see every alarm raised by a cabinet with its severity **so that** I can go to the cabinet before a patient misses a dose.
 
@@ -202,6 +202,7 @@
 - **GIVEN** ADC-101 is online
 - **WHEN** ADC-101 sends a heartbeat containing an alarm with no severity
 - **THEN** the alarm is rejected and logged
+- **AND** the acknowledgement returned to ADC-101 marks that transaction "rejected"
 - **AND** no alarm is displayed on the dashboard
 
 **Scenario 3 — Many cabinets connected (normal, load)**
