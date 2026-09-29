@@ -16,8 +16,10 @@ FILES=(
   non-functional-requirements.md
   user-stories.md
   diagrams/high-level-architecture.md
+  diagrams/class-model.md
   diagrams/use-case-diagram.md
   diagrams/activity-diagram.md
+  diagrams/state-machine-diagrams.md
   diagrams/sequence-diagram.md
   traceability.md
   assumptions-and-decisions.md
