@@ -8,9 +8,9 @@ Intended readers: the team, the teaching assistants, and the ADC team (Part A), 
 
 ## 2. Project purpose
 
-A hospital operates several ADCs in different locations. As their number grows, pharmacy personnel need one system to watch how they operate and to spot problems. The Monitoring System provides this centralized view for inventory, alarms, cabinet status and maintenance activities, and lets authorized staff send commands and configuration to a cabinet.
+A hospital operates several ADCs in different locations. As their number grows, pharmacy personnel need one system to watch how they operate and to spot problems. The Monitoring System provides this centralized view for inventory, alarms and cabinet status, and lets authorized staff send commands (such as "maintenance mode") and configuration to a cabinet. Maintenance information beyond that command is out of scope (D-17).
 
-The system is **safety-critical**, even though it never releases medication. A malfunction can lead to harm, for example by hiding or misrouting a critical alarm, showing an offline cabinet as healthy, sending a command to the wrong cabinet, or assuming that an uncertain command succeeded. These hazards shaped the requirements (safety, security, auditability, accessibility) and the decisions listed in [assumptions-and-decisions.md](assumptions-and-decisions.md).
+The system is **safety-critical**, even though it never releases medication. A malfunction can lead to harm, for example by hiding or misrouting a critical alarm, showing an offline cabinet as healthy, sending a command to the wrong cabinet, or assuming that an uncertain command succeeded. The hazards tied to medication schedules, dose sessions and administration recording concern functions outside this system (D-17). These hazards shaped the requirements (safety, security, auditability, accessibility) and the decisions listed in [assumptions-and-decisions.md](assumptions-and-decisions.md).
 
 ## 3. Scope
 
@@ -44,9 +44,9 @@ The Monitoring System is one part of a larger hospital medication management sol
 | Nurse                    | Views statuses, alarms and inventory; acknowledges alarms                                                                               |
 | Pharmacist               | Views inventory, history and reports; acknowledges alarms                                                                               |
 | Technician               | Views cabinet health; sends commands; acknowledges alarms                                                                               |
-| Administrator            | Sends commands and configuration; generates reports; manages roles                                                                      |
+| Administrator            | Sends commands and configuration; generates reports; manages accounts and roles; reviews the audit log                                                                      |
 | Hospital risk management | Reviews alarm history, alarm reports and the audit log                                                                                  |
-| ADC units (Part A)       | Partner system: send registrations and heartbeats; receive acknowledgements, commands and configuration                                 |
+| ADC units (Part A)       | Partner system: send registrations, heartbeats and command/configuration acknowledgements; receive registration answers, heartbeat acknowledgements, commands and configuration                                 |
 | Other stakeholders       | Patient, Hospital privacy officer, Hospital IT: no direct use case, but source of requirements (see [stakeholders.md](stakeholders.md)) |
 
 The exchanges between the Monitoring System and the ADC units cover the operational status, the inventory, the alarms and the dispensing activities sent by the ADC, and the acknowledgements, commands and configuration sent by the Monitoring System. The boundary between both systems, and the messages that cross it, are shown in the [high-level architecture diagram](diagrams/high-level-architecture.md). The exact message formats are still to be agreed with the ADC team (open points O-01 to O-04).
@@ -62,9 +62,9 @@ The requirements and models are organized around four scenarios:
 
 ## 6. Constraints and assumptions
 
-The design considers the constraints of the project description: communicate with multiple ADC units, keep the information received from the ADCs consistent, store important events, control user access, detect communication problems, keep historical information available, and support future expansion.
+The design considers the constraints of the project description: communicate with multiple ADC units, keep the information received from the ADCs consistent, store important events, control user access, detect communication problems and keep historical information available. Support for future expansion is acknowledged but not specified in this deliverable (D-17).
 
-The team relies on the four given assumptions (multiple ADCs, communication interfaces provided by the ADCs, hospital network available, users with valid accounts), plus additional assumptions and decisions that fill the gaps of the description. All of them are documented, with the requirements they affect, in [assumptions-and-decisions.md](assumptions-and-decisions.md).
+The team relies on the five given assumptions (multiple ADCs, communication interfaces provided by the ADCs, hospital network available, users with valid accounts, ADC operational information available through those interfaces), plus additional assumptions and decisions that fill the gaps of the description. All of them are documented, with the requirements they affect, in [assumptions-and-decisions.md](assumptions-and-decisions.md).
 
 ## 7. Document structure
 

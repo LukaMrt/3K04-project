@@ -2,64 +2,33 @@
 
 ## 0. Overview
 
+The use cases are grouped into six packages, detailed in diagrams 1 to 6. Actors are linked to use cases only inside those diagrams; this table gives, for each package, the actors that take part in it.
+
 ```mermaid
 flowchart LR
-    subgraph Actors[" "]
-        direction TB
-        Nurse["Nurse"]
-        Pharmacist["Pharmacist"]
-        Technician["Technician"]
-        Admin["Administrator"]
-        RiskMgmt["Hospital risk management"]
-        ADC["ADC Unit"]
-    end
-
     subgraph MS["Hospital Monitoring System"]
         direction TB
-        Auth(["Authenticate User<br/>(included by every<br/>user use case)"])
         P_COM["ADC Communication<br/>(diagram 1)"]
         P_DSH["Dashboard & Cabinet Health<br/>(diagram 2)"]
         P_INV["Inventory Supervision<br/>(diagram 3)"]
         P_ALM["Alarm Management<br/>(diagram 4)"]
         P_RPT["History & Reporting<br/>(diagram 5)"]
+        P_USR["User Management & Audit<br/>(diagram 6)"]
     end
 
-    Nurse --- Auth
-    Pharmacist --- Auth
-    Technician --- Auth
-    Admin --- Auth
-    RiskMgmt --- Auth
-
-    ADC --- P_COM
-    Technician --- P_COM
-    Admin --- P_COM
-
-    Nurse --- P_DSH
-    Pharmacist --- P_DSH
-    Technician --- P_DSH
-    Admin --- P_DSH
-
-    Nurse --- P_INV
-    Pharmacist --- P_INV
-
-    Nurse --- P_ALM
-    Pharmacist --- P_ALM
-    Technician --- P_ALM
-    Admin --- P_ALM
-
-    Pharmacist --- P_RPT
-    Admin --- P_RPT
-    RiskMgmt --- P_RPT
-
-    classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
-    classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
     classDef package fill:#f7f7f7,stroke:#666,stroke-width:1px,stroke-dasharray: 3 3;
-    class Nurse,Pharmacist,Technician,Admin,RiskMgmt,ADC actor;
-    class Auth usecase;
-    class P_COM,P_DSH,P_INV,P_ALM,P_RPT package;
-    style Actors fill:none,stroke:none;
+    class P_COM,P_DSH,P_INV,P_ALM,P_RPT,P_USR package;
     style MS fill:none,stroke:#334,stroke-width:2px;
 ```
+
+| Package | Actors |
+| --- | --- |
+| ADC Communication | ADC Unit, Technician, Administrator |
+| Dashboard & Cabinet Health | Nurse, Pharmacist, Technician, Administrator |
+| Inventory Supervision | Nurse, Pharmacist |
+| Alarm Management | Nurse, Pharmacist, Technician, Administrator |
+| History & Reporting | Pharmacist, Administrator, Hospital risk management |
+| User Management & Audit | all five user roles (authentication); Administrator, Hospital risk management (audit log) |
 
 ## 1. ADC Communication
 
@@ -67,7 +36,6 @@ flowchart LR
 flowchart LR
     subgraph Primary[" "]
         direction TB
-        ADC["ADC Unit<br/>(primary role)"]
         Technician["Technician"]
         Admin["Administrator"]
     end
@@ -81,8 +49,8 @@ flowchart LR
         AuditLog(["Log Audit Trail"])
     end
 
-    subgraph Secondary[" "]
-        ADC2["ADC Unit<br/>(secondary role)"]
+    subgraph Partner[" "]
+        ADC["ADC Unit"]
     end
 
     ADC --- RegisterADC
@@ -91,9 +59,9 @@ flowchart LR
     Admin --- SendCmd
     Admin --- SendConfig
 
-    SendCmd --- ADC2
-    SendConfig --- ADC2
-    AckEvent --- ADC2
+    SendCmd --- ADC
+    SendConfig --- ADC
+    AckEvent --- ADC
 
     Heartbeat -. "«include»" .-> AckEvent
     SendCmd -. "«include»" .-> AuditLog
@@ -101,10 +69,10 @@ flowchart LR
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
-    class ADC,ADC2,Technician,Admin actor;
+    class ADC,Technician,Admin actor;
     class RegisterADC,Heartbeat,AckEvent,SendCmd,SendConfig,AuditLog usecase;
     style Primary fill:none,stroke:none;
-    style Secondary fill:none,stroke:none;
+    style Partner fill:none,stroke:none;
     style MS fill:none,stroke:#334,stroke-width:2px;
 ```
 
@@ -164,9 +132,9 @@ flowchart LR
     Nurse --- ViewInv
     Pharmacist --- ViewInv
     Pharmacist --- ViewAggInv
+    Pharmacist --- SameFloor
 
     LowStock -. "«extend»" .-> ViewInv
-    SameFloor -. "«extend»" .-> ViewInv
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
@@ -241,6 +209,7 @@ flowchart LR
     Admin --- ViewSavedReports
     RiskMgmt --- ViewHistory
     RiskMgmt --- GenAlarmReport
+    RiskMgmt --- ViewSavedReports
 
     ExportAlarmReport -. "«extend»" .-> GenAlarmReport
 
@@ -251,3 +220,73 @@ flowchart LR
     style Actors fill:none,stroke:none;
     style MS fill:none,stroke:#334,stroke-width:2px;
 ```
+
+## 6. User Management & Audit
+
+```mermaid
+flowchart LR
+    subgraph Actors[" "]
+        direction TB
+        Nurse["Nurse"]
+        Pharmacist["Pharmacist"]
+        Technician["Technician"]
+        Admin["Administrator"]
+        RiskMgmt["Hospital risk management"]
+    end
+
+    subgraph MS["Hospital Monitoring System — User Management & Audit"]
+        Authenticate(["Authenticate User"])
+        CheckRole(["Check Role Permission"])
+        ManageAccounts(["Manage Accounts and Roles"])
+        ViewAudit(["View Audit Log"])
+    end
+
+    Nurse --- Authenticate
+    Pharmacist --- Authenticate
+    Technician --- Authenticate
+    Admin --- Authenticate
+    RiskMgmt --- Authenticate
+    Admin --- ManageAccounts
+    Admin --- ViewAudit
+    RiskMgmt --- ViewAudit
+
+    ManageAccounts -. "«include»" .-> CheckRole
+    ViewAudit -. "«include»" .-> CheckRole
+
+    classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
+    classDef usecase fill:#fff,stroke:#666,stroke-width:1px;
+    class Nurse,Pharmacist,Technician,Admin,RiskMgmt actor;
+    class Authenticate,CheckRole,ManageAccounts,ViewAudit usecase;
+    style Actors fill:none,stroke:none;
+    style MS fill:none,stroke:#334,stroke-width:2px;
+```
+
+"Authenticate User" and "Check Role Permission" are included by every use case started by a user in diagrams 1 to 5 (all of them except "Register ADC", "Send Heartbeat" and "Acknowledge Transactions", which the ADC Unit starts); the «include» arrows are not repeated there to keep them readable.
+
+## 7. User stories → use cases
+
+| Story | Use case (diagram) |
+| --- | --- |
+| US-COM-01 | Register ADC (1) — started by the ADC Unit; the Administrator is the stakeholder who benefits |
+| US-COM-02 | Send Command to ADC (1) |
+| US-COM-03 | Send Configuration to ADC (1) |
+| US-REQ-01 | Send Heartbeat, Acknowledge Transactions (1) |
+| US-INV-01 | View Inventory (3) |
+| US-INV-02 | Identify Low Stock (3) |
+| US-INV-03 | Find Stock on Same Floor (3) |
+| US-INV-04 | View Aggregated Inventory (3) |
+| US-ALM-01 | View Active Alarms (4) |
+| US-ALM-02 | Acknowledge Alarm (4) |
+| US-HLT-01 | Monitor Cabinet Health (2) |
+| US-HLT-02 | Detect Unreachable / Offline (2) |
+| US-HLT-03 | Monitor Cabinet Health (2) |
+| US-DSH-01 | View Dashboard (2) |
+| US-DSH-02 | Filter / Sort ADCs (2) |
+| US-HIS-01 | View Event History (5) |
+| US-HIS-02 | View Event History (5), View Audit Log (6) |
+| US-RPT-01 to US-RPT-05 | Generate Consumption Report (5) |
+| US-RPT-06 | Generate Alarm Report, Export Alarm Report (5) |
+| US-RPT-07 | View Saved Reports (5) |
+| US-USR-01 | Authenticate User (6) |
+| US-USR-02 | Check Role Permission (6) |
+| US-USR-03 | Manage Accounts and Roles (6) |
