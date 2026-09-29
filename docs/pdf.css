@@ -1,0 +1,29 @@
+body {
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.45;
+  color: #111;
+}
+
+h1 { font-size: 18pt; border-bottom: 2px solid #333; padding-bottom: 4px; }
+h2 { font-size: 14pt; margin-top: 1.4em; }
+h3 { font-size: 11.5pt; margin-top: 1.2em; }
+
+table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin: 0.8em 0; }
+th, td { border: 1px solid #999; padding: 3px 5px; vertical-align: top; }
+th { background: #eee; }
+tr { page-break-inside: avoid; }
+td:first-child { white-space: nowrap; }
+
+/* The architecture diagram gets its own A3 landscape page */
+@page wide { size: A3 landscape; margin: 10mm; }
+.wide { page: wide; }
+.wide img { max-width: 100%; max-height: 27cm; }
+
+img { max-width: 100%; max-height: 24cm; display: block; margin: 0.8em auto; }
+
+.page-break { page-break-after: always; }
+
+.cover { text-align: center; padding-top: 6cm; }
+.cover h1 { border: none; font-size: 24pt; }
+.cover table { width: 50%; margin: 3cm auto 0; font-size: 11pt; }

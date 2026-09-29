@@ -1,12 +1,5 @@
 # Introduction and System Context — Part B (Hospital Monitoring System)
 
-## Team
-
-| Name         | Student ID |
-| ------------ | ---------- |
-| Malika Mehta | 400566025  |
-| Luka Maret   | 400743235  |
-
 ## 1. Purpose of this document
 
 This document specifies the requirements of the **Hospital Monitoring System**, the supervisory software that centralizes the monitoring of the hospital's Automated Dispensing Cabinets (ADCs). It is the Deliverable 1 of SFWRENG 3K04 (Fall 2026), Part B. It states what the system must do and for whom, and models it with requirements, user stories with acceptance criteria, and UML diagrams. The design and the tests of the next deliverables trace back to the identifiers defined here.
