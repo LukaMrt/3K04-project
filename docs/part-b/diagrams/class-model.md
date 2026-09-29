@@ -1,3 +1,6 @@
+# Conceptual Domain / Class Model — Part B (Hospital Monitoring System)
+
+```mermaid
 classDiagram
     direction TB
 
@@ -106,10 +109,11 @@ classDiagram
 
     ADC "1" *-- "1..*" InventoryItem : contains >
     Medication "1" -- "0..*" InventoryItem : categorizes >
-    
+
     ADC "1" -- "0..*" Alarm : triggers >
     ADC "1" -- "0..*" DispensingActivity : records >
     ADC "1" -- "0..*" AuditLogEntry : targets >
 
     Alarm "0..*" -- "0..1" Report : compiled_into >
     DispensingActivity "0..*" -- "0..1" Report : compiled_into >
+```

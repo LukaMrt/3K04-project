@@ -2,11 +2,12 @@
 
 ## 1. Cabinet Health & Connectivity State Machine
 
+```mermaid
 stateDiagram-v2
     direction TB
 
     [*] --> Registering
-    
+
     state Registering {
         [*] --> PendingAuth
         PendingAuth --> Registered : Valid Credentials & Unique ID [FR-COM-01]
@@ -21,10 +22,10 @@ stateDiagram-v2
 
         state "Connectivity Health" as Connectivity {
             [*] --> Online : Heartbeat < 30s [FR-COM-03]
-            
+
             Online --> Unreachable : Heartbeat silent > 45s / Label 'Stale' [FR-HLT-02, NFR-SAF-01]
             Unreachable --> Online : Heartbeat received / Clear 'Stale' [FR-HLT-05]
-            
+
             Unreachable --> Offline : Heartbeat silent > 75s / Raise Alert [FR-HLT-03, FR-HLT-04]
             Offline --> Online : Heartbeat received / Recover State & Sync [FR-HLT-05]
         }
@@ -41,13 +42,15 @@ stateDiagram-v2
     }
 
     note right of Offline
-        D-02: Connectivity status overrides 
-        reported state (e.g. Offline device 
+        D-02: Connectivity status overrides
+        reported state (e.g. Offline device
         cannot be shown as Healthy/Normal).
     end note
+```
 
 ## 2. Alarm Lifecycle State Machine
 
+```mermaid
 stateDiagram-v2
     direction LR
 
@@ -80,3 +83,4 @@ stateDiagram-v2
 
     Acknowledged --> PersistentHistory : Retained for 1 Year [FR-HIS-01]
     PersistentHistory --> [*]
+```
