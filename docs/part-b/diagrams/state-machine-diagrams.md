@@ -6,47 +6,46 @@
 stateDiagram-v2
     direction TB
 
-    [*] --> Registering
+    state RegistrationCheck <<choice>>
+    [*] --> RegistrationCheck : registration request
+    RegistrationCheck --> Rejected : [identifier already registered] / log the rejection [FR-COM-02]
+    RegistrationCheck --> Monitored : [new identifier] / store the ADC, last heartbeat time set to the registration time [FR-COM-01, FR-HLT-06]
+    Rejected --> [*]
 
-    state Registering {
-        [*] --> PendingAuth
-        PendingAuth --> Registered : Valid Credentials & Unique ID [FR-COM-01]
-        PendingAuth --> Rejected : Duplicate ID / Unregistered [FR-COM-02]
-        Rejected --> [*]
-    }
-
-    Registered --> ActiveMonitoring : Heartbeat Started
-
-    state ActiveMonitoring {
+    state Monitored {
         direction LR
 
-        state "Connectivity Health" as Connectivity {
-            [*] --> Online : Heartbeat < 30s [FR-COM-03]
-
-            Online --> Unreachable : Heartbeat silent > 45s / Label 'Stale' [FR-HLT-02, NFR-SAF-01]
-            Unreachable --> Online : Heartbeat received / Clear 'Stale' [FR-HLT-05]
-
-            Unreachable --> Offline : Heartbeat silent > 75s / Raise Alert [FR-HLT-03, FR-HLT-04]
-            Offline --> Online : Heartbeat received / Recover State & Sync [FR-HLT-05]
+        state "Connectivity (detected by the system)" as Connectivity {
+            [*] --> Reachable
+            Reachable --> Reachable : heartbeat / record reception time, restart timer [FR-COM-03]
+            Reachable --> Unreachable : after(45 s) without heartbeat / label status and inventory stale, record status change [FR-HLT-02, NFR-SAF-01, FR-HIS-03]
+            Unreachable --> Reachable : heartbeat / clear stale label [FR-HLT-05]
+            Unreachable --> Offline : after(75 s) without heartbeat / record status change, raise communication loss alarm [FR-HLT-03, FR-HLT-04]
+            Offline --> Reachable : heartbeat / resynchronise inventory and transactions [FR-HLT-05, FR-INV-01]
         }
 
         --
 
-        state "Reported Operational State" as Operational {
-            [*] --> Normal
-            Normal --> Maintenance : ADC Reports Maintenance / Tech Command [FR-COM-04]
-            Maintenance --> Normal : Maintenance Complete
-            Normal --> Fault : Hardware/Drawer Fault Detected [FR-HLT-01]
-            Fault --> Normal : Fault Cleared
+        state "Reported operational state (from heartbeats)" as Operational {
+            [*] --> NotReported
+            NotReported --> Online : heartbeat reports online
+            NotReported --> Maintenance : heartbeat reports maintenance
+            NotReported --> Fault : heartbeat reports fault
+            Online --> Maintenance : heartbeat reports maintenance
+            Online --> Fault : heartbeat reports fault
+            Maintenance --> Online : heartbeat reports online
+            Maintenance --> Fault : heartbeat reports fault
+            Fault --> Online : heartbeat reports online
+            Fault --> Maintenance : heartbeat reports maintenance
         }
     }
-
-    note right of Offline
-        D-02: Connectivity status overrides
-        reported state (e.g. Offline device
-        cannot be shown as Healthy/Normal).
-    end note
 ```
+
+The two regions run in parallel for each registered ADC.
+
+- **Displayed status** (D-02, NFR-SAF-03): UNREACHABLE or OFFLINE whenever the connectivity region is not in *Reachable*; otherwise the state of the reported operational region.
+- **Commands**: a "maintenance mode" command changes nothing in this machine until a heartbeat reports "maintenance"; its outcome is tracked by the command itself (FR-COM-06, FR-COM-11).
+- **Invalid events**: a heartbeat from an unregistered ADC is discarded and logged, and causes no transition (NFR-SEC-03); a duplicate registration leads to *Rejected* without touching the registered ADC (FR-COM-02).
 
 ## 2. Alarm Lifecycle State Machine
 
@@ -54,33 +53,23 @@ stateDiagram-v2
 stateDiagram-v2
     direction LR
 
-    [*] --> Received : Immediate Heartbeat with Alarm Payload [FR-ALM-01]
+    state Validation <<choice>>
+    [*] --> Validation : alarm transaction received in a heartbeat
+    [*] --> Unacknowledged : ADC marked offline / create "communication loss" alarm, severity error [FR-HLT-04]
 
-    state IngestionValidation <<choice>>
-    Received --> IngestionValidation
+    Validation --> [*] : [transaction ID already received] / not recorded again, ACK "received" [FR-COM-08, FR-REQ-01]
+    Validation --> Rejected : [ADC, timestamp, type or severity missing, or unknown severity] / log, ACK "rejected" [FR-ALM-02, FR-ALM-03, FR-REQ-01]
+    Validation --> Unacknowledged : [valid] / record, then ACK "received" [FR-ALM-01, FR-REQ-01]
 
-    IngestionValidation --> Rejected : Missing Fields (ADC, Type, Severity) [FR-ALM-02]
-    Rejected --> [*] : Log Failure & ACK "rejected" [FR-REQ-01]
+    Unacknowledged : entry / display within 2 s with text label, visual and audible cue (NFR-PRF-01, NFR-ACC-01, NFR-ACC-02)
+    Unacknowledged : do / repeat the audible cue every 60 s if critical (NFR-SAF-04)
 
-    IngestionValidation --> Unacknowledged : Valid Payload [FR-ALM-01]
+    Unacknowledged --> Unacknowledged : acknowledge request [role not permitted] / permission message [NFR-SEC-02]
+    Unacknowledged --> Unacknowledged : ADC communicates again / stays unacknowledged [FR-HLT-07]
+    Unacknowledged --> Acknowledged : acknowledge request [nurse, pharmacist or technician] / record user, audit log [FR-ALM-05, NFR-AUD-01, D-09]
+    Acknowledged --> Acknowledged : acknowledge request / refuse, show who acknowledged [FR-ALM-06]
 
-    state Unacknowledged {
-        [*] --> Displayed : Render on Dashboard < 2s [NFR-PRF-01]
-        Displayed --> VisualAudibleAlert : Trigger Text, Visual & Audible Cues [NFR-ACC-01, NFR-ACC-02]
-    }
-
-    Unacknowledged --> Acknowledging : User clicks 'Acknowledge' [FR-ALM-05]
-
-    state RoleCheck <<choice>>
-    Acknowledging --> RoleCheck
-
-    RoleCheck --> Unacknowledged : Role Unauthorized (Admin/Guest) / Display Permission Error [NFR-SEC-02]
-    RoleCheck --> AlreadyAckCheck : Role Authorized (Nurse/Pharm/Tech) [D-09]
-
-    state AlreadyAckCheck <<choice>>
-    AlreadyAckCheck --> Unacknowledged : Already Acked / Show original User ID [FR-ALM-06]
-    AlreadyAckCheck --> Acknowledged : First Ack / Record User, Action, Time [FR-ALM-05, NFR-AUD-01]
-
-    Acknowledged --> PersistentHistory : Retained for 1 Year [FR-HIS-01]
-    PersistentHistory --> [*]
+    Unacknowledged --> [*] : after(1 year) / purge [FR-HIS-01, FR-HIS-09]
+    Acknowledged --> [*] : after(1 year) / purge [FR-HIS-01, FR-HIS-09]
+    Rejected --> [*] : after(1 year) / purge the log entry [FR-HIS-08, FR-HIS-09]
 ```

@@ -75,7 +75,8 @@ The team relies on the five given assumptions (multiple ADCs, communication inte
 | Non-functional requirements | [non-functional-requirements.md](non-functional-requirements.md) — safety, security, reliability, availability, performance, auditability, usability, accessibility                      |
 | User stories                | [user-stories.md](user-stories.md) — with Given/When/Then acceptance criteria                                                                                                            |
 | High-level architecture     | [diagrams/high-level-architecture.md](diagrams/high-level-architecture.md)                                                                                                               |
-| UML models                  | [diagrams/use-case-diagram.md](diagrams/use-case-diagram.md), [diagrams/activity-diagram.md](diagrams/activity-diagram.md), [diagrams/sequence-diagram.md](diagrams/sequence-diagram.md) |
+| UML models — structure      | [diagrams/class-model.md](diagrams/class-model.md) — conceptual domain / class model |
+| UML models — behaviour      | [diagrams/use-case-diagram.md](diagrams/use-case-diagram.md), [diagrams/activity-diagram.md](diagrams/activity-diagram.md), [diagrams/state-machine-diagrams.md](diagrams/state-machine-diagrams.md), [diagrams/sequence-diagram.md](diagrams/sequence-diagram.md) |
 | Traceability                | [traceability.md](traceability.md) — requirement → story → component → stakeholder or source                                                                                             |
 | Assumptions and decisions   | [assumptions-and-decisions.md](assumptions-and-decisions.md), including ethical and accessibility considerations                                                                         |
 
