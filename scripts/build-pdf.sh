@@ -23,6 +23,7 @@ FILES=(
   diagrams/sequence-diagram.md
   traceability.md
   assumptions-and-decisions.md
+  appendix-methodology-and-ai-use.md
 )
 
 rm -rf "$BUILD"

@@ -79,5 +79,6 @@ The team relies on the five given assumptions (multiple ADCs, communication inte
 | UML models — behaviour      | [diagrams/use-case-diagram.md](diagrams/use-case-diagram.md), [diagrams/activity-diagram.md](diagrams/activity-diagram.md), [diagrams/state-machine-diagrams.md](diagrams/state-machine-diagrams.md), [diagrams/sequence-diagram.md](diagrams/sequence-diagram.md) |
 | Traceability                | [traceability.md](traceability.md) — requirement → story → component → stakeholder or source                                                                                             |
 | Assumptions and decisions   | [assumptions-and-decisions.md](assumptions-and-decisions.md), including ethical and accessibility considerations                                                                         |
+| Appendix A                  | [appendix-methodology-and-ai-use.md](appendix-methodology-and-ai-use.md) — how the document was produced, and our use of AI                                                              |
 
 Requirement identifiers follow the pattern `FR-<theme>-<nn>` and `NFR-<theme>-<nn>`; stories are `US-<theme>-<nn>`. Assumptions, decisions and open points are `A-`, `D-` and `O-` numbered.
