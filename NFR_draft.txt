@@ -1,0 +1,71 @@
+AUTH-01	The ADC shall authenticate a user before permitting protected cabinet operations.
+
+Safety
+ - how will a user be authenticated?
+ - 
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-02	The ADC shall determine whether an authenticated user is permitted to access the medication requested.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-03	The ADC shall deny a medication-access request when the authenticated user lacks the required permission.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-04	The ADC shall automatically terminate an authenticated user session after a configurable period of inactivity.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-05	The ADC shall reject operations attempted using a session that has ended.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-06	The ADC shall temporarily block additional login attempts after a configurable number of consecutive failed attempts.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+
+AUTH-07	[Proposed] The ADC shall support different user authorization levels for protected actions or medications.
+
+Safety
+Security
+Reliability
+Performance
+Usability
+
+AUTH-08	[Proposed] The ADC shall support medication-specific access permissions.
+
+Safety
+Security
+Reliability
+Performance
+Usability

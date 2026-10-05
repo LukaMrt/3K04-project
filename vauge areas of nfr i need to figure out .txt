@@ -1,0 +1,172 @@
+Questions / vague areas that need resolving 
+1. What exactly is Level 1 authorization? Your draft says Level 1 can dispense “1 medication at a time within certain set limits by Level 2 authorization or higher.” Does Level 2 preconfigure which medications/limits Level 1 can access, or does Level 2 have to approve each request?
+	Level 2 or Level 3 can preconfigure which medications/limits Level 1 can access. Level 2 will usually be used by pharmacists or other personnel restocking the ADC and can prevent absurd withdrawals of prescription medication. Level 3 is admin access meaning all system, functions and logs are available ot this authorized user. 
+
+2. Is Level 2 really allowed unlimited medication withdrawal? You currently describe Level 2 as having “unlimited insertion and withdrawal,” but DISP-07 introduces dispensing limits. I would avoid the word unlimited unless you genuinely mean it bypasses all quantity/rate restrictions.
+
+ 	What would you rather have? If a pharmacist or other personnel is attempting to restock or fix inventory issues with the ADC then unrestricted access to medication insertion/withdrawal would be keep work unhindered no? Please push back on this if you think there is an issue or there is a better solution. I need feedback and I need to make sure safety is also considered. 
+
+
+3. How do AUTH-07 and AUTH-08 work together? Is permission determined only by Level 1/2/3, or can two Level 1 users have permission for different medications?
+	Medication constraints are preconfigured by Level 2 or 3 at a previous time, Level 1 users have access only to permissions set by level 2 or 3 based on the storage unit and the medication. 
+
+	Should this be handled differently? Are there pros and cons to this system vs something else?
+
+4. Are the passwords per user or per authorization level? Right now it sounds like there is one Level 1 password, one Level 2 password, and one Level 3 password shared by everyone. If so, LOG-07 cannot really identify the responsible individual unless there is another user identifier.
+
+	 - passwords per user. Every user has a different password.
+
+5. What is the actual password rule? “At least 3 numbers and 3 special characters” doesn't specify total length or whether letters are required. For example, would 123!!! be valid?
+
+	 - minimum of 8 characters total. 3 special characters, and 3 numbers req.
+
+6. What is the failed-login threshold? AUTH-06 says configurable number of attempts, but no default/minimum/maximum is defined.
+
+	 - this is set by Level 3 authorized users, can be any configurable amount of logins set by this user. 
+
+7. Is the lockout duration fixed at 60 seconds or configurable? Both versions appear in the current notes. Pick one rule.
+	 - this is set by Level 3 authorized users, can be any configurable set of time set by this user. 
+
+8. Does the failed-login counter survive leaving the login screen or restarting the ADC? Otherwise someone could potentially reset the counter to bypass the lockout.
+
+	 - failed login counter can only be cleared by level 2 authorization or higher, 
+
+9. How exactly does the inactivity timer work? Your notes say the inactivity timer starts after 15 seconds with a configurable value from 1–900 seconds. Does that mean there is 15 seconds of inactivity plus another countdown, or is the configurable timeout itself supposed to replace the 15-second value?
+
+	 - no, it should always function as 15 seconds of no entered inputs leads to the inactivity timer starting. This inactivity timer is then configurable from 1-900 seconds. Once this configurable time finishes the ADC session ends and it goes back to the login screen. 
+
+
+10. What happens when a session times out while a drawer is open? The warning behaviour is defined pretty well, but can the user still perform whatever interaction is required to physically close it without re-authenticating?
+
+	 - Any user or anybody in general will be able to physically close the door without re-authentication. My reasoning is that reauthentication will lead to further delays in closing the door. If a passerby saw the door open they could close it easily without having to get the correct personal and come back.
+	 - during this section of time where the door is open, the system will send multiple warning signals to pt b indicating the door is open. there will also be wanrning messages on the display, with a repeated message of the door being open and that it needs ot be closed. not sure if i mentioned these.
+	 - However after the adc door is closed, the adc will go into lock down mode. level 2 or 3 authorization needs to used to clear this lockdown. These authorized users can physically check if the system has any messed up inventory using logs(missing/additional medication).
+
+
+11. What is the “unique medication identifier”? Is it a medication/drug ID, a specific prescription/patient medication ID, a lot/batch ID, or simply your team's internal ID?
+
+	 - after a medication is inserted into the adc, there will be a prompt to enter what type of medication it is, strength of med, quantity, and other details about the medication. we will use a combination of the medication name, strength, date of insertion, etc to create a unique identifier for the medication, this will then be its address essentially. When we call for that specific medication to be withdrawn / inserted we call for the unique medication id instead of other factors like medication name or streghth etc because there could be multiple of the same type of medication in the system. 2 different storage containers can contain Vyvanse, 20mg, 40 units, we dont want to mix them up in the code. This is more of a backend thing than a front end thing. Please give advice on this part, not sure how to differentiate duplicate medication but this is my best shot. 
+	 - For front end though, want to find an easy way for nurses to quickly know which medication is for which if there are duplicate medications. Like if there are two versions of Vyvanse, 20mg, 40 units, how can nurses quickly know which one is for each patient? Would we have to include patient information as a requirement in unique medication data to ensure this is able to be done? Can you think of anything else. 
+
+12. Do you actually need patient names stored locally? The project excludes patient-information systems from scope, while your INV-01 notes currently include patient name.     part-a You can still decide to store patient-related information, but it creates additional privacy/security requirements and should be a conscious decision.
+
+	 - no need for now. We can make it an optional requirement later. 
+
+13. Are 5 storage blocks and 20 units per block actual hardware requirements or assumptions your team invented? If they are assumptions, they should probably go in the assumptions/decisions section.
+	
+ - they are assumptions. make sure to create a quick summary all the things that I may need to include in other sections that i instead mentioned here in nfr at the end of your response.
+ 
+14. How does the ADC know the physical inventory quantity is correct? Is there a sensor that counts medication, or is inventory entirely software-recorded/manual? This affects INV-07 and what “quantity cannot be confirmed” actually means.
+
+	 - inventory is entirely software-recorded/manual. Becauese this is exclusively only a software based project and no physical systems or sensors will be involved I think this would be the easiest way to implement this sort of system. how would you circumvent this apparant safety issue. I am currently thinking that Level2 or 3 authorized users will be able to check if the system has the correct number of units per medication and ensure that medicaiton isn't missing.
+
+15. How does the ADC know a dispense successfully completed? Drawer-open/close sensors? A medication-removal sensor? User confirmation? This is important for DISP-06 and INV-05.
+
+	 - Because again this is a software only project, I am hoping to implement this with a counter for the medication quantity and another counter displaying how many were dispensed. The user will then confirm that they withdrew and received the correct amount of medication. No sensors. 
+
+16. How will duplicate dispensing requests be identified? Unique request ID, same button submission, same medication/user/quantity within a short period, etc.?
+	 - situation 1: nurse accidentally withdraws the same med&strength again during their session with the adc. Or nurse2 comes and withdraws the same med&strength after nurse1
+		  - send a warning message to display, are you sure you want to withdraw medication and strength again? this medication and strength was withdrawn x seconds ago, and then it shows the dispensing request the system previously did as well as remaining dispenses allowed for the next section of time(determined by rate of withdrawal set by level 2). 
+			- exp "REPEAT WITHDRAWAL?: are you sure you want to withdraw medication and strength again? this medication and strength was withdrawn 2 minutes and 45 seconds ago, 'Vyvanse 20mg 10 units'". 1 remaining dispenses of this medication for the next 24 hours.
+	 - situation 2: nurse withdraws a med&strenghth, logs out, comes back and requests the same med&strength before the rate of withdrawal timer is reset(this is set by level 2)
+		 - send a message to dispaly: unable to withdraw more of the same medication, wait until xx:xx to withdraw more medication or enter level 2 authorization or higher. Last withdrawal by 'user_name'. Adding user name of whoever withdrew last so whoever failed to withdraw more medication can follow up with 'user_name' to see if everything is sorted with that prescription.  
+
+		 - Level 2 authorized users will be able to determine how much of a medication can be withdrawn in a certain period. This rate of withdrawal can be something like 1 unit / 24 hours, with both the hours field and the unit feild being configurable when inserting the medication by level 2. This prevents medication excessive medication being withdrawn for the patient and inform nurses about how many withdraws they have left. 
+	 - What I am not sure about is if there is another storage container with 'Vyvanse 40mg' also in the adc. Should it will allow withdrawal of Vyvanse 40mg if the Vyvanse 20mg timeout period is still active or not allow any withdrawals of any version of the medication during the timeout period? I am concerned with users just taking another version of the same medication to get past this timeout period. Or mallicous stealing of the same medication. I initially added this feature to prevent mistaken repeated withdrawals but not sure how to prevent this new angle I thought of. 
+ 
+
+17. What exactly is the dispensing-rate limit? Is it per medication, per user, per patient, per cabinet, or some combination? You also need the quantity and time window, e.g. “maximum X units in Y minutes.”
+	 - yes level 2 or higher will set this dispensing rate limit or withdrawal rate, it will be set as x units / y hours z minutes. It is done per medication ID, when the medication is inserted into the adc by level 2 or higher authorized users, the system will ask for the rate of withdrawal of this inserted medication, and will allow only x many units to be dispensed in those y hours and z minutes.
+
+18. Which faults actually force the entire ADC into Fault Mode? Does an informational/warning fault leave the ADC in Normal Mode? Does one broken drawer disable just that compartment, or the whole cabinet?
+
+	 - informational and warning faults keep the adc in normal mode but sends information to the display or warnings to the part B / the logs
+	 - error and critical faults send the adc into fault mode and lead to the system locking down. This means no withdrawals, insertions, inventory changes, logins, etc. The door is locked if it can be. Physically I imagine loud sounds when this is happening. Part B is contacted that there is an issue with this adc.  It can only be put out of error lockdown by a level 2 or higher authorized user. It can only be put out of critical fault lockdown by a level 3 authorized user. 
+	 - informational faults are caused by
+		 - duplicate dispensing
+		 - inactivity timers
+		 - withdrawing more medication than its withdrawal rate
+		 - withdrawing when medication is empty
+		 - setting withdrawal rate to more than the medication quantity
+		 - 
+
+	 - warning faults caused by
+		 - door open while session is active
+		 - medication low / refill necessary for medication (low medication threshold calculated as 10% of the initial inserted value of medication)
+		 - 
+
+	 - error faults caused by
+		 - door open after inactivity timer runs out(ie session inactive). 
+		 - 
+
+	 - critical faults
+		 - adc shuts down
+		 - adc restarts
+		 - adc 
+
+could you help me think of more cases where these faults would be triggered? 
+
+19. Can unaffected drawers continue operating when one drawer has a fault? FAULT-03 sounds compartment-specific, but MODE-02 could imply the entire ADC enters Fault Mode.
+	 - if it is error or critical fault, the ADC enters Fault Mode and the entire system locks down. All compartments are inaccessible in this mode. It can be cleared by a level 2 or higher authorization. 
+20. Which actions are permitted while in Fault Mode? Can users retrieve medication from unaffected compartments, or is all dispensing disabled?
+	 - in Fault mode, if the any of the doors are open they are allowed to be closed. If they are closed after being open, they will remain shut until level 2 authorized user or higher comes and clears the fault mode. no logins, no withdrawing, nothing is allowed until the fault is cleared. The display will say something like 'FAULT MODE: lockdown activated, error fault: door open activity timer expired, level 2 authorization or higher to clear lockdown'
+
+21. Can the Monitoring System remotely dispense/unlock medication? COM-05 currently allows commands without defining what commands exist. This is one of the bigger safety/security questions to settle with the Part B team.
+	 - For now lets say yes, the adc functions can be done through part b. 
+
+22. How will the ADC verify that a Monitoring System command is legitimate? Shared secret, authenticated connection, message signature, just checking message format, etc.? You don't necessarily need to choose a detailed networking implementation yet, but the security requirement needs some agreed definition of “valid.”
+
+	 - not sure about this, could you go in more detail and give some general options I could go with? I was hoping to go with a chatroom architecture with an initial secured connection, but I kind of forgot how to do it and I was wondering if there was something better I could go with?
+
+23. What is the ADC status-update interval? COM-02 says repeatedly after a certain interval. You need a number eventually, even if it is something simple such as every 5 or 10 seconds.
+
+	 - We agreed upon 30 seconds. every 30 seconds all information about the adc, its medication, faults, logs, etc, is sent to part B. 
+
+24. How quickly must faults be detected and alerts sent? Right now the major performance NFRs besides the 3-second login response have no measurable timing.
+
+	 - alerts, and all other information, will be sent to part B every 30s through a pinging system.
+	 - The ADC itself will enter fault mode within 3 seconds of any fault condition being met. 
+
+25. What is an acceptable restart/recovery time? MODE-09 and INV-08 say state is restored, but not whether that should take 2 seconds, 10 seconds, 1 minute, etc.
+
+	 - I think the requirement for resetting the system to be removed. I want it as an optional requirement for the functional and non functional requirements. If I can get to it I will implement a restart function. But for now, if the system hits a critical fault it will be on the login page or lockdown mode until a level 3 authorized user logs in
+
+26. How long are event/fault logs retained, and how many must the ADC be able to store? This becomes especially relevant during a long Monitoring System outage.
+
+	 - for now there should be at least 500 events able to be stored in the event log and at least 100 faults to be stored in the fault log. Each fault and event should have a time/date, and all information about the adc at that time.
+	 - once either of the logs are full it will try to send all its logs to part B. If it fails to transmit its logs it will reattempt until it succeeds. It will keep all its logs locally until the data is transmitted. Level 3 authorization can clear logs. Logs will stop filling once it is filled and whatever is in the event/fault logs is not overwritten as to not miss any important information from the past. 
+27. Can logs ever be deleted or edited? Ideally medication/security audit records should not be casually editable. If Level 3 can clear logs, that action probably needs its own audit record.
+	 - 100% this is a good idea. Could you think of any solutions to this? I will pick one that I like or make recommendations on what I think could work for this project. 
+
+28. What timestamps are you using? Does the ADC have a local real-time clock? Does it synchronize with the Monitoring System? This matters because the project explicitly cares about traceability of activities.     part-a
+
+	 - it will be synced up to the time zone it is currently in. Part B will be in the same time zone so it should not be an issue. The time zone can be set by Level 3 authorization in the adc settings
+	 - we are going to be using MM/DD/YYYY : 24 hour clock format for log times
+
+29. When reconnection occurs, who handles duplicate-event detection? ADC, Monitoring System, or both? COM-11 needs agreement with the Part B team.
+	 - we will have an id for each event or fault log on the adc itself. we will have a counter on the adc side indicating which fault or event was last transmitted and ack back that it was sent. We will then have a list of all faults and logs on the part B side with all the fault log identifiers included. When incoming messages to part B are received, we check if the identifier is already in the lits, and if it is we toss the packet, otherwise we accept it and send an ack back to part a. so yes in short both will verify in their own way.
+
+30. Do you want any explicit accessibility requirements? Deliverable 1 specifically asks you to document accessibility considerations. deliverable-1 I added only a very mild one—warnings should not rely on colour alone—rather than inventing a whole accessibility specification.
+
+	 - perhaps givig some ideas in this respect, I'm not sure how to implement accessibility for a software program. 
+
+Here is infomraion the adc should know about itself at all times and should be able to transmit to part B for more context in modifying your original requirements. 
+information the adc needs to store about each medication
+
+ - medication id 
+ - name of med
+ - strength 
+ - quantity
+ - patient name this med belongs to
+ - date of last access
+ - user name of last acess
+ - rate of withdrawal timer
+ - storage container it is 
+
+
+What each adc needs to know about itself
+ - unique id that is essentially its communication address
+ - number of containers full / empty
+ - where it is in the hospital (room/wing)
+ - error messages
+
