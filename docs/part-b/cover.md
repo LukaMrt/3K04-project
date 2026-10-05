@@ -9,7 +9,7 @@ McMaster University
 
 | Name         | Student ID |
 | ------------ | ---------- |
-| Malika Mehta | 400743234  |
+| Malika Mehta | 400566025  |
 | Luka Maret   | 400743235  |
 
 </div>
