@@ -51,11 +51,13 @@ The two regions run in parallel for each registered ADC.
 
 ```mermaid
 stateDiagram-v2
-    direction LR
+    direction TB
 
+    state Origin <<choice>>
     state Validation <<choice>>
-    [*] --> Validation : alarm transaction received in a heartbeat
-    [*] --> Unacknowledged : ADC marked offline / create "communication loss" alarm, severity error [FR-HLT-04]
+    [*] --> Origin : alarm event
+    Origin --> Validation : [alarm transaction received in a heartbeat]
+    Origin --> Unacknowledged : [ADC marked offline] / create "communication loss" alarm, severity error [FR-HLT-04]
 
     Validation --> [*] : [transaction ID already received] / not recorded again, ACK "received" [FR-COM-08, FR-REQ-01]
     Validation --> Rejected : [ADC, timestamp, type or severity missing, or unknown severity] / log, ACK "rejected" [FR-ALM-02, FR-ALM-03, FR-REQ-01]

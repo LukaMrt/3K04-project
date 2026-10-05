@@ -57,7 +57,7 @@
 - **AND** after 10 seconds it is shown as "failed"
 
 ### US-COM-03 — Push configuration to a cabinet
-**Traces to:** FR-COM-05, FR-COM-06, FR-COM-12, NFR-SEC-02, NFR-AUD-01
+**Traces to:** FR-COM-05, FR-COM-06, FR-COM-12, NFR-SEC-02, NFR-AUD-01, NFR-AUD-05
 
 **As an** Administrator, **I want** to send configuration information to a specific cabinet **so that** cabinet settings stay aligned with hospital policy without an on-site visit.
 

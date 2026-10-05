@@ -22,7 +22,7 @@
 | FR-INV-06 | Aggregated stock across ADCs | US-INV-04 | Inventory Supervisor | Pharmacist; Scenario 1 |
 | FR-ALM-01 | Record received alarms | US-ALM-01 | Alarm Manager, Historical Data Store | Nurse; Scenario 2 |
 | FR-ALM-02 | Reject incomplete alarm transactions | US-ALM-01 | ADC Communication Manager, Historical Data Store | ADC team (Part A) |
-| FR-ALM-03 | Reject unknown severity | US-ALM-01 | Alarm Manager | Nurse |
+| FR-ALM-03 | Reject unknown severity | US-ALM-01 | ADC Communication Manager, Historical Data Store | Nurse |
 | FR-ALM-04 | Display unacknowledged alarms | US-ALM-01 | Alarm Manager, Operator Dashboard | Nurse; Scenario 2 |
 | FR-ALM-05 | Acknowledge an alarm | US-ALM-02 | Alarm Manager, Operator Dashboard | Nurse; Technician |
 | FR-ALM-06 | Reject re-acknowledgement | US-ALM-02 | Alarm Manager | Nurse |
@@ -82,7 +82,7 @@
 | NFR-AUD-02 | History cannot be modified | US-HIS-01 | Historical Data Store | Hospital risk management |
 | NFR-AUD-03 | History cannot be deleted | US-HIS-01 | Historical Data Store | Hospital risk management |
 | NFR-AUD-04 | Log account and role changes | US-USR-03 | User Management / Auth, Historical Data Store | Hospital risk management; Hospital privacy officer |
-| NFR-AUD-05 | Log command/configuration outcome | US-COM-02 | ADC Communication Manager, Historical Data Store | Hospital risk management |
+| NFR-AUD-05 | Log command/configuration outcome | US-COM-02, US-COM-03 | ADC Communication Manager, Historical Data Store | Hospital risk management |
 | NFR-AUD-06 | Log display of patient identifiers | US-HIS-01 | Historical Data Store, Reporting, User Management / Auth | Hospital privacy officer; PHIPA |
 | NFR-USA-01 | Problem ADCs on main view | US-INV-02, US-DSH-01 | Operator Dashboard | Nurse; Scenario 1 |
 | NFR-USA-02 | Same status labels everywhere | US-ALM-01, US-DSH-01 | Operator Dashboard, Reporting | Nurse |

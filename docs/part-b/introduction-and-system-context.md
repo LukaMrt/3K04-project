@@ -62,7 +62,7 @@ The requirements and models are organized around four scenarios:
 
 ## 6. Constraints and assumptions
 
-The design considers the constraints of the project description: communicate with multiple ADC units, keep the information received from the ADCs consistent, store important events, control user access, detect communication problems and keep historical information available. Support for future expansion is acknowledged but not specified in this deliverable (D-17).
+The design considers the constraints of the project description: communicate with multiple ADC units, keep the information received from the ADCs consistent, store important events, control user access, detect communication problems and keep historical information available. Future expansion is supported through the registration of new ADCs while the system runs, up to 50 connected ADCs (FR-COM-01, NFR-PRF-02, D-19).
 
 The team relies on the five given assumptions (multiple ADCs, communication interfaces provided by the ADCs, hospital network available, users with valid accounts, ADC operational information available through those interfaces), plus additional assumptions and decisions that fill the gaps of the description. All of them are documented, with the requirements they affect, in [assumptions-and-decisions.md](assumptions-and-decisions.md).
 

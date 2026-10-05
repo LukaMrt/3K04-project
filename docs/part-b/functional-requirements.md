@@ -1,7 +1,5 @@
 # Functional Requirements — Part B (Hospital Monitoring System)
 
-State, severity and flag values are written here in lower case; the label displayed for each value is fixed by D-16.
-
 ## ADC Communication Management (COM)
 
 - **FR-COM-01** The system shall register an ADC that provides its identifier, contact address and location (floor included).
