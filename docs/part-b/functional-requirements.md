@@ -1,4 +1,4 @@
-# Functional Requirements — Part B (Hospital Monitoring System)
+# Functional Requirements - Part B (Hospital Monitoring System)
 
 ## ADC Communication Management (COM)
 

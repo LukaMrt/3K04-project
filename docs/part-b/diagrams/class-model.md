@@ -1,4 +1,4 @@
-# Conceptual Domain / Class Model — Part B (Hospital Monitoring System)
+# Conceptual Domain / Class Model - Part B (Hospital Monitoring System)
 
 ```mermaid
 classDiagram

@@ -1,4 +1,4 @@
-# Use Case Diagrams — Part B (Hospital Monitoring System)
+# Use Case Diagrams - Part B (Hospital Monitoring System)
 
 ## 0. Overview
 
@@ -40,7 +40,7 @@ flowchart LR
         Admin["Administrator"]
     end
 
-    subgraph MS["Hospital Monitoring System — ADC Communication"]
+    subgraph MS["Hospital Monitoring System - ADC Communication"]
         RegisterADC(["Register ADC"])
         Heartbeat(["Send Heartbeat<br/>(status, inventory, transactions)"])
         AckEvent(["Acknowledge Transactions"])
@@ -88,7 +88,7 @@ flowchart LR
         Admin["Administrator"]
     end
 
-    subgraph MS["Hospital Monitoring System — Dashboard & Cabinet Health"]
+    subgraph MS["Hospital Monitoring System - Dashboard & Cabinet Health"]
         ViewDash(["View Dashboard"])
         FilterSort(["Filter / Sort ADCs"])
         MonitorHealth(["Monitor Cabinet Health"])
@@ -122,7 +122,7 @@ flowchart LR
         Pharmacist["Pharmacist"]
     end
 
-    subgraph MS["Hospital Monitoring System — Inventory Supervision"]
+    subgraph MS["Hospital Monitoring System - Inventory Supervision"]
         ViewInv(["View Inventory"])
         LowStock(["Identify Low Stock"])
         SameFloor(["Find Stock on Same Floor"])
@@ -156,7 +156,7 @@ flowchart LR
         Admin["Administrator"]
     end
 
-    subgraph MS["Hospital Monitoring System — Alarm Management"]
+    subgraph MS["Hospital Monitoring System - Alarm Management"]
         ViewAlarms(["View Active Alarms"])
         AckAlarm(["Acknowledge Alarm"])
         AuditLog(["Log Audit Trail"])
@@ -192,7 +192,7 @@ flowchart LR
         RiskMgmt["Hospital risk management"]
     end
 
-    subgraph MS["Hospital Monitoring System — History & Reporting"]
+    subgraph MS["Hospital Monitoring System - History & Reporting"]
         ViewHistory(["View Event History"])
         GenConsumeReport(["Generate Consumption Report"])
         GenAlarmReport(["Generate Alarm Report"])
@@ -234,7 +234,7 @@ flowchart LR
         RiskMgmt["Hospital risk management"]
     end
 
-    subgraph MS["Hospital Monitoring System — User Management & Audit"]
+    subgraph MS["Hospital Monitoring System - User Management & Audit"]
         Authenticate(["Authenticate User"])
         CheckRole(["Check Role Permission"])
         ManageAccounts(["Manage Accounts and Roles"])
@@ -267,7 +267,7 @@ flowchart LR
 
 | Story | Use case (diagram) |
 | --- | --- |
-| US-COM-01 | Register ADC (1) — started by the ADC Unit; the Administrator is the stakeholder who benefits |
+| US-COM-01 | Register ADC (1) - started by the ADC Unit; the Administrator is the stakeholder who benefits |
 | US-COM-02 | Send Command to ADC (1) |
 | US-COM-03 | Send Configuration to ADC (1) |
 | US-REQ-01 | Send Heartbeat, Acknowledge Transactions (1) |

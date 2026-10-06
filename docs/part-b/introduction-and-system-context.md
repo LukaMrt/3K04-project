@@ -1,4 +1,4 @@
-# Introduction and System Context — Part B (Hospital Monitoring System)
+# Introduction and System Context - Part B (Hospital Monitoring System)
 
 ## 1. Purpose of this document
 
@@ -71,14 +71,14 @@ The team relies on the five given assumptions (multiple ADCs, communication inte
 | Section                     | Content                                                                                                                                                                                  |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Stakeholders                | [stakeholders.md](stakeholders.md)                                                                                                                                                       |
-| Functional requirements     | [functional-requirements.md](functional-requirements.md) — by capability (COM, INV, ALM, HIS, RPT, DSH, HLT, REQ, USR)                                                                   |
-| Non-functional requirements | [non-functional-requirements.md](non-functional-requirements.md) — safety, security, reliability, availability, performance, auditability, usability, accessibility                      |
-| User stories                | [user-stories.md](user-stories.md) — with Given/When/Then acceptance criteria                                                                                                            |
+| Functional requirements     | [functional-requirements.md](functional-requirements.md) - by capability (COM, INV, ALM, HIS, RPT, DSH, HLT, REQ, USR)                                                                   |
+| Non-functional requirements | [non-functional-requirements.md](non-functional-requirements.md) - safety, security, reliability, availability, performance, auditability, usability, accessibility                      |
+| User stories                | [user-stories.md](user-stories.md) - with Given/When/Then acceptance criteria                                                                                                            |
 | High-level architecture     | [diagrams/high-level-architecture.md](diagrams/high-level-architecture.md)                                                                                                               |
-| UML models — structure      | [diagrams/class-model.md](diagrams/class-model.md) — conceptual domain / class model |
-| UML models — behaviour      | [diagrams/use-case-diagram.md](diagrams/use-case-diagram.md), [diagrams/activity-diagram.md](diagrams/activity-diagram.md), [diagrams/state-machine-diagrams.md](diagrams/state-machine-diagrams.md), [diagrams/sequence-diagram.md](diagrams/sequence-diagram.md) |
-| Traceability                | [traceability.md](traceability.md) — requirement → story → component → stakeholder or source                                                                                             |
+| UML models - structure      | [diagrams/class-model.md](diagrams/class-model.md) - conceptual domain / class model |
+| UML models - behaviour      | [diagrams/use-case-diagram.md](diagrams/use-case-diagram.md), [diagrams/activity-diagram.md](diagrams/activity-diagram.md), [diagrams/state-machine-diagrams.md](diagrams/state-machine-diagrams.md), [diagrams/sequence-diagram.md](diagrams/sequence-diagram.md) |
+| Traceability                | [traceability.md](traceability.md) - requirement → story → component → stakeholder or source                                                                                             |
 | Assumptions and decisions   | [assumptions-and-decisions.md](assumptions-and-decisions.md), including ethical and accessibility considerations                                                                         |
-| Appendix A                  | [appendix-methodology-and-ai-use.md](appendix-methodology-and-ai-use.md) — how the document was produced, and our use of AI                                                              |
+| Appendix A                  | [appendix-methodology-and-ai-use.md](appendix-methodology-and-ai-use.md) - how the document was produced, and our use of AI                                                              |
 
 Requirement identifiers follow the pattern `FR-<theme>-<nn>` and `NFR-<theme>-<nn>`; stories are `US-<theme>-<nn>`. Assumptions, decisions and open points are `A-`, `D-` and `O-` numbered.

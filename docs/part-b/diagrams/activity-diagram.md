@@ -1,4 +1,4 @@
-# Activity Diagrams — Part B (Hospital Monitoring System)
+# Activity Diagrams - Part B (Hospital Monitoring System)
 
 ## 1. Inventory Monitoring (Scenario 1)
 

@@ -1,10 +1,10 @@
 <div class="cover">
 
-# Requirements Document — Deliverable 1
+# Requirements Document - Deliverable 1
 
 ## Part B: Hospital Monitoring System
 
-MECHTRON / SFWRENG 3K04: Software Development — Fall 2026<br/>
+MECHTRON / SFWRENG 3K04: Software Development - Fall 2026<br/>
 McMaster University
 
 | Name         | Student ID |

@@ -1,4 +1,4 @@
-# Traceability — Part B (Hospital Monitoring System)
+# Traceability - Part B (Hospital Monitoring System)
 
 | Req ID | Requirement (short) | Story | Component | Stakeholder / source |
 | --- | --- | --- | --- | --- |
@@ -33,8 +33,8 @@
 | FR-HIS-05 | Retain audit log 1 year | US-HIS-02 | Historical Data Store | Hospital risk management |
 | FR-HIS-06 | Retain generated reports 1 year | US-RPT-07 | Reporting, Historical Data Store | Administrator |
 | FR-HIS-07 | Display the audit log | US-HIS-02 | Historical Data Store, Operator Dashboard, User Management / Auth | Hospital risk management |
-| FR-HIS-08 | Retain system log entries 1 year | — (verified without a user story, see user-stories.md) | Historical Data Store | Hospital risk management; Hospital IT |
-| FR-HIS-09 | Delete data after its retention period | — (verified without a user story, see user-stories.md) | Historical Data Store | Hospital privacy officer; PHIPA |
+| FR-HIS-08 | Retain system log entries 1 year | - (verified without a user story, see user-stories.md) | Historical Data Store | Hospital risk management; Hospital IT |
+| FR-HIS-09 | Delete data after its retention period | - (verified without a user story, see user-stories.md) | Historical Data Store | Hospital privacy officer; PHIPA |
 | FR-RPT-01 | Consumption report over a period | US-RPT-01 | Reporting, Historical Data Store | Pharmacist |
 | FR-RPT-02 | Filter consumption report by ADC | US-RPT-02 | Reporting, Historical Data Store | Pharmacist |
 | FR-RPT-03 | Filter consumption report by medication | US-RPT-03 | Reporting, Historical Data Store | Pharmacist |
@@ -67,15 +67,15 @@
 | NFR-SEC-02 | Restrict acknowledgement, commands, configuration by role | US-COM-02, US-COM-03, US-ALM-02, US-USR-02 | User Management / Auth, Operator Dashboard | Hospital risk management |
 | NFR-SEC-03 | Discard heartbeats from unregistered ADCs | US-COM-01, US-REQ-01 | ADC Communication Manager, Historical Data Store | ADC team (Part A) |
 | NFR-SEC-04 | Patient identifiers (reports, history) for pharmacist/administrator only | US-HIS-01, US-RPT-04 | Reporting, User Management / Auth | Hospital privacy officer; PHIPA |
-| NFR-SEC-05 | Encrypted channel with ADCs | — (verified without a user story, see user-stories.md) | ADC Communication Manager, Hospital network | Hospital privacy officer; PHIPA; Hospital IT |
+| NFR-SEC-05 | Encrypted channel with ADCs | - (verified without a user story, see user-stories.md) | ADC Communication Manager, Hospital network | Hospital privacy officer; PHIPA; Hospital IT |
 | NFR-REL-01 | Transactions acked "received" retrievable | US-REQ-01, US-HIS-02 | ADC Communication Manager, Historical Data Store | Hospital risk management |
-| NFR-REL-02 | < 1 unplanned outage / 1,000 h | — (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
+| NFR-REL-02 | < 1 unplanned outage / 1,000 h | - (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
 | NFR-REL-03 | Displayed inventory matches the latest heartbeat | US-HLT-03 | Inventory Supervisor, ADC Communication Manager | ADC team (Part A); Pharmacist |
 | NFR-AVL-01 | Available while ADCs offline | US-HLT-02 | Operator Dashboard, ADC Communication Manager | Nurse |
 | NFR-AVL-02 | Keep processing connected ADCs | US-HLT-02 | ADC Communication Manager | Nurse |
-| NFR-AVL-03 | 99.5% monthly availability | — (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
-| NFR-AVL-04 | 30 days without restart | — (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
-| NFR-AVL-05 | Record own start-ups and shutdowns | — (verified without a user story, see user-stories.md) | Cabinet Health Monitor, Historical Data Store | Hospital IT |
+| NFR-AVL-03 | 99.5% monthly availability | - (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
+| NFR-AVL-04 | 30 days without restart | - (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
+| NFR-AVL-05 | Record own start-ups and shutdowns | - (verified without a user story, see user-stories.md) | Cabinet Health Monitor, Historical Data Store | Hospital IT |
 | NFR-PRF-01 | Alarm displayed within 2 s | US-ALM-01, US-HLT-02 | ADC Communication Manager, Alarm Manager, Operator Dashboard | Nurse; Scenario 2 |
 | NFR-PRF-02 | NFR-PRF-01 holds with 50 ADCs | US-ALM-01 | ADC Communication Manager, Alarm Manager | Hospital IT |
 | NFR-AUD-01 | Log acknowledgements, commands, configs | US-COM-02, US-COM-03, US-ALM-02, US-HIS-02 | Alarm Manager, ADC Communication Manager, Historical Data Store | Hospital risk management |
@@ -89,5 +89,5 @@
 | NFR-USA-03 | Acknowledge alarm in < 15 s | US-ALM-02 | Operator Dashboard | Nurse |
 | NFR-ACC-01 | Visual and audible alarm cues | US-ALM-01 | Operator Dashboard, Operator workstation | AODA |
 | NFR-ACC-02 | No colour-only information | US-ALM-01 | Operator Dashboard | AODA |
-| NFR-ACC-03 | Keyboard-only operation | — (verified without a user story, see user-stories.md) | Operator Dashboard, Operator workstation | AODA |
-| NFR-ACC-04 | WCAG 2.0 AA | — (verified without a user story, see user-stories.md) | Operator Dashboard | AODA |
+| NFR-ACC-03 | Keyboard-only operation | - (verified without a user story, see user-stories.md) | Operator Dashboard, Operator workstation | AODA |
+| NFR-ACC-04 | WCAG 2.0 AA | - (verified without a user story, see user-stories.md) | Operator Dashboard | AODA |

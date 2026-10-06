@@ -1,4 +1,4 @@
-# Sequence Diagrams — Part B (Hospital Monitoring System)
+# Sequence Diagrams - Part B (Hospital Monitoring System)
 
 ## 1. ADC Registration and Heartbeat (Scenario 3)
 

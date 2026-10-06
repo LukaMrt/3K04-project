@@ -1,4 +1,4 @@
-# Appendix A — Methodology and Use of AI — Part B (Hospital Monitoring System)
+# Appendix A - Methodology and Use of AI - Part B (Hospital Monitoring System)
 
 This appendix explains how the team produced this document, and in particular how it used an AI assistant (Claude, by Anthropic). It is meant to be transparent about the process, and to explain why the document is as detailed as it is.
 

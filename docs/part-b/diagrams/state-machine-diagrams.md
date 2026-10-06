@@ -1,4 +1,4 @@
-# State Machine Diagrams — Part B (Hospital Monitoring System)
+# State Machine Diagrams - Part B (Hospital Monitoring System)
 
 ## 1. Cabinet Health & Connectivity State Machine
 

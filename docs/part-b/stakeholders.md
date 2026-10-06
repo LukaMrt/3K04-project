@@ -1,4 +1,4 @@
-# Stakeholders — Part B (Hospital Monitoring System)
+# Stakeholders - Part B (Hospital Monitoring System)
 
 | Stakeholder              | Type                      | What they care about                                                                            | Priority (power / interest)                             |
 | ------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------- |

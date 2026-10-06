@@ -1,4 +1,4 @@
-# High-Level Architecture Diagram — Part B (Hospital Monitoring System)
+# High-Level Architecture Diagram - Part B (Hospital Monitoring System)
 
 ```mermaid
 flowchart LR
@@ -34,7 +34,7 @@ flowchart LR
 
     Network{{"Hospital network<br/>(hardware / infrastructure)"}}
 
-    subgraph Partner["Partner system (Part A) — independent software"]
+    subgraph Partner["Partner system (Part A) - independent software"]
         ADCUnits["ADC Units<br/>(one or more)"]
     end
 
