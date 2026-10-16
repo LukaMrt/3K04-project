@@ -2,15 +2,15 @@
 
 ## ADC Communication Management (COM)
 
-- **FR-COM-01** The system shall register an ADC that provides its identifier, contact address and location (floor included).
-- **FR-COM-02** The system shall reject, and log the rejection of, a registration request whose ADC identifier is already registered.
+- **FR-COM-01** The system shall register an ADC that provides its identifier, label, contact address and location (floor included).
+- **FR-COM-02** The system shall accept a registration request whose ADC identifier is already registered, replace the label, the contact address and the location of that ADC with those of the request, and log the re-registration.
 - **FR-COM-03** The system shall record the reception time of each heartbeat sent by a registered ADC.
 - **FR-COM-04** The system shall send a command to a specific registered ADC.
 - **FR-COM-05** The system shall send configuration information to a specific registered ADC.
 - **FR-COM-06** The system shall mark a command or a configuration as "failed" and notify the sending user when the target ADC has not acknowledged it within 10 seconds of its sending.
 - **FR-COM-07** The system shall accept, in each heartbeat of a registered ADC, the ADC's current status, its complete inventory and the transactions (alarms, dispensing activities) the ADC has not yet had acknowledged.
 - **FR-COM-08** The system shall not record again a transaction whose identifier has already been received.
-- **FR-COM-09** The system shall accept, for each dispensing activity of a heartbeat, its transaction identifier, the identifier of the ADC, the time set by the ADC, the medication, the quantity dispensed (in boxes), the patient identifier and the identifier of the staff member who withdrew it.
+- **FR-COM-09** The system shall accept, for each dispensing activity of a heartbeat, its transaction identifier, the identifier of the ADC, the time set by the ADC, the medication identifier and name, the quantity dispensed (in boxes), the patient identifier, and the identifier and name of the staff member who withdrew it.
 - **FR-COM-10** The system shall reject and log a dispensing activity that is missing at least one of the fields listed in FR-COM-09.
 - **FR-COM-11** The system shall mark a command or a configuration as "delivered" only when the acknowledgement received carries both its identifier and the identifier of the target ADC.
 - **FR-COM-12** The system shall refuse to send a command or a configuration to an ADC marked "offline" and inform the requesting user of the refusal.
@@ -42,7 +42,7 @@
 - **FR-HIS-05** The system shall retain every audit log entry (NFR-AUD-01, NFR-AUD-04, NFR-AUD-05, NFR-AUD-06) for 1 year.
 - **FR-HIS-06** The system shall retain every generated report, with its parameters and generation timestamp, for 1 year.
 - **FR-HIS-07** The system shall display the audit log over a user-specified date range, optionally filtered by ADC or by user, to authorized users.
-- **FR-HIS-08** The system shall retain every system log entry (rejected registrations, rejected transactions, discarded heartbeats, own start-ups and shutdowns) for 1 year.
+- **FR-HIS-08** The system shall retain every system log entry (rejected registrations, re-registrations, rejected transactions, discarded heartbeats, own start-ups and shutdowns) for 1 year.
 - **FR-HIS-09** The system shall delete each stored item within 24 hours after the end of its retention period.
 
 Retention periods run from the date of the event. No user role may modify or delete stored data (NFR-AUD-02, NFR-AUD-03). Only the latest inventory of each ADC is kept (FR-INV-01).
@@ -62,7 +62,7 @@ Retention periods run from the date of the event. No user role may modify or del
 
 - **FR-DSH-01** The system shall display the current status of each registered ADC on the dashboard.
 - **FR-DSH-02** The system shall filter the displayed ADC list by status.
-- **FR-DSH-03** The system shall sort the displayed ADC list by identifier.
+- **FR-DSH-03** The system shall sort the displayed ADC list by label.
 
 ## Cabinet Health Monitoring (HLT)
 

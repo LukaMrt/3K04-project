@@ -90,7 +90,7 @@ flowchart LR
     CommMgr -. "ADC messages sent and received<br/>over an encrypted channel" .-> Network
     Network -. "carries ADC messages" .-> ADCUnits
     ADCUnits == "registration request,<br/>heartbeat (status, complete inventory,<br/>unacknowledged alarms and dispensing activities),<br/>command / configuration acknowledgement<br/>(command ID + ADC ID)" ==> CommMgr
-    CommMgr == "registration accepted / rejected,<br/>heartbeat acknowledgement (status per transaction ID),<br/>commands and configuration (with their ID)" ==> ADCUnits
+    CommMgr == "registration accepted (new or re-registration) / rejected (invalid request),<br/>heartbeat acknowledgement (status per transaction ID),<br/>commands and configuration (with their ID)" ==> ADCUnits
 
     classDef actor fill:#e8eef7,stroke:#334,stroke-width:1.5px,color:#112;
     classDef component fill:#e6f4ea,stroke:#2e7d32,stroke-width:1.5px,color:#111;

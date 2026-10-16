@@ -1,5 +1,7 @@
 # User Stories & Acceptance Criteria - Part B (Hospital Monitoring System)
 
+In the scenarios, ADCs are designated by their label (e.g. "ADC-101"), and patients and staff members by short stand-ins (e.g. "P-4521", "S-118") for their identifiers, which are UUID v4 (A-21).
+
 ## Theme: ADC Communication (COM)
 
 ### US-COM-01 - Register a new cabinet
@@ -12,11 +14,11 @@
 - **WHEN** ADC-101 requests registration with contact address "10.0.3.50" and location "Floor 3 – ICU"
 - **THEN** ADC-101 appears in the dashboard's cabinet list with location "Floor 3 – ICU"
 
-**Scenario 2 - Duplicate identifier (off-normal)**
-- **GIVEN** ADC-101 is already registered at "Floor 3 – ICU"
-- **WHEN** another device requests registration with identifier "ADC-101"
-- **THEN** the registration is rejected and the rejection is logged
-- **AND** the existing ADC-101 entry is unchanged
+**Scenario 2 - Re-registration after a restart (off-normal)**
+- **GIVEN** ADC-101 is already registered at "Floor 3 – ICU" with contact address "10.0.3.50"
+- **WHEN** ADC-101 restarts and requests registration again with contact address "10.0.3.51" and location "Floor 3 – ICU"
+- **THEN** the registration is accepted, ADC-101 keeps a single entry in the cabinet list, with contact address "10.0.3.51"
+- **AND** the re-registration is logged
 
 **Scenario 3 - Unregistered device (off-normal)**
 - **GIVEN** no ADC with identifier "ADC-999" is registered
@@ -387,9 +389,9 @@
 - **WHEN** the Technician filters the list on status "OFFLINE"
 - **THEN** only the 3 offline ADCs are displayed
 
-**Scenario 2 - Sort by identifier (normal)**
-- **GIVEN** ADC-205, ADC-101 and ADC-150 are registered
-- **WHEN** the Technician sorts the list by identifier
+**Scenario 2 - Sort by label (normal)**
+- **GIVEN** ADCs labelled ADC-205, ADC-101 and ADC-150 are registered
+- **WHEN** the Technician sorts the list by label
 - **THEN** the list shows ADC-101, ADC-150, ADC-205 in that order
 
 **Scenario 3 - No match (off-normal)**

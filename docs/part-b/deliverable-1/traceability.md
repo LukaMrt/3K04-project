@@ -3,7 +3,7 @@
 | Req ID | Requirement (short) | Story | Component | Stakeholder / source |
 | --- | --- | --- | --- | --- |
 | FR-COM-01 | Register an ADC | US-COM-01 | ADC Communication Manager | ADC team (Part A); Administrator |
-| FR-COM-02 | Reject duplicate ADC identifier | US-COM-01 | ADC Communication Manager, Historical Data Store | Administrator |
+| FR-COM-02 | Accept re-registration of a known ADC identifier | US-COM-01 | ADC Communication Manager, Historical Data Store | Administrator |
 | FR-COM-03 | Record heartbeat reception time | US-HLT-01 | ADC Communication Manager, Cabinet Health Monitor | Technician; Scenario 3 |
 | FR-COM-04 | Send a command to an ADC | US-COM-02 | Operator Dashboard, ADC Communication Manager | Technician |
 | FR-COM-05 | Send configuration to an ADC | US-COM-03 | Operator Dashboard, ADC Communication Manager | Administrator |
@@ -45,7 +45,7 @@
 | FR-RPT-08 | Reopen a generated report | US-RPT-07 | Reporting, Historical Data Store | Administrator |
 | FR-DSH-01 | Display each ADC's status | US-HLT-01, US-DSH-01 | Operator Dashboard, Cabinet Health Monitor | Nurse |
 | FR-DSH-02 | Filter ADC list by status | US-DSH-02 | Operator Dashboard | Technician; Scenario 1 |
-| FR-DSH-03 | Sort ADC list by identifier | US-DSH-02 | Operator Dashboard | Technician |
+| FR-DSH-03 | Sort ADC list by label | US-DSH-02 | Operator Dashboard | Technician |
 | FR-HLT-01 | Display reported operational state | US-HLT-01 | Cabinet Health Monitor, Operator Dashboard | Technician |
 | FR-HLT-02 | Mark unreachable after 45 s | US-HLT-02 | Cabinet Health Monitor | Technician; Scenario 3 |
 | FR-HLT-03 | Mark offline after 75 s | US-HLT-02 | Cabinet Health Monitor | Technician; Scenario 3 |

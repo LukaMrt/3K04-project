@@ -11,16 +11,23 @@
 | A-05 | ADCs push their data: each heartbeat, sent at most 30 seconds apart, contains the ADC's status, its complete inventory and its unacknowledged transactions (alarms, dispensing activities). | Team, with ADC team (Part A) | FR-COM-03, FR-COM-07, FR-INV-01 |
 | A-06 | An ADC keeps each transaction in memory until the Monitoring System has acknowledged its identifier.                                                                                        | Team, with ADC team (Part A) | FR-REQ-01, NFR-REL-01           |
 | A-07 | Transaction identifiers are UUID v4, hence unique across all ADCs.                                                                                                                          | Team                         | FR-COM-08                       |
-| A-08 | An ADC sends a heartbeat immediately when it raises an alarm, without waiting for the 30-second period.                                                                                     | Team, with ADC team (Part A) | NFR-PRF-01                      |
+| A-08 | An ADC sends a heartbeat immediately when it raises an alarm or changes its operational state, without waiting for the 30-second period.                                                     | Team, with ADC team (Part A) | NFR-PRF-01                      |
 | A-09 | Each ADC's location includes its floor.                                                                                                                                                     | Team                         | FR-COM-01, FR-INV-04            |
 | A-10 | A medication is in low stock in an ADC when its quantity is below 10 boxes; this threshold is the same for every medication and every ADC and is not configurable. | Team | FR-INV-03, FR-INV-04, FR-INV-05 |
 | A-11 | Each ADC reports its own operational state (online, maintenance, fault).                                                                                                                    | Team                         | FR-HLT-01                       |
 | A-12 | Users of the dashboard are trained before using it.                                                                                                                                         | Team                         | NFR-USA-03                      |
-| A-13 | Each dispensing activity sent by an ADC carries its identifier, the ADC identifier, the time, the medication, the quantity, the patient identifier and the staff member identifier. | Team, with ADC team (Part A) | FR-COM-09, FR-RPT-04, FR-RPT-05 |
+| A-13 | Each dispensing activity sent by an ADC carries its identifier, the ADC identifier, the time, the medication identifier and name, the quantity, the patient identifier, and the staff member identifier and name. | Team, with ADC team (Part A) | FR-COM-09, FR-RPT-04, FR-RPT-05 |
 | A-14 | Every alarm and dispensing activity carries the timestamp set by the ADC in its message; the system does not replace it with the reception time. | Team, with ADC team (Part A) | FR-ALM-01, FR-ALM-02, FR-COM-09 |
 | A-15 | The "operational information" distributed to ADC units (part-b.pdf §3.1) means the commands and the configuration sent through FR-COM-04 and FR-COM-05; no other flow is sent to the ADCs. | part-b.pdf §3.1 | FR-COM-04, FR-COM-05 |
 | A-16 | The "system health information" of an ADC (part-b.pdf §9) is limited to the operational state it reports (online, maintenance, fault) and to the connectivity status detected by the system. | part-b.pdf §9 | FR-HLT-01, FR-HLT-02, FR-HLT-03 |
 | A-17 | ADC operational information is available through the communication interfaces of the ADCs. | part-b.pdf §3.2 | FR-COM-07, FR-HLT-01 |
+| A-18 | The ADCs and the Monitoring System exchange JSON messages over HTTPS. Both expose an HTTP server: the Monitoring System receives registrations and heartbeats; each ADC receives commands and configurations at the contact address it gave when registering. The full contract is in the ADC ↔ Monitoring interface contract (interface-adc-monitoring.md). | Team, with ADC team (Part A) | FR-COM-01, FR-COM-04, FR-COM-05, FR-COM-07, NFR-SEC-05 |
+| A-19 | Every acknowledgement is the synchronous response to the request it acknowledges: the response to a heartbeat gives a status ("received", "rejected") per transaction; the response of an ADC to a command or a configuration repeats its identifier and the ADC identifier. | Team, with ADC team (Part A) | FR-REQ-01, FR-COM-06, FR-COM-11, D-07 |
+| A-20 | An ADC puts its identifier in every message it sends; the ADC identifier of a heartbeat is the originating ADC of every transaction it contains. | Team, with ADC team (Part A) | FR-COM-09, FR-ALM-02, NFR-SEC-03 |
+| A-21 | Every identifier exchanged between both systems (ADC, medication, patient, staff member, transaction, command, configuration) is a UUID v4; an ADC generates its identifier once and keeps it across restarts. ADCs, medications and staff members also have a label (ADC label, medication name, staff member name) used only for display; patients have none, to keep health information off the interface. | Team, with ADC team (Part A) | FR-COM-01, FR-COM-02, FR-COM-09, FR-INV-01, FR-INV-06, FR-DSH-03, NFR-SEC-04 |
+| A-22 | An ADC registers at every start-up, always with the same identifier, and registers again whenever the Monitoring System answers that it is not registered. | Team, with ADC team (Part A) | FR-COM-01, FR-COM-02 |
+| A-23 | When the Monitoring System does not answer, or answers with an error, the ADC keeps its transactions and tries again at the heartbeat rhythm (30 s); it sends at most one heartbeat at a time. | Team, with ADC team (Part A) | A-06, NFR-REL-01 |
+| A-24 | The memory of an ADC is large enough to keep every unacknowledged transaction during any outage. | Team, with ADC team (Part A) | A-06, NFR-REL-01 |
 
 ## Decisions
 
@@ -45,6 +52,7 @@
 | D-17 | Out of scope: maintenance information beyond the "maintenance mode" command, medication schedules and dose sessions, and the recording of medication administration (the system records dispensing, not administration). The hazards of part-b.pdf §2 linked to schedules, dose sessions and administration therefore have no requirement. | Deliberate scoping for Deliverable 1; these items belong to other hospital systems or to later deliverables. | - |
 | D-18 | A communication loss alarm stays unacknowledged when its ADC comes back; the audible cue of an unacknowledged critical alarm is repeated every 60 s. | An outage must be reviewed by someone even if it was short; an unseen critical alarm must not fade. | FR-HLT-07, NFR-SAF-04 |
 | D-19 | Future expansion (part-b.pdf §8) is supported by the number of ADCs: any new ADC joins through registration, without changing or restarting the system, and the performance targets hold up to 50 connected ADCs. | The number of cabinets is the dimension the project description expects to grow ("as the number of cabinets increases"). | FR-COM-01, NFR-PRF-02 |
+| D-20 | A registration whose ADC identifier is already registered is accepted: it replaces the contact address and the location of that ADC and is logged, without changing its connectivity status, its reported state or its alarms. | An ADC that restarts must rejoin without an administrator. The risk of a device taking over the identifier of an ADC is limited by the encrypted channel (NFR-SEC-05) and by the logging of every re-registration. | FR-COM-02, FR-HIS-08 |
 
 ## Role permissions (D-14)
 
@@ -77,12 +85,3 @@ Patient identifiers in reports and in event history remain visible to the pharma
 | Accountability       | Nobody knows who acknowledged an alarm or sent a command.               | NFR-AUD-01, NFR-AUD-02, NFR-AUD-03, NFR-AUD-04, NFR-AUD-05, FR-HIS-01, FR-HIS-07 |
 | Accessibility (AODA) | Colour-only or visual-only alarms exclude some users.                   | NFR-ACC-01, NFR-ACC-02, NFR-ACC-03, NFR-ACC-04, NFR-USA-02 |
 | Honesty about limits | The dashboard shows old data as if it were current.                     | NFR-SAF-01, NFR-SAF-03                                                          |
-
-## Open points (to agree with the ADC team, Part A)
-
-| ID   | Open point                                                                                       | Related                                    |
-| ---- | ------------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| O-01 | Exact format of the heartbeat, the acknowledgement, the commands and the configuration messages. | FR-COM-04, FR-COM-05, FR-COM-07, FR-COM-11, FR-REQ-01 |
-| O-02 | Acknowledgement with a status per transaction ("received", "rejected").                          | D-07                                       |
-| O-03 | ADC memory capacity and behaviour when it is full during a long outage.                          | A-06                                       |
-| O-04 | Immediate heartbeat when the ADC raises an alarm.                                                | A-08                                       |

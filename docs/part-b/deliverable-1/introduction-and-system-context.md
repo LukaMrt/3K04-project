@@ -49,7 +49,7 @@ The Monitoring System is one part of a larger hospital medication management sol
 | ADC units (Part A)       | Partner system: send registrations, heartbeats and command/configuration acknowledgements; receive registration answers, heartbeat acknowledgements, commands and configuration                                 |
 | Other stakeholders       | Patient, Hospital privacy officer, Hospital IT: no direct use case, but source of requirements (see [stakeholders.md](stakeholders.md)) |
 
-The exchanges between the Monitoring System and the ADC units cover the operational status, the inventory, the alarms and the dispensing activities sent by the ADC, and the acknowledgements, commands and configuration sent by the Monitoring System. The boundary between both systems, and the messages that cross it, are shown in the [high-level architecture diagram](diagrams/high-level-architecture.md). The exact message formats are still to be agreed with the ADC team (open points O-01 to O-04).
+The exchanges between the Monitoring System and the ADC units cover the operational status, the inventory, the alarms and the dispensing activities sent by the ADC, and the acknowledgements, commands and configuration sent by the Monitoring System. The boundary between both systems, and the messages that cross it, are shown in the [high-level architecture diagram](diagrams/high-level-architecture.md). The transport, the message formats, the error codes and the behaviour when one side is unavailable are fixed in the [ADC ↔ Monitoring interface contract](../interface-adc-monitoring.md), proposed to the ADC team (A-18 to A-24).
 
 ## 5. Operational scenarios
 
@@ -81,4 +81,4 @@ The team relies on the five given assumptions (multiple ADCs, communication inte
 | Assumptions and decisions   | [assumptions-and-decisions.md](assumptions-and-decisions.md), including ethical and accessibility considerations                                                                         |
 | Appendix A                  | [appendix-methodology-and-ai-use.md](appendix-methodology-and-ai-use.md) - how the document was produced, and our use of AI                                                              |
 
-Requirement identifiers follow the pattern `FR-<theme>-<nn>` and `NFR-<theme>-<nn>`; stories are `US-<theme>-<nn>`. Assumptions, decisions and open points are `A-`, `D-` and `O-` numbered.
+Requirement identifiers follow the pattern `FR-<theme>-<nn>` and `NFR-<theme>-<nn>`; stories are `US-<theme>-<nn>`. Assumptions and decisions are `A-` and `D-` numbered.

@@ -22,6 +22,7 @@ classDiagram
 
     class ADC {
         String adcId
+        String label
         String contactAddress
         String location
         int floor
@@ -93,6 +94,7 @@ classDiagram
         int quantityInBoxes
         String patientId
         String staffMemberId
+        String staffMemberName
     }
 
     class Command {

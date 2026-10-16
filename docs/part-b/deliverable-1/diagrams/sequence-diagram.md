@@ -1,5 +1,7 @@
 # Sequence Diagrams - Part B (Hospital Monitoring System)
 
+ADCs are designated by their label (e.g. "ADC-205"); the messages carry their identifier, a UUID v4 (A-21).
+
 ## 1. ADC Registration and Heartbeat (Scenario 3)
 
 ```mermaid
@@ -13,14 +15,15 @@ sequenceDiagram
     participant HistStore as Historical Data Store
     participant Dashboard as Operator Dashboard
 
-    ADC->>CommMgr: register(id, address, location with floor)
+    ADC->>CommMgr: register(id, label, address, location with floor)
     alt identifier not yet registered
         CommMgr->>CommMgr: store registration (FR-COM-01)
         CommMgr-->>ADC: registration accepted
         CommMgr->>Dashboard: add ADC to the cabinet list
-    else identifier already registered
-        CommMgr->>HistStore: log rejection (FR-HIS-08)
-        CommMgr-->>ADC: registration rejected (FR-COM-02)
+    else identifier already registered (e.g. the ADC restarted)
+        CommMgr->>CommMgr: replace contact address and location (FR-COM-02)
+        CommMgr->>HistStore: log re-registration (FR-HIS-08)
+        CommMgr-->>ADC: registration accepted
     end
 
     opt heartbeat sent by a device that never registered (e.g. ADC-999)
