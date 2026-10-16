@@ -21,7 +21,7 @@ sequenceDiagram
         CommMgr-->>ADC: registration accepted
         CommMgr->>Dashboard: add ADC to the cabinet list
     else identifier already registered (e.g. the ADC restarted)
-        CommMgr->>CommMgr: replace contact address and location (FR-COM-02)
+        CommMgr->>CommMgr: replace label, contact address and location (FR-COM-02)
         CommMgr->>HistStore: log re-registration (FR-HIS-08)
         CommMgr-->>ADC: registration accepted
     end

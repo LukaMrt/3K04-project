@@ -1,4 +1,4 @@
-# ADC ↔ Monitoring System Interface Contract - Draft v0.1
+# ADC ↔ Monitoring System Interface Contract - v1.0
 
 ## 1. Overview
 
@@ -92,7 +92,7 @@ Response `200 OK`:
 }
 ```
 
-**Re-registration**: a request whose `adcId` is already registered is **accepted**. It replaces the label, the contact address and the location, is written to the audit log, and answers `200` with `firstRegistration: false`. It changes neither the last heartbeat time, nor the connectivity status, nor the alarms of the ADC (a pending communication loss alarm stays unacknowledged, FR-HLT-07). The ADC sends its first heartbeat right after a successful registration.
+**Re-registration**: a request whose `adcId` is already registered is **accepted**. It replaces the label, the contact address and the location, is written to the system log (FR-HIS-08), and answers `200` with `firstRegistration: false`. It changes neither the last heartbeat time, nor the connectivity status, nor the alarms of the ADC (a pending communication loss alarm stays unacknowledged, FR-HLT-07). The ADC sends its first heartbeat right after a successful registration.
 
 Errors: `400 INVALID_MESSAGE`.
 

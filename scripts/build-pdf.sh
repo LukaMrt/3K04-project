@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$ROOT/docs/part-b"
+SRC="$ROOT/docs/part-b/deliverable-1"
 BUILD="$ROOT/build"
 
 # Order of the requirements document (deliverable-1.pdf, §4)
