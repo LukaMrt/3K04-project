@@ -1,3 +1,6 @@
 .adonisjs
 node_modules
 build
+
+# prettier-edge is not idempotent: every run adds blank lines to .edge files
+*.edge
