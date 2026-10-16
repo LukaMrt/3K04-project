@@ -59,10 +59,8 @@ flowchart LR
     AlarmMgr -- "unacknowledged alarms (push)" --> Dashboard
     HealthMon -- "ADC states, stale labels" --> Dashboard
     HealthMon -- "communication loss alarms" --> AlarmMgr
-    Dashboard -- "report requests (date range, filters)" --> Reporting
-    Reporting -- "reports, exports" --> Dashboard
-    Dashboard -- "event history and audit log requests" --> HistStore
-    HistStore -- "events" --> Dashboard
+    Dashboard -- "report, event history and<br/>audit log requests (date range, filters)" --> Reporting
+    Reporting -- "reports, exports, event history<br/>(patient IDs filtered by role), audit log" --> Dashboard
     Dashboard -- "command / configuration to send" --> CommMgr
     CommMgr -- "delivered / failed" --> Dashboard
 
