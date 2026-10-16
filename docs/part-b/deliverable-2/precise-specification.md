@@ -63,7 +63,7 @@ The required behaviour (REQ, section 3) is stated with monitored and controlled 
 
 | Variable | Meaning | Type / range |
 | --- | --- | --- |
-| `c_displayedStatus(a)` | Status of ADC `a` as read by users on the dashboard | {`ONLINE`, `MAINTENANCE`, `FAULT`, `UNREACHABLE`, `OFFLINE`, `PENDING`} (`PENDING`: see G-01) |
+| `c_displayedStatus(a)` | Status of ADC `a` as read by users on the dashboard | {`ONLINE`, `MAINTENANCE`, `FAULT`, `UNREACHABLE`, `OFFLINE`, `PENDING`} (`PENDING`: D-21) |
 | `c_stale(a)` | "stale" label, with the last-update time, shown next to the status and inventory of `a` | Boolean + timestamp |
 | `c_displayedStock(a, med)` | Quantity of `med` shown for ADC `a`, with the time of the heartbeat it comes from | Integer ≥ 0 + timestamp |
 | `c_lowStock(a, med)` | "Low Stock" flag shown for `med` in ADC `a` | Boolean |
@@ -103,7 +103,7 @@ A heartbeat from a device that is not registered is an input with no monitored c
 | --- | --- | --- | --- |
 | `o_page`: server-rendered HTML page | Browser, workstation screen | `c_displayedStatus`, `c_stale`, `c_displayedStock`, `c_lowStock`, `c_stockSources`, `c_alarmList`, `c_alarmAck`, `c_cmdOutcome`, `c_patientIdShown` | Shown when a user opens or reloads a page |
 | `o_liveEvent`: Server-Sent Event pushed to the open dashboards | Browser, workstation screen | Same as `o_page`, without reload | Shown while a dashboard is open and its browser connected |
-| `o_sound`: order to play the alarm sound | Browser, workstation speaker | `c_audibleCue` | Heard if the speaker is on and audible (new assumption, G-07) |
+| `o_sound`: order to play the alarm sound | Browser, workstation speaker | `c_audibleCue` | Heard if the speaker is on and audible (A-25) |
 | `o_registerResponse` | HTTPS, ADC software | `c_registration(a)` | The ADC sends its first heartbeat after a `200` |
 | `o_hbResponse`: one acknowledgement per transaction | HTTPS, ADC software | `c_txnStatus(id)` | The ADC removes each acknowledged transaction from its memory; a lost response makes it resend them (D-07) |
 | `o_command`: `POST {contactAddress}/api/v1/commands` | HTTPS, ADC software | `c_adcMode(a)` | Applied by the ADC unless it answers an error (interface §4.1) |
@@ -131,16 +131,16 @@ These hold whatever the software does; the specification relies on them.
 Notation: `reported(a)` is the state carried by the latest valid heartbeat of `a`, or `⊥` if none has been received since its first registration; `label(e_online) = ONLINE`, `label(e_maintenance) = MAINTENANCE`, `label(e_fault) = FAULT` (D-16).
 
 **SPEC-HLT-01 - Displayed status of ADC `a`**
-Refines FR-HLT-01, FR-HLT-02, FR-HLT-03, FR-HLT-05, FR-HLT-06, FR-DSH-01, NFR-SAF-01, NFR-SAF-03 (D-01, D-02, D-03).
+Refines FR-HLT-01, FR-HLT-02, FR-HLT-03, FR-HLT-05, FR-HLT-06, FR-DSH-01, NFR-SAF-01, NFR-SAF-03 (D-01, D-02, D-03, D-21, D-22).
 
 | Condition | `c_displayedStatus(a)` | `c_stale(a)` |
 | --- | --- | --- |
-| `silence(a) < 45` ∧ `reported(a) = ⊥` | `PENDING` (G-01) | false |
+| `silence(a) < 45` ∧ `reported(a) = ⊥` | `PENDING` (D-21) | false |
 | `silence(a) < 45` ∧ `reported(a) ≠ ⊥` | `label(reported(a))` | false |
 | `45 ≤ silence(a) < 75` | `UNREACHABLE` | true, with `m_lastContact(a)` |
 | `silence(a) ≥ 75` | `OFFLINE` | true, with `m_lastContact(a)` |
 
-- Timing: the displayed status follows a change of row within 2 s (G-02).
+- Timing: the displayed status follows a change of row within 2 s (D-22).
 - `ONLINE` is shown only in the second row, so never while `silence(a) ≥ 45` (NFR-SAF-03).
 - The same stale label applies to the inventory of `a` (`c_displayedStock`, NFR-SAF-01).
 
@@ -193,11 +193,11 @@ Refines FR-COM-08, FR-COM-09, FR-COM-10, FR-ALM-01, FR-ALM-02, FR-ALM-03, FR-HIS
 A rejected transaction is never recorded, so if an ADC sends it again it is rejected again with the same reason.
 
 **SPEC-COM-04 - User `u` asks to send command or configuration `k` to ADC `a`**
-Refines FR-COM-04, FR-COM-05, FR-COM-12, NFR-SEC-02, NFR-AUD-01, NFR-AUD-05 (D-04, D-10). `permitted(u, k)`: `k` is a command and `u` is a technician or an administrator, or `k` is a configuration and `u` is an administrator.
+Refines FR-COM-04, FR-COM-05, FR-COM-12, NFR-SEC-02, NFR-AUD-01, NFR-AUD-05 (D-04, D-10, D-26). `permitted(u, k)`: `k` is a command and `u` is a technician or an administrator, or `k` is a configuration and `u` is an administrator.
 
 | Condition | Effect | `c_cmdOutcome(k)` |
 | --- | --- | --- |
-| `¬permitted(u, k)` | Nothing sent; permission message shown | - (no `k` created) |
+| `¬permitted(u, k)` | Nothing sent; permission message shown; not audited (D-26) | - (no `k` created) |
 | `permitted(u, k)` ∧ `silence(a) ≥ 75` (`a` offline) | Nothing sent; user told the request is refused; outcome logged | `e_refused` |
 | `permitted(u, k)` ∧ `silence(a) < 75` | `k` sent to `a` with a new identifier; sending logged (user, action, `a`, `t`) | `e_pending`, then SPEC-COM-05 |
 
@@ -217,10 +217,10 @@ In every row the outcome is shown to the sender and logged with `k.id`, `a` and 
 
 ### 3.3 Inventory supervision (INV)
 
-Notation: `q(b, med)` is the quantity of `med` in the latest stored inventory of ADC `b`; `S(a, med) = { b ≠ a | floor(b) = floor(a) ∧ q(b, med) > 10 ∧ silence(b) < 45 }` (the last condition is G-03).
+Notation: `q(b, med)` is the quantity of `med` in the latest stored inventory of ADC `b`; `S(a, med) = { b ≠ a | floor(b) = floor(a) ∧ q(b, med) > 10 ∧ silence(b) < 45 }` (the last condition is D-23).
 
 **SPEC-INV-01 - Low stock flag and sources of `med` in ADC `a`**, for every `med` present in the latest inventory of `a`
-Refines FR-INV-03, FR-INV-04, FR-INV-05, NFR-USA-01 (A-10, D-05).
+Refines FR-INV-03, FR-INV-04, FR-INV-05, NFR-USA-01 (A-10, D-05, D-23, D-24).
 
 | Condition | `c_lowStock(a, med)` | `c_stockSources(a, med)` |
 | --- | --- | --- |
@@ -228,7 +228,7 @@ Refines FR-INV-03, FR-INV-04, FR-INV-05, NFR-USA-01 (A-10, D-05).
 | `q(a, med) < 10` ∧ `S(a, med) ≠ ∅` | true | labels of the ADCs of `S(a, med)` |
 | `q(a, med) < 10` ∧ `S(a, med) = ∅` | true | "no stock available" |
 
-The threshold is 10 boxes for flagging and more than 10 boxes for being a source: an ADC proposed as a source still holds at least 10 boxes after giving one box, so moving stock never creates a new low-stock flag. A medication absent from the inventory of `a` is not flagged (G-04).
+The threshold is 10 boxes for flagging and more than 10 boxes for being a source: an ADC proposed as a source still holds at least 10 boxes after giving one box, so moving stock never creates a new low-stock flag. A medication absent from the inventory of `a` is not flagged (D-24).
 
 **SPEC-INV-02 - Displayed stock**
 Refines FR-INV-02, FR-INV-06, NFR-REL-03: `c_displayedStock(a, med) = q(a, med)`, with the time of the heartbeat it comes from; the aggregated quantity of `med` is `Σ_b q(b, med)` over all registered ADCs.
@@ -236,11 +236,11 @@ Refines FR-INV-02, FR-INV-06, NFR-REL-03: `c_displayedStock(a, med) = q(a, med)`
 ### 3.4 Alarm management (ALM)
 
 **SPEC-ALM-01 - User `u` asks to acknowledge alarm `x`**
-Refines FR-ALM-05, FR-ALM-06, NFR-SAF-02, NFR-SEC-02, NFR-AUD-01 (D-09).
+Refines FR-ALM-05, FR-ALM-06, NFR-SAF-02, NFR-SEC-02, NFR-AUD-01 (D-09, D-26).
 
 | Condition | `c_alarmAck(x)` | Other effect |
 | --- | --- | --- |
-| `role(u) ∉ {nurse, pharmacist, technician}` | unchanged | Permission message shown |
+| `role(u) ∉ {nurse, pharmacist, technician}` | unchanged | Permission message shown; not audited (D-26) |
 | `role(u) ∈ {nurse, pharmacist, technician}` ∧ `c_alarmAck(x) = e_acknowledged(v, t')` | unchanged | Refusal shown, naming `v` and `t'` |
 | `role(u) ∈ {nurse, pharmacist, technician}` ∧ `c_alarmAck(x) = e_unacknowledged` | `e_acknowledged(u, t)` | Removed from `c_alarmList`; audit entry (`u`, acknowledgement, ADC of `x`, `t`); repetition of the audible cue stops |
 
@@ -260,12 +260,12 @@ The 2-second bound holds with up to 50 ADCs connected (NFR-PRF-02). `t₀` is th
 ### 3.5 Users and access (USR)
 
 **SPEC-USR-01 - Request of a dashboard function `f` by the person at the workstation**
-Refines FR-USR-01, FR-USR-02, FR-USR-05, NFR-SEC-01, NFR-SEC-02 (D-14). `allowed(f)` is the set of roles of the D-14 matrix for `f`.
+Refines FR-USR-01, FR-USR-02, FR-USR-05, NFR-SEC-01, NFR-SEC-02 (D-14, D-25). `allowed(f)` is the set of roles of the D-14 matrix for `f`.
 
 | Condition | `c_access(u, f)` | Effect |
 | --- | --- | --- |
 | No authenticated session | false | Login page shown; no patient or medication data shown |
-| Session of `u` ∧ account of `u` deactivated | false | Session closed; login page shown (G-05) |
+| Session of `u` ∧ account of `u` deactivated | false | Session closed; login page shown (D-25) |
 | Session of `u` ∧ account active ∧ `role(u) ∉ allowed(f)` | false | Permission message shown |
 | Session of `u` ∧ account active ∧ `role(u) ∈ allowed(f)` | true | `f` performed |
 
@@ -294,17 +294,17 @@ For every kind: `e ∈ c_records` while `t < d + R`, and `e ∉ c_records` once 
 
 ## 4. Gaps found while refining the D1 requirements
 
-Writing complete tables exposed cases that the D1 requirements leave open. Each one is resolved above with the proposal below, **to be confirmed by the team** and then recorded as a new decision (D-21 onwards) in the assumptions and decisions section.
+Writing complete tables exposed cases that the D1 requirements left open. The team resolved each of them with a new decision or assumption, recorded in the assumptions and decisions section; the D1 requirements themselves are unchanged.
 
-| ID | Gap | Proposal used in this specification | Affects |
+| Gap | Resolution | Recorded as | Used in |
 | --- | --- | --- | --- |
-| G-01 | Between its first registration and its first heartbeat, an ADC has no reported state, and no D-16 label applies. | New label `PENDING`, shown until the first heartbeat (normally less than a second, interface §3.1). | SPEC-HLT-01, D-16, NFR-USA-02 |
-| G-02 | No requirement bounds the delay between a status change and its display (NFR-PRF-01 covers alarms only). | Same 2-second bound as alarms. | SPEC-HLT-01, NFR-PRF-01 |
-| G-03 | FR-INV-04 would propose as a source an ADC that is unreachable or offline, whose stock is stale. | Only ADCs with `silence < 45` are proposed as sources. | SPEC-INV-01, FR-INV-04 |
-| G-04 | A medication missing from the inventory of an ADC is neither "low" nor "not low". | Not flagged: the system cannot know that this ADC should hold it. | SPEC-INV-01, FR-INV-03 |
-| G-05 | FR-USR-05 refuses a deactivated account at login, but says nothing about an open session. | The session is closed on the next request. | SPEC-USR-01, FR-USR-05 |
-| G-06 | A request refused because of the role is not in the audit log (NFR-AUD-01 lists performed actions only). | Not logged; only the permission message is shown. | SPEC-COM-04, SPEC-ALM-01 |
-| G-07 | The audible cue assumes a working speaker on the workstation. | New assumption: each operator workstation has a working, audible speaker. | `o_sound`, NFR-ACC-01 |
+| Between its first registration and its first heartbeat, an ADC has no reported state, and no D-16 label applies. | New label `PENDING`, shown until the first heartbeat (normally less than a second, interface §3.1). | D-21 (and D-16) | SPEC-HLT-01 |
+| No requirement bounds the delay between a status change and its display (NFR-PRF-01 covers alarms only). | Same 2-second bound as alarms. | D-22 | SPEC-HLT-01 |
+| FR-INV-04 would propose as a source an ADC that is unreachable or offline, whose stock is stale. | Only ADCs with `silence < 45` are proposed as sources. | D-23 | SPEC-INV-01 |
+| A medication missing from the inventory of an ADC is neither "low" nor "not low". | Not flagged: the system cannot know that this ADC should hold it. | D-24 | SPEC-INV-01 |
+| FR-USR-05 refuses a deactivated account at login, but says nothing about an open session. | The session is closed on the next request. | D-25 | SPEC-USR-01 |
+| A request refused because of the role is not in the audit log (NFR-AUD-01 lists performed actions only). | Not logged; only the permission message is shown. | D-26 | SPEC-COM-04, SPEC-ALM-01 |
+| The audible cue assumes a working speaker on the workstation. | Each operator workstation has a working, audible speaker. | A-25 | `o_sound` (section 2.5), SPEC-ALM-02 |
 
 ## 5. Traceability: D1 requirements → specification
 
