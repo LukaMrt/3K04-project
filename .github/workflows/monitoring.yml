@@ -1,0 +1,29 @@
+name: Monitoring (Part B)
+
+on:
+  push:
+    branches: [main]
+    paths: ['monitoring/**', '.github/workflows/monitoring.yml']
+  pull_request:
+    paths: ['monitoring/**', '.github/workflows/monitoring.yml']
+
+defaults:
+  run:
+    working-directory: monitoring
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: monitoring/.nvmrc
+          cache: npm
+          cache-dependency-path: monitoring/package-lock.json
+      - run: npm ci
+      - name: Prepare environment
+        run: cp .env.example .env && node ace generate:key
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test

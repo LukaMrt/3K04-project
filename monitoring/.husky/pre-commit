@@ -1,0 +1,2 @@
+cd monitoring
+npx lint-staged
