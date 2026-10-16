@@ -1,0 +1,66 @@
+@layouts.marketing()
+  <div class="home">
+    <article class="prose-card">
+      <div class="pc-top">
+        <span class="pc-status mono tag" style="color: var(--ok);">
+          <span class="dot"></span>
+          Server ready
+        </span>
+        <span class="mono tag">SFWRENG 3K04 · Part B</span>
+      </div>
+
+      <div class="pc-lead">Hospital Monitoring System</div>
+
+      <p class="pc-para">
+        Centralized supervision of the Automated Dispensing Cabinets (ADC): status, inventory, alarms and history.
+      </p>
+
+      <ul class="links" x-data="liveCheck">
+        <li>
+          <div class="lrow">
+            <span class="lrow__bullet"></span>
+            <span class="lrow__title">Server</span>
+            <span class="lrow__desc" style="color: var(--ok);">Running</span>
+          </div>
+        </li>
+        <li>
+          <div class="lrow">
+            <span class="lrow__bullet"></span>
+            <span class="lrow__title">Database</span>
+            @if(database)
+              <span class="lrow__desc" style="color: var(--ok);">SQLite connected</span>
+            @else
+              <span class="lrow__desc" style="color: #c0392b;">
+                Unreachable (did you run the migrations?)
+              </span>
+            @end
+          </div>
+        </li>
+        <li>
+          <div class="lrow">
+            <span class="lrow__bullet"></span>
+            <span class="lrow__title">Live channel</span>
+            <span class="lrow__desc" x-text="status">Connecting…</span>
+            <button
+              type="button"
+              class="btn btn--secondary btn--sm"
+              x-on:click="ping"
+              x-bind:disabled="!connected"
+            >
+              Send test event
+            </button>
+          </div>
+        </li>
+      </ul>
+
+      <p class="pc-para">
+        @if(auth.user)
+          Signed in as
+          {{ auth.user.email }}
+        @else
+          Sign in to access the operator dashboard.
+        @end
+      </p>
+    </article>
+  </div>
+@end
