@@ -29,10 +29,10 @@
 | FR-HIS-01 | Retain alarms 1 year | US-HIS-02 | Historical Data Store | Hospital risk management |
 | FR-HIS-02 | Retain dispensing activity 6 months | US-HIS-01 | Historical Data Store, ADC Communication Manager | Pharmacist; Scenario 4 |
 | FR-HIS-03 | Retain status changes 6 months | US-HIS-01 | Historical Data Store, Cabinet Health Monitor | Hospital risk management |
-| FR-HIS-04 | Display ADC event history (dispensing, status, alarms) | US-HIS-01 | Historical Data Store, Operator Dashboard | Pharmacist; Scenario 4 |
+| FR-HIS-04 | Display ADC event history (dispensing, status, alarms) | US-HIS-01 | Historical Data Store, Reporting, Operator Dashboard | Pharmacist; Scenario 4 |
 | FR-HIS-05 | Retain audit log 1 year | US-HIS-02 | Historical Data Store | Hospital risk management |
 | FR-HIS-06 | Retain generated reports 1 year | US-RPT-07 | Reporting, Historical Data Store | Administrator |
-| FR-HIS-07 | Display the audit log | US-HIS-02 | Historical Data Store, Operator Dashboard, User Management / Auth | Hospital risk management |
+| FR-HIS-07 | Display the audit log | US-HIS-02 | Historical Data Store, Reporting, Operator Dashboard, User Management / Auth | Hospital risk management |
 | FR-HIS-08 | Retain system log entries 1 year | - (verified without a user story, see user-stories.md) | Historical Data Store | Hospital risk management; Hospital IT |
 | FR-HIS-09 | Delete data after its retention period | - (verified without a user story, see user-stories.md) | Historical Data Store | Hospital privacy officer; PHIPA |
 | FR-RPT-01 | Consumption report over a period | US-RPT-01 | Reporting, Historical Data Store | Pharmacist |
