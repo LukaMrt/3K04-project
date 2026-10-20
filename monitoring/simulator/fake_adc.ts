@@ -85,6 +85,7 @@ export class FakeAdc {
 
   /** Contract §3.1: sent at start-up and whenever the Monitoring System answers 404. */
   async register() {
+    if (!this.server) return { httpStatus: null, body: null }
     const { httpStatus, body } = await this.post('/api/v1/adcs/register', {
       adcId: this.adcId,
       label: this.label,
@@ -150,6 +151,8 @@ export class FakeAdc {
   }
 
   private async heartbeatOnce(registerIfUnknown: boolean): Promise<HeartbeatResult> {
+    // A stopped ADC sends nothing (e.g. a heartbeat triggered just before stop()).
+    if (!this.server) return { httpStatus: null, acknowledgements: [] }
     const sent = [...this.pending]
     const { httpStatus, body } = await this.post('/api/v1/heartbeats', {
       adcId: this.adcId,

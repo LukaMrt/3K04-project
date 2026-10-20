@@ -4,7 +4,8 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import AlarmService from '#modules/alarms/alarms_service'
 import type { NewAdcAlarm } from '#modules/alarms/types'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
-import type { AdcIdentity, RegistrationResult } from '#modules/cabinet_health/types'
+import { UnknownAdcError } from '#modules/cabinet_health/errors'
+import type { AdcIdentity, AdcStatus, RegistrationResult } from '#modules/cabinet_health/types'
 import ClockService from '#modules/clock/clock_service'
 import type { AdcId, RecordOutcome, ReportedState } from '#modules/shared/types'
 import { ManualClock } from '#tests/helpers/manual_clock'
@@ -26,6 +27,19 @@ export class FakeCabinetHealth extends CabinetHealthService {
 
   async recordHeartbeat(adcId: AdcId, state: ReportedState, at: Date) {
     this.heartbeats.push({ adcId, state, at })
+  }
+
+  /** ONLINE, or OFFLINE for the ADCs listed in `offline`. */
+  offline = new Set<AdcId>()
+
+  async getStatus(adcId: AdcId): Promise<AdcStatus> {
+    if (!this.registered.has(adcId)) throw new UnknownAdcError(`Unknown ADC ${adcId}`)
+    return {
+      adcId,
+      displayedStatus: this.offline.has(adcId) ? 'OFFLINE' : 'ONLINE',
+      stale: false,
+      lastContact: new Date(),
+    }
   }
 }
 

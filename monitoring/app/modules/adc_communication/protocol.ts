@@ -9,7 +9,8 @@
 
 import vine from '@vinejs/vine'
 import app from '@adonisjs/core/services/app'
-import type { AlarmSeverity } from '#modules/shared/types'
+import type { AdcId, AlarmSeverity } from '#modules/shared/types'
+import type { AdcCommand, AdcSettings, DeliveryOutcome } from '#modules/adc_communication/types'
 
 /** Contract §2: identifiers are lowercase UUID v4. */
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
@@ -174,4 +175,56 @@ function isUuid(value: unknown): value is string {
 
 function isLabel(value: unknown): value is string {
   return typeof value === 'string' && value.length <= MAX_LABEL_LENGTH
+}
+
+/** Contract §4: the Monitoring System waits 10 s at most for an ADC (FR-COM-06). */
+export const ADC_ANSWER_TIMEOUT_MS = 10_000
+
+/** Contract §4.1 and §4.2: path, identifier field and body of what is sent to an ADC. */
+export function commandMessage(adcId: AdcId, command: AdcCommand, id: string, issuedAt: Date) {
+  return {
+    path: '/api/v1/commands',
+    idField: 'commandId',
+    body: {
+      commandId: id,
+      adcId,
+      command: 'set_maintenance_mode',
+      parameters: { enabled: command.enabled },
+      issuedAt: issuedAt.toISOString(),
+    },
+  }
+}
+
+export function configurationMessage(
+  adcId: AdcId,
+  settings: AdcSettings,
+  id: string,
+  issuedAt: Date
+) {
+  return {
+    path: '/api/v1/configuration',
+    idField: 'configurationId',
+    body: { configurationId: id, adcId, settings, issuedAt: issuedAt.toISOString() },
+  }
+}
+
+/** SPEC-COM-05: outcome of an ADC answer; `null` means no answer in time. */
+export function readDeliveryAnswer(
+  answer: { status: number; body: any } | null,
+  expected: { idField: string; id: string; adcId: AdcId }
+): Exclude<DeliveryOutcome, { kind: 'refusedOffline' }> {
+  if (!answer) {
+    return { kind: 'failed', code: 'TIMEOUT', message: 'No answer from the ADC within 10 s.' }
+  }
+  if (answer.status !== 200) {
+    return {
+      kind: 'failed',
+      code: answer.body?.error?.code ?? `HTTP_${answer.status}`,
+      message: answer.body?.error?.message ?? 'The ADC refused the request.',
+    }
+  }
+  if (answer.body?.[expected.idField] !== expected.id || answer.body?.adcId !== expected.adcId) {
+    return { kind: 'failed', code: 'ID_MISMATCH', message: 'The ADC acknowledged another request.' }
+  }
+  return { kind: 'delivered' }
 }

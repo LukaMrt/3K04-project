@@ -1,12 +1,13 @@
+import { randomUUID } from 'node:crypto'
 import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
 import { errors as vineErrors } from '@vinejs/vine'
 import AlarmService from '#modules/alarms/alarms_service'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
+import { UnknownAdcError } from '#modules/cabinet_health/errors'
 import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
 import InventoryService from '#modules/inventory/inventory_service'
-import { notImplemented } from '#modules/shared/errors'
 import type { Actor, AdcId } from '#modules/shared/types'
 import type {
   AdcCommand,
@@ -16,8 +17,12 @@ import type {
 } from '#modules/adc_communication/types'
 import AdcContactModel from '#modules/adc_communication/models/adc_contact'
 import {
+  ADC_ANSWER_TIMEOUT_MS,
+  commandMessage,
+  configurationMessage,
   HEARTBEAT_PERIOD_SECONDS,
   heartbeatValidator,
+  readDeliveryAnswer,
   readTransaction,
   registrationValidator,
 } from '#modules/adc_communication/protocol'
@@ -122,7 +127,9 @@ export default class AdcCommunicationService {
    * Throws: UnknownAdcError.
    */
   async sendCommand(actor: Actor, adcId: AdcId, command: AdcCommand): Promise<DeliveryOutcome> {
-    return notImplemented('AdcCommunicationService.sendCommand', actor, adcId, command)
+    return this.deliver(actor, adcId, 'send_command', (id, now) =>
+      commandMessage(adcId, command, id, now)
+    )
   }
 
   /**
@@ -136,7 +143,66 @@ export default class AdcCommunicationService {
     adcId: AdcId,
     settings: AdcSettings
   ): Promise<DeliveryOutcome> {
-    return notImplemented('AdcCommunicationService.sendConfiguration', actor, adcId, settings)
+    return this.deliver(actor, adcId, 'send_configuration', (id, now) =>
+      configurationMessage(adcId, settings, id, now)
+    )
+  }
+
+  /** How long an ADC has to answer; shortened by the tests only. */
+  answerTimeoutMs = ADC_ANSWER_TIMEOUT_MS
+
+  /**
+   * SPEC-COM-04 and SPEC-COM-05: refuses if the ADC is offline, otherwise sends the message
+   * with a new identifier and waits for the answer. The sending and the outcome are both
+   * audited, so that a sending without outcome stays visible.
+   */
+  private async deliver(
+    actor: Actor,
+    adcId: AdcId,
+    action: string,
+    buildMessage: (id: string, now: Date) => { path: string; idField: string; body: object }
+  ): Promise<DeliveryOutcome> {
+    const audit = (outcome: string) =>
+      this.history.appendAudit({
+        userId: actor.userId,
+        action,
+        target: adcId,
+        outcome,
+        at: this.clock.now(),
+      })
+
+    const status = await this.cabinetHealth.getStatus(adcId)
+    if (status.displayedStatus === 'OFFLINE') {
+      await audit('refused: ADC offline')
+      return { kind: 'refusedOffline' }
+    }
+
+    const contact = await AdcContactModel.find(adcId)
+    if (!contact) throw new UnknownAdcError(`No contact address for ADC ${adcId}`)
+
+    const id = randomUUID()
+    const message = buildMessage(id, this.clock.now())
+    await audit(`sent ${id}`)
+
+    const answer = await this.post(`${contact.contactAddress}${message.path}`, message.body)
+    const outcome = readDeliveryAnswer(answer, { idField: message.idField, id, adcId })
+    await audit(outcome.kind === 'delivered' ? `delivered ${id}` : `failed ${id}: ${outcome.code}`)
+    return outcome
+  }
+
+  /** POST to an ADC; null when it does not answer in time or cannot be reached. */
+  private async post(url: string, body: object) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(this.answerTimeoutMs),
+      })
+      return { status: response.status, body: await response.json().catch(() => null) }
+    } catch {
+      return null
+    }
   }
 
   /** SPEC-COM-03: records the transaction, or rejects it and logs why. */
