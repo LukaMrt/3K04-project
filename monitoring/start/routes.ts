@@ -20,6 +20,16 @@ transmit.registerRoutes()
 router.get('/', [controllers.Home, 'index']).as('home')
 router.post('/system/echo', [controllers.System, 'echo']).as('system.echo')
 
+/**
+ * ADC ↔ Monitoring interface contract (docs/part-b/interface-adc-monitoring.md §3)
+ */
+router
+  .group(() => {
+    router.post('adcs/register', [controllers.AdcProtocol, 'register'])
+    router.post('heartbeats', [controllers.AdcProtocol, 'heartbeat'])
+  })
+  .prefix('/api/v1')
+
 router
   .group(() => {
     router.get('signup', [controllers.NewAccount, 'create'])

@@ -9,6 +9,8 @@ export type ScannedRoutes = {
     'unsubscribe': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
     'system.echo': { paramsTuple?: []; params?: {} }
+    'adc_protocol.register': { paramsTuple?: []; params?: {} }
+    'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
@@ -34,6 +36,8 @@ export type ScannedRoutes = {
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
     'system.echo': { paramsTuple?: []; params?: {} }
+    'adc_protocol.register': { paramsTuple?: []; params?: {} }
+    'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }

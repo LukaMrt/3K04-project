@@ -16,7 +16,8 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test:coverage": "c8 node ace test",
-    "prepare": "cd .. && husky monitoring/.husky"
+    "prepare": "cd .. && husky monitoring/.husky",
+    "check": "npm run format && npm run lint && npm run typecheck"
   },
   "imports": {
     "#modules/*": "./app/modules/*.js",
@@ -36,7 +37,8 @@
     "#database/*": "./database/*.js",
     "#tests/*": "./tests/*.js",
     "#start/*": "./start/*.js",
-    "#config/*": "./config/*.js"
+    "#config/*": "./config/*.js",
+    "#simulator/*": "./simulator/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^8.5.2",

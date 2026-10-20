@@ -77,7 +77,7 @@ Request:
 | ---------------------- | ------- | :------: | ---------------------------------------------------------------- |
 | `adcId`                | string  | yes      | See section 2                                                    |
 | `label`                | string  | yes      | Name of the ADC shown to users and used to sort the ADC list (FR-DSH-03) |
-| `contactAddress`       | string  | yes      | Absolute `https://` base URL; the paths of section 4 are appended to it |
+| `contactAddress`       | string  | yes      | Absolute `https://` base URL; the paths of section 4 are appended to it. `http://` is accepted outside production, for demonstrations (D-35) |
 | `location.floor`       | integer | yes      | Floor number used by the same-floor stock search (FR-INV-04)     |
 | `location.description` | string  | yes      | Free text shown to users                                         |
 

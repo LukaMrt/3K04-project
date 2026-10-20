@@ -45,7 +45,8 @@ const shieldConfig = defineConfig({
      * Routes that should be excluded from CSRF protection.
      * Useful for webhooks or API endpoints that use other auth methods.
      */
-    exceptRoutes: [],
+    // ADC units are not browsers: they identify themselves by adcId (interface contract §1).
+    exceptRoutes: ['/api/v1/adcs/register', '/api/v1/heartbeats'],
 
     /**
      * Enable XSRF-TOKEN cookie for JavaScript frameworks.

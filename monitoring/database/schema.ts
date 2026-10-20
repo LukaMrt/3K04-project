@@ -7,6 +7,174 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class AdcContactSchema extends BaseModel {
+  static $columns = ['adcId', 'contactAddress'] as const
+  $columns = AdcContactSchema.$columns
+  @column({ isPrimary: true })
+  declare adcId: string
+  @column()
+  declare contactAddress: string
+}
+
+export class AlarmAcknowledgementSchema extends BaseModel {
+  static $columns = ['alarmId', 'at', 'userId'] as const
+  $columns = AlarmAcknowledgementSchema.$columns
+  @column({ isPrimary: true })
+  declare alarmId: string
+  @column.dateTime()
+  declare at: DateTime
+  @column()
+  declare userId: number
+}
+
+export class AlarmSchema extends BaseModel {
+  static $columns = [
+    'adcId',
+    'alarmId',
+    'alarmType',
+    'description',
+    'severity',
+    'source',
+    'timestamp',
+  ] as const
+  $columns = AlarmSchema.$columns
+  @column()
+  declare adcId: string
+  @column({ isPrimary: true })
+  declare alarmId: string
+  @column()
+  declare alarmType: string
+  @column()
+  declare description: string | null
+  @column()
+  declare severity: string
+  @column()
+  declare source: string
+  @column.dateTime()
+  declare timestamp: DateTime
+}
+
+export class AuditEntrySchema extends BaseModel {
+  static $columns = ['action', 'at', 'id', 'outcome', 'target', 'userId'] as const
+  $columns = AuditEntrySchema.$columns
+  @column()
+  declare action: string
+  @column.dateTime()
+  declare at: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare outcome: string | null
+  @column()
+  declare target: string
+  @column()
+  declare userId: number
+}
+
+export class DispensingActivitySchema extends BaseModel {
+  static $columns = [
+    'adcId',
+    'medicationId',
+    'medicationName',
+    'patientId',
+    'quantityInBoxes',
+    'staffMemberId',
+    'staffMemberName',
+    'timestamp',
+    'transactionId',
+  ] as const
+  $columns = DispensingActivitySchema.$columns
+  @column()
+  declare adcId: string
+  @column()
+  declare medicationId: string
+  @column()
+  declare medicationName: string
+  @column()
+  declare patientId: string
+  @column()
+  declare quantityInBoxes: number
+  @column()
+  declare staffMemberId: string
+  @column()
+  declare staffMemberName: string
+  @column.dateTime()
+  declare timestamp: DateTime
+  @column({ isPrimary: true })
+  declare transactionId: string
+}
+
+export class InventoryLineSchema extends BaseModel {
+  static $columns = ['adcId', 'id', 'medicationId', 'medicationName', 'quantityInBoxes'] as const
+  $columns = InventoryLineSchema.$columns
+  @column()
+  declare adcId: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare medicationId: string
+  @column()
+  declare medicationName: string
+  @column()
+  declare quantityInBoxes: number
+}
+
+export class InventorySnapshotSchema extends BaseModel {
+  static $columns = ['adcId', 'heartbeatAt'] as const
+  $columns = InventorySnapshotSchema.$columns
+  @column({ isPrimary: true })
+  declare adcId: string
+  @column.dateTime()
+  declare heartbeatAt: DateTime
+}
+
+export class SavedReportSchema extends BaseModel {
+  static $columns = ['figures', 'generatedAt', 'generatedBy', 'id', 'kind', 'parameters'] as const
+  $columns = SavedReportSchema.$columns
+  @column()
+  declare figures: string
+  @column.dateTime()
+  declare generatedAt: DateTime
+  @column()
+  declare generatedBy: number
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare kind: string
+  @column()
+  declare parameters: string
+}
+
+export class StatusChangeSchema extends BaseModel {
+  static $columns = ['adcId', 'at', 'connectivity', 'id', 'reportedState'] as const
+  $columns = StatusChangeSchema.$columns
+  @column()
+  declare adcId: string
+  @column.dateTime()
+  declare at: DateTime
+  @column()
+  declare connectivity: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare reportedState: string | null
+}
+
+export class SystemLogEntrySchema extends BaseModel {
+  static $columns = ['adcId', 'at', 'details', 'event', 'id'] as const
+  $columns = SystemLogEntrySchema.$columns
+  @column()
+  declare adcId: string | null
+  @column.dateTime()
+  declare at: DateTime
+  @column()
+  declare details: string | null
+  @column()
+  declare event: string
+  @column({ isPrimary: true })
+  declare id: number
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = UserSchema.$columns
