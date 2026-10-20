@@ -1,56 +1,12 @@
 import { test } from '@japa/runner'
-import type { Group } from '@japa/runner/core'
 import app from '@adonisjs/core/services/app'
-import testUtils from '@adonisjs/core/services/test_utils'
-import AlarmService from '#modules/alarms/alarms_service'
-import type { NewAdcAlarm } from '#modules/alarms/types'
-import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
-import type { AdcIdentity, RegistrationResult } from '#modules/cabinet_health/types'
-import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
 import InventoryService from '#modules/inventory/inventory_service'
-import type { AdcId, RecordOutcome, ReportedState } from '#modules/shared/types'
-import { ManualClock } from '#tests/helpers/manual_clock'
+import { useFakeModules } from '#tests/helpers/fake_modules'
 
 const ADC = 'c4a1e8f2-7b3d-4e9a-a5c6-2d8f0b1e3a47'
 const MORPHINE = '8c1d5e2a-4f3b-4a9e-b7d6-1e2f3a4b5c6d'
 const NOW = new Date('2026-10-16T14:03:28.000Z')
-
-/** Stands in for the Cabinet Health Monitor (#39): a set of registered ADCs. */
-class FakeCabinetHealth extends CabinetHealthService {
-  registered = new Map<AdcId, AdcIdentity>()
-  heartbeats: Array<{ adcId: AdcId; state: ReportedState; at: Date }> = []
-
-  async register(identity: AdcIdentity): Promise<RegistrationResult> {
-    const firstRegistration = !this.registered.has(identity.adcId)
-    this.registered.set(identity.adcId, identity)
-    return { firstRegistration }
-  }
-
-  async isRegistered(adcId: AdcId) {
-    return this.registered.has(adcId)
-  }
-
-  async recordHeartbeat(adcId: AdcId, state: ReportedState, at: Date) {
-    this.heartbeats.push({ adcId, state, at })
-  }
-}
-
-/** Stands in for the Alarm Manager (#38): keeps alarms in memory, once each (D-28). */
-class FakeAlarms extends AlarmService {
-  recorded: NewAdcAlarm[] = []
-  failing = false
-
-  async recordFromAdc(alarm: NewAdcAlarm): Promise<RecordOutcome> {
-    if (this.failing) throw new Error('storage down')
-    if (this.recorded.some((a) => a.transactionId === alarm.transactionId)) return 'duplicate'
-    this.recorded.push(alarm)
-    return 'recorded'
-  }
-}
-
-let cabinetHealth: FakeCabinetHealth
-let alarms: FakeAlarms
 
 function registration(overrides: Record<string, unknown> = {}) {
   return {
@@ -102,23 +58,8 @@ function heartbeat(transactions: unknown[] = [], overrides: Record<string, unkno
   }
 }
 
-function setup(group: Group) {
-  group.each.setup(async () => {
-    cabinetHealth = new FakeCabinetHealth(null as any, null as any, null as any)
-    alarms = new FakeAlarms(null as any, null as any)
-    app.container.swap(CabinetHealthService, () => cabinetHealth)
-    app.container.swap(AlarmService, () => alarms)
-    app.container.swap(ClockService, () => new ManualClock(NOW))
-    const rollback = await testUtils.db().withGlobalTransaction()
-    return () => {
-      app.container.restoreAll([CabinetHealthService, AlarmService, ClockService])
-      return rollback()
-    }
-  })
-}
-
 test.group('ADC protocol / registration (SPEC-COM-01)', (group) => {
-  setup(group)
+  const fakes = useFakeModules(group, NOW)
 
   test('registers a new ADC', async ({ client, assert, db }) => {
     const response = await client.post('/api/v1/adcs/register').json(registration())
@@ -130,7 +71,7 @@ test.group('ADC protocol / registration (SPEC-COM-01)', (group) => {
       firstRegistration: true,
       heartbeatPeriodSeconds: 30,
     })
-    assert.deepEqual(cabinetHealth.registered.get(ADC), {
+    assert.deepEqual(fakes.cabinetHealth.registered.get(ADC), {
       adcId: ADC,
       label: 'ADC West 214',
       floor: 2,
@@ -165,7 +106,7 @@ test.group('ADC protocol / registration (SPEC-COM-01)', (group) => {
       response.body().error.details.map((d: { field: string }) => d.field),
       ['adcId', 'label']
     )
-    assert.equal(cabinetHealth.registered.size, 0)
+    assert.equal(fakes.cabinetHealth.registered.size, 0)
     await db.assertHas('system_log_entries', { event: 'registration_rejected' })
   })
 
@@ -178,9 +119,9 @@ test.group('ADC protocol / registration (SPEC-COM-01)', (group) => {
 })
 
 test.group('ADC protocol / heartbeat (SPEC-COM-02)', (group) => {
-  setup(group)
+  const fakes = useFakeModules(group, NOW)
   group.each.setup(() => {
-    cabinetHealth.registered.set(ADC, {
+    fakes.cabinetHealth.registered.set(ADC, {
       adcId: ADC,
       label: 'ADC West 214',
       floor: 2,
@@ -193,7 +134,7 @@ test.group('ADC protocol / heartbeat (SPEC-COM-02)', (group) => {
 
     response.assertStatus(200)
     response.assertBody({ receivedAt: NOW.toISOString(), acknowledgements: [] })
-    assert.deepEqual(cabinetHealth.heartbeats, [{ adcId: ADC, state: 'fault', at: NOW }])
+    assert.deepEqual(fakes.cabinetHealth.heartbeats, [{ adcId: ADC, state: 'fault', at: NOW }])
 
     const inventoryService = await app.container.make(InventoryService)
     const inventory = await inventoryService.getInventory(ADC)
@@ -208,13 +149,13 @@ test.group('ADC protocol / heartbeat (SPEC-COM-02)', (group) => {
   })
 
   test('discards and logs a heartbeat from an unknown ADC', async ({ client, assert, db }) => {
-    cabinetHealth.registered.clear()
+    fakes.cabinetHealth.registered.clear()
 
     const response = await client.post('/api/v1/heartbeats').json(heartbeat())
 
     response.assertStatus(404)
     response.assertBodyContains({ error: { code: 'ADC_NOT_REGISTERED' } })
-    assert.lengthOf(cabinetHealth.heartbeats, 0)
+    assert.lengthOf(fakes.cabinetHealth.heartbeats, 0)
     await db.assertHas('system_log_entries', { event: 'heartbeat_discarded', adc_id: ADC })
   })
 
@@ -239,27 +180,27 @@ test.group('ADC protocol / heartbeat (SPEC-COM-02)', (group) => {
       response.assertStatus(400)
       response.assertBodyContains({ error: { code: 'INVALID_MESSAGE' } })
     }
-    assert.lengthOf(cabinetHealth.heartbeats, 0)
+    assert.lengthOf(fakes.cabinetHealth.heartbeats, 0)
   })
 
   test('a storage failure acknowledges nothing and is not a contact', async ({
     client,
     assert,
   }) => {
-    alarms.failing = true
+    fakes.alarms.failing = true
 
     const response = await client.post('/api/v1/heartbeats').json(heartbeat([alarmTransaction()]))
 
     response.assertStatus(500)
     response.assertBodyContains({ error: { code: 'INTERNAL_ERROR' } })
-    assert.lengthOf(cabinetHealth.heartbeats, 0)
+    assert.lengthOf(fakes.cabinetHealth.heartbeats, 0)
   })
 })
 
 test.group('ADC protocol / transactions (SPEC-COM-03)', (group) => {
-  setup(group)
+  const fakes = useFakeModules(group, NOW)
   group.each.setup(() => {
-    cabinetHealth.registered.set(ADC, {
+    fakes.cabinetHealth.registered.set(ADC, {
       adcId: ADC,
       label: 'ADC West 214',
       floor: 2,
@@ -279,7 +220,7 @@ test.group('ADC protocol / transactions (SPEC-COM-03)', (group) => {
         { transactionId: dispensingTransaction().transactionId, status: 'received' },
       ],
     })
-    assert.deepEqual(alarms.recorded, [
+    assert.deepEqual(fakes.alarms.recorded, [
       {
         transactionId: alarmTransaction().transactionId,
         adcId: ADC,
@@ -307,7 +248,7 @@ test.group('ADC protocol / transactions (SPEC-COM-03)', (group) => {
     response.assertBodyContains({
       acknowledgements: [{ transactionId: alarmTransaction().transactionId, status: 'received' }],
     })
-    assert.lengthOf(alarms.recorded, 1)
+    assert.lengthOf(fakes.alarms.recorded, 1)
   })
 
   test('rejects each invalid transaction with its reason', async ({ client, assert, db }) => {
@@ -345,7 +286,7 @@ test.group('ADC protocol / transactions (SPEC-COM-03)', (group) => {
       { transactionId: id(8), status: 'received' },
     ])
     assert.deepEqual(
-      alarms.recorded.map((a) => a.transactionId),
+      fakes.alarms.recorded.map((a) => a.transactionId),
       [id(8)]
     )
     await db.assertCount('system_log_entries', 7)
