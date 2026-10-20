@@ -31,12 +31,23 @@ Open http://localhost:3333 — the home page checks the server, the database and
 A pre-commit hook (Husky + lint-staged) lints and formats staged files. CI runs lint, typecheck
 and tests on every pull request touching `monitoring/`.
 
+## Database and scheduler
+
+SQLite files live in `tmp/`: `db.sqlite3` for development, `test.sqlite3` for the tests
+(migrated at the start of `npm test`, each test in a transaction rolled back afterwards).
+Dates go through Lucid's default `datetime` columns, to the second (D-34); values given to
+`where` must be formatted the way Lucid stores them (see `toColumn` in the history module).
+
+`start/scheduler.ts` (web server only) runs the periodic operations of the modules: the
+purge of expired records (`history.purgeExpired`, at start-up then every 24 h, FR-HIS-09).
+
 ## Code organization
 
 Business logic lives in `app/modules/`, one folder per module of the D2 modular design
 (docs/part-b/deliverable-2/modular-design-and-interfaces.md). Each module exposes a single
 service (its interface, with pre-conditions and effects in doc comments), its exported
-types in `types.ts` and its exceptions in `errors.ts`, and hides one anticipated change
+types in `types.ts` and its exceptions in `errors.ts` (a module storing data also has a
+`models/` folder with its Lucid models, never imported from outside), and hides one anticipated change
 (Parnas-style information hiding):
 
 | Module              | Hides                                                           |

@@ -67,6 +67,7 @@
 | D-31 | Role checks are made once, on the server, by the Operator Dashboard controllers asking User Management before they call another module; the browser never decides a permission. The other modules state the permission as a pre-condition and do not check it again. | The role → permission matrix (D-14) is in a single module, so changing it touches User Management only. | FR-USR-02, NFR-SEC-02, D-14 |
 | D-32 | The contact address of an ADC is kept by the ADC Communication Manager, not by the Cabinet Health Monitor. | An address only makes sense for the transport in use; changing the transport must not touch the module that tracks ADC health. | FR-COM-01, FR-COM-02, FR-COM-04 |
 | D-33 | The event history and the audit log are read through the Reporting module, not directly from the Historical Data Store as drawn in the D1 architecture. | Reporting is the only module that filters patient identifiers by role and logs their display; the Historical Data Store returns everything it holds. | FR-HIS-04, FR-HIS-07, NFR-SEC-04, NFR-AUD-06 |
+| D-34 | Times are stored to the second: the milliseconds of the timestamps set by an ADC are dropped when stored. | The 45 s, 75 s and 10 s rules, the retention periods and the display of events all work at the scale of the second; the standard date columns of the storage layer keep seconds only. | A-14, NFR-REL-01 |
 
 ## Role permissions (D-14)
 

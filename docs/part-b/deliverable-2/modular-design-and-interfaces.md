@@ -24,7 +24,7 @@ These rules hold for every module; they are not repeated in each table.
 
 - **Exported operations** are the public methods of the module's service class (`<module>_service.ts`; `live_channel.ts` for the Dashboard); exported types are in `types.ts`, exceptions in `errors.ts`. Nothing else of a module may be imported by another module. Each method carries the same pre-conditions, effects and exceptions as its row below in its doc comment.
 - **Shared vocabulary**: `app/modules/shared/` holds the identifier types, `Actor`, `Role`, `DateRange`, the enumerations used by several modules (severity, reported state, connectivity) and `StorageUnavailableError`. It is not a module: it has no state, no behaviour and no secret, and using its types is not a USES relation.
-- **No storage object crosses an interface**: operations take and return plain data (types of `types.ts`), never a Lucid model or a database row.
+- **No storage object crosses an interface**: operations take and return plain data (types of `types.ts`), never a Lucid model or a database row. A module that stores data keeps its Lucid models in its own `models/` folder, which no other module imports.
 - **Time** is read from the Clock module (D-29), never from `Date.now()`.
 - **Foreseen refusals are results, faults are exceptions** (D-30). A result type such as `{ kind: 'acknowledged' } | { kind: 'alreadyAcknowledged' }` lists every refusal the specification foresees; an exception means that the caller broke a pre-condition (for example an unknown identifier) or that the system failed (storage unavailable).
 - **Permissions are pre-conditions** (D-31): an operation used on behalf of a user assumes that the Dashboard has already checked, with User Management, that the user's role allows it. The operation does not check it again.
@@ -55,7 +55,7 @@ State: an append-only set of records, each with its kind and its event date. No 
 | --- | --- | --- | --- | --- | --- |
 | `recordAlarm(alarm)` | `StoredAlarm` | `RecordOutcome` (`recorded` \| `duplicate`) | - | If no alarm or dispensing activity has `alarm.alarmId` as transaction identifier: alarm stored, answer `recorded`; else nothing stored, answer `duplicate` (D-28) | `StorageUnavailableError` |
 | `recordDispensing(activity)` | `DispensingRecord` | `RecordOutcome` | Fields valid (FR-COM-09) | Same uniqueness rule as `recordAlarm` | `StorageUnavailableError` |
-| `recordAcknowledgement(ack)` | `AcknowledgementRecord` (alarm, user, time) | `void` | The alarm is stored and has no acknowledgement yet | Acknowledgement stored | `UnknownRecordError`, `StorageUnavailableError` |
+| `recordAcknowledgement(ack)` | `AcknowledgementRecord` (alarm, user, time) | `void` | The alarm is stored and has no acknowledgement yet | Acknowledgement stored, in a record of its own: the alarm record itself is never modified | `UnknownRecordError`, `AlarmAlreadyAcknowledgedError` (two acknowledgements racing), `StorageUnavailableError` |
 | `findAlarm(alarmId)` | `AlarmId` | `StoredAlarmWithAck \| null` | - | None | `StorageUnavailableError` |
 | `listUnacknowledgedAlarms()` | - | `StoredAlarmWithAck[]`, most recent first | - | None | `StorageUnavailableError` |
 | `recordStatusChange(change)` | `StatusChangeRecord` (ADC, reported state, connectivity, time) | `void` | - | Stored (FR-HIS-03) | `StorageUnavailableError` |
@@ -96,7 +96,7 @@ State: the alarms stored in the Historical Data Store, each `unacknowledged` or 
 | --- | --- | --- | --- | --- | --- |
 | `recordFromAdc(alarm)` | `NewAdcAlarm` (transaction ID, ADC, ADC timestamp, type, severity, description?) | `RecordOutcome` | Alarm validated against SPEC-COM-03 (by the ADC Communication Manager); ADC registered | If `recorded`: stored unacknowledged with the ADC timestamp (A-14), then `raised` announced. If `duplicate`: nothing (D-28) | `StorageUnavailableError` |
 | `raiseCommunicationLoss(adcId)` | `AdcId` | `AlarmId` | Called by the Cabinet Health Monitor only, when `adcId` becomes offline | New alarm, type `communication_loss`, severity `error`, timestamp = now, stored unacknowledged, then `raised` announced (FR-HLT-04, D-15) | `StorageUnavailableError` |
-| `acknowledge(actor, alarmId)` | `Actor`, `AlarmId` | `AcknowledgeResult`: `acknowledged(at)` \| `alreadyAcknowledged(by, at)` | `actor` may acknowledge alarms (D-09, D-31) | If unacknowledged: acknowledgement stored, audited (NFR-AUD-01), then `acknowledged` announced. Else nothing changes (SPEC-ALM-01) | `UnknownAlarmError`, `StorageUnavailableError` |
+| `acknowledge(actor, alarmId)` | `Actor`, `AlarmId` | `AcknowledgeResult`: `acknowledged(at)` \| `alreadyAcknowledged(by, at)` | `actor` may acknowledge alarms (D-09, D-31) | If unacknowledged: acknowledgement stored, audited (NFR-AUD-01), then `acknowledged` announced. Else nothing changes (SPEC-ALM-01). If another acknowledgement wins the race between the check and the storage (`AlarmAlreadyAcknowledgedError` from the Historical Data Store), the exception is caught and nothing changes either: answer `alreadyAcknowledged` with the stored acknowledgement | `UnknownAlarmError`, `StorageUnavailableError` |
 | `listUnacknowledged()` | - | `Alarm[]`, most recent first | - | None (FR-ALM-04) | `StorageUnavailableError` |
 | `subscribe(listener)` | `(event: AlarmEvent) => void` | Unsubscribe function | - | `listener` called for every later `raised` and `acknowledged` event | - |
 
@@ -123,7 +123,7 @@ State, for each registered ADC: label, location (floor, description), registrati
 
 **Uses:** Cabinet Health Monitor. **Used by:** ADC Communication Manager, Operator Dashboard.
 
-State: for each ADC, its latest inventory and the time of the heartbeat it comes from (FR-INV-01).
+State: for each ADC, its latest inventory and the time of the heartbeat it comes from (FR-INV-01). Every operation throws `StorageUnavailableError` when the storage cannot be used.
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |

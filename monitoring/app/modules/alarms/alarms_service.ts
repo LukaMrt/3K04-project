@@ -51,7 +51,9 @@ export default class AlarmService {
    * Pre: `actor` may acknowledge alarms (D-09, checked by the caller, D-31).
    * Effects (SPEC-ALM-01): if the alarm is unacknowledged, the acknowledgement is stored
    * and audited (NFR-AUD-01), then an 'acknowledged' event is announced; otherwise
-   * nothing changes and the result names who acknowledged it (FR-ALM-06).
+   * nothing changes and the result names who acknowledged it (FR-ALM-06). An
+   * AlarmAlreadyAcknowledgedError from history.recordAcknowledgement (another
+   * acknowledgement won the race) is caught and handled the same way: nothing changes.
    * Throws: UnknownAlarmError.
    */
   async acknowledge(actor: Actor, alarmId: AlarmId): Promise<AcknowledgeResult> {
