@@ -7,6 +7,15 @@
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
+export class AdcContactSchema extends BaseModel {
+  static $columns = ['adcId', 'contactAddress'] as const
+  $columns = AdcContactSchema.$columns
+  @column({ isPrimary: true })
+  declare adcId: string
+  @column()
+  declare contactAddress: string
+}
+
 export class AlarmAcknowledgementSchema extends BaseModel {
   static $columns = ['alarmId', 'at', 'userId'] as const
   $columns = AlarmAcknowledgementSchema.$columns

@@ -1,4 +1,5 @@
 import app from '@adonisjs/core/services/app'
+import AdcCommunicationService from '#modules/adc_communication/adc_communication_service'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
 
@@ -34,6 +35,15 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * response to the client
    */
   async handle(error: unknown, ctx: HttpContext) {
+    /**
+     * A body that is not JSON is refused by the body parser before reaching the ADC routes;
+     * the ADC still gets an answer in the format of the interface contract.
+     */
+    if (ctx.request.url().startsWith('/api/') && isUnreadableBody(error)) {
+      const adcCommunication = await app.container.make(AdcCommunicationService)
+      const answer = adcCommunication.answerUnreadableBody()
+      return ctx.response.status(answer.httpStatus).json(answer.body)
+    }
     return super.handle(error, ctx)
   }
 
@@ -46,4 +56,9 @@ export default class HttpExceptionHandler extends ExceptionHandler {
   async report(error: unknown, ctx: HttpContext) {
     return super.report(error, ctx)
   }
+}
+
+function isUnreadableBody(error: unknown) {
+  const status = (error as { status?: number }).status
+  return status === 400 || status === 422
 }

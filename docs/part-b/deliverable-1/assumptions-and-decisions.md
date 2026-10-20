@@ -29,6 +29,7 @@
 | A-23 | When the Monitoring System does not answer, or answers with an error, the ADC keeps its transactions and tries again at the heartbeat rhythm (30 s); it sends at most one heartbeat at a time. | Team, with ADC team (Part A) | A-06, NFR-REL-01 |
 | A-24 | The memory of an ADC is large enough to keep every unacknowledged transaction during any outage. | Team, with ADC team (Part A) | A-06, NFR-REL-01 |
 | A-25 | Each operator workstation has a working speaker, switched on and audible from where the users work. | Team (D2 precise specification, G-07) | NFR-ACC-01, NFR-SAF-04 |
+| A-26 | A transaction sent again by an ADC (after a lost response or an outage) is identical to the first sending: same identifier, same content. A transaction already recorded therefore passes its checks again, so checking it before looking for its identifier gives the acknowledgement of SPEC-COM-03. | Team (D2 implementation of SPEC-COM-03) | FR-COM-08, D-07, D-28 |
 
 ## Decisions
 
@@ -68,6 +69,7 @@
 | D-32 | The contact address of an ADC is kept by the ADC Communication Manager, not by the Cabinet Health Monitor. | An address only makes sense for the transport in use; changing the transport must not touch the module that tracks ADC health. | FR-COM-01, FR-COM-02, FR-COM-04 |
 | D-33 | The event history and the audit log are read through the Reporting module, not directly from the Historical Data Store as drawn in the D1 architecture. | Reporting is the only module that filters patient identifiers by role and logs their display; the Historical Data Store returns everything it holds. | FR-HIS-04, FR-HIS-07, NFR-SEC-04, NFR-AUD-06 |
 | D-34 | Times are stored to the second: the milliseconds of the timestamps set by an ADC are dropped when stored. | The 45 s, 75 s and 10 s rules, the retention periods and the display of events all work at the scale of the second; the standard date columns of the storage layer keep seconds only. | A-14, NFR-REL-01 |
+| D-35 | Outside production, an ADC may register an `http://` contact address; in production only `https://` is accepted (NFR-SEC-05). | The simulated ADCs used for tests and the demonstration run on the presenter's machine without TLS certificates. | NFR-SEC-05, FR-COM-01 |
 
 ## Role permissions (D-14)
 
