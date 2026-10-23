@@ -1,0 +1,15 @@
+# Modular Decomposition (Information Hiding)
+
+Following Parnas's principle of information hiding, the system is decomposed into 9 modules. Each module hides a specific secret—a design decision or implementation detail most likely to change—behind a stable interface.
+
+| Module Name & Code Path | Responsibility | Secret (Anticipated Change Hidden) | Classification |
+| :--- | :--- | :--- | :--- |
+| **Clock**<br>`app/modules/clock/` | Gives the current system time. | **Source of time**: Hides whether time comes from the system OS clock or a test driver controlling simulated time during demos. | Hardware Hiding |
+| **Historical Data Store**<br>`app/modules/history/` | Retains all system records append-only, answers query requests, and handles data retention/purging. | **Storage technology & schema**: Database engine (SQL/NoSQL/file), table/collection layout, and automated purge indexing. | Software Decision Hiding |
+| **User Management**<br>`app/modules/users/` | Authenticates user credentials, manages accounts/roles, and evaluates action permissions. | **Access control rules & storage**: The Role-Permission matrix structure and user credential storage mechanism. | Software Decision Hiding |
+| **Alarm Manager**<br>`app/modules/alarms/` | Records incoming alarms, manages acknowledgement states, and drives active presentation/cues. | **Alarm lifecycle & cue presentation**: Visual alert logic, audible cue patterns, and 60-second critical repetition timing. | Behavior Hiding |
+| **Cabinet Health Monitor**<br>`app/modules/cabinet_health/` | Maintains the ADC registry, tracks reported operational states, and monitors network connectivity. | **Connectivity state machine & timeouts**: Heartbeat thresholds (45s unreachable, 75s offline) and state transition rules. | Behavior Hiding / Software Decision Hiding |
+| **Inventory Supervisor**<br>`app/modules/inventory/` | Stores the latest inventory snapshot per ADC, flags low stock, and searches for alternate floor stock. | **Low-stock rules & search algorithms**: Fixed low-stock threshold (10 boxes) and the same-floor cabinet search algorithm. | Behavior Hiding / Software Decision Hiding |
+| **ADC Communication Manager**<br>`app/modules/adc_communication/` | Handles bi-directional communication between the Monitoring System and deployed ADCs. | **Protocol format & transport**: JSON payload schemas, HTTP endpoint routes, and network transport details. | Software Decision Hiding / Behavior Hiding |
+| **Reporting**<br>`app/modules/reporting/` | Generates, saves, and exports reports; filters patient identifiers based on role permissions. | **Report formats & privacy masking**: Layout rendering, export file creation (PDF/CSV), and PHIPA masking logic. | Software Decision Hiding |
+| **Operator Dashboard**<br>`app/modules/dashboard/` | Displays real-time status/inventory/alarms to clinical operators and captures user requests. | **UI layout & web delivery**: Frontend page structure, styling/wording, and browser communication technology. | Behavior Hiding |
