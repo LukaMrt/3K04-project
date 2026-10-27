@@ -54,6 +54,7 @@ case "$DELIVERABLE" in
       deliverable-2/assumptions-and-decisions.md
       "@part:Appendix A - ADC ↔ Monitoring Interface Contract"
       interface-adc-monitoring.md
+      deliverable-2/appendix-methodology-and-ai-use.md
     )
     ;;
   *)
@@ -80,6 +81,9 @@ done > "$BUILD/full.md"
 
 # Links to other .md files do not work in a single PDF: keep only their text
 sed -E -i '' 's/\[([^]]*)\]\([^)]*\.md[^)]*\)/\1/g' "$BUILD/full.md"
+
+# Identifier columns stay on one line (pdf.css); see the script for the rule
+python3 "$ROOT/scripts/mark-id-tables.py" "$BUILD/full.md"
 
 # 2. Render the Mermaid blocks as SVG images
 npx -y -p @mermaid-js/mermaid-cli mmdc \

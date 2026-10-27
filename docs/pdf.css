@@ -18,7 +18,14 @@ table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin: 0.8em 
 th, td { border: 1px solid #999; padding: 3px 5px; vertical-align: top; }
 th { background: #eee; }
 tr { page-break-inside: avoid; }
-td:first-child { white-space: nowrap; }
+/* Identifier columns (FR-COM-01, D-20, ...) stay on one line; marked by mark-id-tables.py.
+   A first column holding long text (spec conditions) wraps like the others. */
+/* Identifier columns (FR-COM-01, D-20, ...) stay on one line: scripts/mark-id-tables.py marks
+   the tables whose first column is short. A long first column wraps like the others, so that
+   no table is wider than the page (Chrome would then shrink every page to fit it). */
+.short-first-col td:first-child { white-space: nowrap; }
+/* Long code names (paths, Class.method()) may break anywhere rather than push the
+   table past the page edge. */
 
 /* The architecture diagram gets its own A3 landscape page */
 @page wide { size: A3 landscape; margin: 10mm; }
