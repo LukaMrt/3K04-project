@@ -21,7 +21,7 @@ The code follows the module guide one to one, so that the boundaries are easy to
 - **`app/modules/shared/`** holds the vocabulary used to write the interfaces: identifiers, `Actor`, `Role`, `DateRange`, severities, states and `StorageUnavailableError`. It is not a module: it has no state, no behaviour and no secret.
 - **Modules are wired by the container.** A service receives the services it uses in its constructor (`@inject()`). The constructor parameters of a service are therefore exactly its "Uses" line in the USES hierarchy, and a test can swap any of them (section 5).
 - **Controllers only adapt HTTP**: they read the request, call module services, and turn the result into a page or a JSON answer. They hold no rule of the specification.
-- **`start/`** holds what runs at start-up: routes (`routes.ts`), the periodic calls (`scheduler.ts`) and the start of the live channel (`live_channel.ts`).
+- **`start/`** holds what runs at start-up: routes (`routes.ts`), the periodic calls (`scheduler.ts`), the start of the live channel (`live_channel.ts`) and the record of the server's start-ups and shutdowns (`lifecycle.ts`, NFR-AVL-05).
 
 ## 2. Modules → code
 
@@ -41,7 +41,7 @@ Remarks on the mapping:
 
 - **Modules are not classes.** Seven modules are one service class plus private models. The Operator Dashboard is spread over controllers, middleware, templates, a browser script and `LiveChannel`: its secret (how information reaches the user) is in all of them, and none of them is used by another module. The Clock is a one-method class.
 - **The ADC Communication Manager has two entry points**: the HTTP routes, for what the ADCs send (`receiveRegistration`, `receiveHeartbeat`), and the Dashboard, for what the operators send (`sendCommand`, `sendConfiguration`). `protocol.ts` is the only file that knows the JSON of the contract; replacing HTTP by a broker (AC-02) changes this file, the controller and the `post` method of the service.
-- **Periodic operations are called from outside the modules.** `start/scheduler.ts` calls `CabinetHealthService.checkTimeouts()` every second and `HistoryService.purgeExpired()` at start-up then every 24 h. The scheduler is only loaded by the web server, so tests decide when time passes (section 5).
+- **Periodic operations are called from outside the modules.** `start/scheduler.ts` calls `CabinetHealthService.checkTimeouts()` every second and `HistoryService.purgeExpired()` at start-up then every 24 h. The scheduler is only loaded by the web server, so tests decide when time passes (section 7). In the same way, `start/lifecycle.ts` writes `system_start_up` to the system log when the server is ready and `system_shutdown` when it stops gracefully (SIGTERM, or Ctrl+C: `bin/server.ts`), through `HistoryService.appendSystemLog()`.
 - **Permission checks** (D-31) are done once, before any module is called. `actor_middleware.ts` builds the `Actor` of the request (user and role read at login). `can_middleware.ts` asks `UserService.can(actor, fn)` for the function of the route (`start/routes.ts`) and shows the permission message when it is refused. The permission matrix itself is the `PERMISSIONS` table of `users_service.ts` (AC-07).
 
 ## 3. D1 domain model → code
@@ -144,26 +144,26 @@ Each scenario of D1 is one request (or one periodic call) that goes down the USE
 
 1. `GET /adcs/:id/history?from=…&to=…`, behind `can('viewAdcHistory')` → `HistoryController.adc()`.
 2. Date range check: `toRange()`; an end before the start gives the "invalid date range" message.
-3. `reporting.adcHistory(actor, adcId, range)` → `history.queryAdcHistory()` (dispensing, status changes, alarms, acknowledgements).
+3. `reporting.adcHistory(actor, adcId, range)` → `history.queryAdcHistory()` (dispensing, status changes, alarms, acknowledgements). A range without any event shows "No data found for this period." (`resources/views/pages/history/adc.edge`).
 4. Patient identifiers: `users.canSeePatientIds(actor)` (pharmacists and administrators); otherwise they are removed (`withoutPatientId`); when they are shown, their display is audited (NFR-AUD-06). The history is read through Reporting so that this rule stays in one module (D-33).
 5. Read-only: the page has no edit control, and the Historical Data Store exports no operation that modifies or deletes an entry.
 
 ## 6. Differences from the D1 models
 
-<!-- TODO (Luka): to be written. For each difference: the D1 element (diagram + ID), what the code does instead, why (requirement, decision D-xx), and whether the D1 model was corrected.
-Candidates found while writing sections 4 and 5 (check each against the D1 diagrams, keep the real ones):
-- State machine 1: Reachable -> Offline directly when silence >= 75 s (ON_SILENCE, safety-critical spec §2 row 3); D1 only goes through Unreachable.
-- State machine 1: NotReported is displayed PENDING (D-21); D1 did not name its displayed status.
-- State machine 1: going Offline, the alarm is stored BEFORE the connectivity changes (D-38); D1 lists "record status change, raise alarm" in the other order.
-- State machine 1: timed transitions are detected by a 1 s poll (checkTimeouts), not by a timer per ADC: at most 1 s late (INV-HLT-1).
-- State machine 2: Rejected is not an alarm state in the code, only a system log entry; the Alarm Manager never sees a rejected alarm.
-- State machine 2: Acknowledged is not a stored state but the existence of an acknowledgement row.
-- Activity 2: a storage failure answers 500 and acknowledges nothing (not in D1).
-- Activity 1: "fresh?" is the connectivity (stale = not reachable), not a direct 45 s comparison on the inventory time.
-- Activity 4: role check happens before the page (can_middleware), and history is read through Reporting (D-33).
--->
+Writing the code against the D1 diagrams showed a few places where the code does not follow them step by step. None of them changes a D1 requirement. Each one is either a refinement already stated in the D2 specification, or an order of steps that the diagrams did not fix and that the code had to choose. The D1 diagrams were left as they were; the specification and the safety-critical specifications describe the behaviour of the code.
 
-TODO
+| D1 element | What the code does | Why |
+| --- | --- | --- |
+| State machine 1, *Connectivity*: *Reachable* → *Unreachable* → *Offline* | An ADC can go from `reachable` directly to `offline` (third column of `ON_SILENCE`, section 4.1). | If a check is missed, for example while the server restarts, the silence of an ADC can jump past 75 s in one step. Going through *Unreachable* first would delay the communication loss alarm by one second for no benefit. Specified in safety-critical specifications, section 2. |
+| State machine 1, `after(45 s)`, `after(75 s)` | The timed transitions are found by a check every second (`checkTimeouts()`), not by one timer per ADC. A transition is at most one second late. | The connectivity is then a function of the time of last contact, which survives a restart; timers in memory would not. The 1 s delay is part of the invariant INV-HLT-1. |
+| State machine 1, *Reported operational state* | Before its first heartbeat, an ADC (*NotReported*) is shown PENDING. | D1 did not say what to show in *NotReported*; every other label would be false (D-21). |
+| State machine 1 and activity 3, *Unreachable* → *Offline* / "record status change, raise communication loss alarm" | The alarm is stored first, then the connectivity becomes `offline` and the status change is recorded. | If storage fails between both steps, the next check finds the ADC still not offline and tries again. The worst case is then a second alarm, never an offline ADC without an alarm (D-38). |
+| Activity 2: "Transaction identifier already received?" before "ADC, timestamp, type and severity present?" | The content of a transaction is checked first (`readTransaction()`); the duplicate is found afterwards, when the Historical Data Store records it. | The module that stores transactions is the only one that knows which identifiers it holds (D-28). A transaction sent again is identical to the first sending (A-26), so it passes the checks again and gets the same acknowledgement as in D1. |
+| Activity 2: "Acknowledge as 'received'", then "Display the alarm" | The alarm is announced to the dashboards as soon as it is stored, before the answer to the heartbeat is sent. | The answer is only sent once the whole heartbeat is stored (every transaction, the inventory, the time of contact). Waiting for it would only delay the alarm on screen; the 2 s bound of NFR-PRF-01 starts at reception. |
+| Activity 2 (not in D1) | If the storage fails while a heartbeat is handled, the answer is `500` and no transaction is acknowledged. | The ADC keeps its transactions and sends them again 30 s later (A-23); those already stored are then found as duplicates. Nothing acknowledged can be lost (NFR-REL-01). |
+| Activity 1: "Search the other ADCs of the same floor holding more than 10 boxes" | Only ADCs of the same floor that are reachable are searched. | The stock of an unreachable or offline ADC is stale: proposing it could send a nurse to an empty or broken cabinet (D-23). |
+| Activity 1: "updated less than 45 s ago?" | The stale label is shown while the ADC is not `reachable`, so at most one second after the 45 s. | One rule for the status and the inventory: both come from the same heartbeat, and the connectivity already tracks the 45 s (NFR-SAF-01, SPEC-HLT-01). |
+| Activity 2 and 4, role decisions | A request whose role is not permitted is refused before any module is called (`can_middleware.ts`). The history is read through Reporting, which hides patient identifiers. | Permissions are checked once, on the server, from the only copy of the matrix (D-31); patient identifiers are filtered in a single module (D-33). |
 
 ## 7. Testing and demonstration
 

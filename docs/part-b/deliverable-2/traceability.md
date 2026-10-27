@@ -54,7 +54,7 @@ How to read it:
 | FR-HIS-01 | Retain alarms 1 year | US-HIS-02 | SPEC-HIS-01 | Historical Data Store | `HistoryService.recordAlarm()`, `purgeExpired()` (`LONG_RETENTION`) |
 | FR-HIS-02 | Retain dispensing activity 6 months | US-HIS-01 | SPEC-HIS-01 | Historical Data Store | `HistoryService.recordDispensing()`, `purgeExpired()` (`SHORT_RETENTION`) |
 | FR-HIS-03 | Retain status changes 6 months | US-HIS-01 | SPEC-HIS-01, SPEC-HLT-02 | Historical Data Store | `HistoryService.recordStatusChange()` (called by `CabinetHealthService`), `purgeExpired()` |
-| FR-HIS-04 | Display ADC event history | US-HIS-01 | As stated | Reporting (D-33) | `ReportingService.adcHistory()` → `HistoryService.queryAdcHistory()`; page: `HistoryController.adc()`, `resources/views/pages/history/adc.edge` |
+| FR-HIS-04 | Display ADC event history | US-HIS-01 | As stated | Reporting (D-33) | `ReportingService.adcHistory()` → `HistoryService.queryAdcHistory()`; page: `HistoryController.adc()`, `resources/views/pages/history/adc.edge` ("No data found for this period.") |
 | FR-HIS-05 | Retain audit log 1 year | US-HIS-02 | SPEC-HIS-01 | Historical Data Store | `HistoryService.appendAudit()`, `purgeExpired()` |
 | FR-HIS-06 | Retain generated reports 1 year | US-RPT-07 | SPEC-HIS-01 | Historical Data Store | `HistoryService.saveReport()`, `purgeExpired()` |
 | FR-HIS-07 | Display the audit log | US-HIS-02 | As stated | Reporting (D-33) | `ReportingService.auditLog()` → `HistoryService.queryAudit()`; page: `HistoryController.audit()` |
@@ -130,7 +130,7 @@ How to read it:
 | NFR-AVL-02 | Keep processing connected ADCs | US-HLT-02 | N/A | ADC Communication Manager | Each heartbeat is handled on its own (`receiveHeartbeat()`); nothing is ever sent to an offline ADC (`deliver()`) |
 | NFR-AVL-03 | 99.5% monthly availability | - | N/A | - | Verified by measurement, from the records of NFR-AVL-05 |
 | NFR-AVL-04 | 30 days without restart | - | N/A | - | Verified by measurement, from the records of NFR-AVL-05 |
-| NFR-AVL-05 | Record own start-ups and shutdowns | - | N/A | Historical Data Store | **Not implemented yet**: `HistoryService.appendSystemLog()` exists, but no start-up or shutdown entry is written |
+| NFR-AVL-05 | Record own start-ups and shutdowns | - | N/A | Historical Data Store | `recordLifecycleEvent()` in `start/lifecycle.ts` → `HistoryService.appendSystemLog()` (events `system_start_up`, `system_shutdown`); graceful stop on SIGTERM and Ctrl+C: `bin/server.ts` |
 | NFR-PRF-01 | Alarm displayed within 2 s | US-ALM-01, US-HLT-02 | SPEC-ALM-02 | Operator Dashboard | `LiveChannel.push()` (Server-Sent Events); `onAlarm()` in `resources/js/app.js` |
 | NFR-PRF-02 | NFR-PRF-01 holds with 50 ADCs | US-ALM-01 | SPEC-ALM-02 | Operator Dashboard | Verified by measurement with the ADC simulator (`node ace adc:simulate --count=50`) |
 | NFR-AUD-01 | Log acknowledgements, commands, configs | US-COM-02, US-COM-03, US-ALM-02, US-HIS-02 | SPEC-COM-04, SPEC-ALM-01 | Alarm Manager; ADC Communication Manager | `AlarmService.acknowledge()` and `AdcCommunicationService.deliver()` → `HistoryService.appendAudit()` |
