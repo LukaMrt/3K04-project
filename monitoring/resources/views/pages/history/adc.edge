@@ -1,0 +1,99 @@
+@layouts.app({ title: `History of ${adc.label}` })
+  @page({ title: `Event history of ${adc.label}`, description: 'Dispensing activities, status changes, alarms and their acknowledgements (FR-HIS-04).' })
+    <div class="column" style="gap: 20px;">
+      <form method="GET" action="{{ route('adcs.history', { id: adc.adcId }) }}" class="panel inline-form">
+        <div class="field">
+          <label class="field__label" for="from">From</label>
+          <input class="field__input" type="date" id="from" name="from" value="{{ period.from }}" required />
+        </div>
+        <div class="field">
+          <label class="field__label" for="to">To</label>
+          <input class="field__input" type="date" id="to" name="to" value="{{ period.to }}" required />
+        </div>
+        <button type="submit" class="btn btn--primary">Show</button>
+      </form>
+
+      <section class="panel" aria-labelledby="dispensing-title">
+        <h2 id="dispensing-title" class="section__title">Dispensing activities ({{ history.dispensing.length }})</h2>
+        @if(history.dispensing.length)
+          <div class="table-wrap" style="margin-top: 10px;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Medication</th>
+                  <th scope="col">Boxes</th>
+                  <th scope="col">Staff member</th>
+                  @if(history.dispensing[0].patientId !== undefined)
+                    <th scope="col">Patient</th>
+                  @end
+                </tr>
+              </thead>
+              <tbody>
+                @each(activity in history.dispensing)
+                  <tr>
+                    <td>{{ formatTime(activity.timestamp) }}</td>
+                    <td>{{ activity.medicationName }}</td>
+                    <td>{{ activity.quantityInBoxes }}</td>
+                    <td>{{ activity.staffMemberName }}</td>
+                    @if(activity.patientId !== undefined)
+                      <td class="mono">{{ activity.patientId }}</td>
+                    @end
+                  </tr>
+                @end
+              </tbody>
+            </table>
+          </div>
+        @end
+      </section>
+
+      <section class="panel" aria-labelledby="changes-title">
+        <h2 id="changes-title" class="section__title">Status changes ({{ history.statusChanges.length }})</h2>
+        @if(history.statusChanges.length)
+          <div class="table-wrap" style="margin-top: 10px;">
+            <table class="table">
+              <thead>
+                <tr><th scope="col">Time</th><th scope="col">Reported state</th><th scope="col">Connectivity</th></tr>
+              </thead>
+              <tbody>
+                @each(change in history.statusChanges)
+                  <tr>
+                    <td>{{ formatTime(change.at) }}</td>
+                    <td>{{ change.reportedState ? change.reportedState.toUpperCase() : 'NONE YET' }}</td>
+                    <td>{{ change.connectivity.toUpperCase() }}</td>
+                  </tr>
+                @end
+              </tbody>
+            </table>
+          </div>
+        @end
+      </section>
+
+      <section class="panel" aria-labelledby="history-alarms-title">
+        <h2 id="history-alarms-title" class="section__title">Alarms ({{ history.alarms.length }})</h2>
+        @if(history.alarms.length)
+          <div class="table-wrap" style="margin-top: 10px;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th><th scope="col">Severity</th><th scope="col">Type</th>
+                  <th scope="col">Acknowledged</th>
+                </tr>
+              </thead>
+              <tbody>
+                @each(alarm in history.alarms)
+                  <tr>
+                    <td>{{ formatTime(alarm.timestamp) }}</td>
+                    <td><span class="{{ labelClass(alarm.severity) }}">{{ severityLabel(alarm.severity) }}</span></td>
+                    <td>{{ alarm.alarmType }}</td>
+                    <td>{{ alarm.acknowledgement ? `at ${formatTime(alarm.acknowledgement.at)} by account ${alarm.acknowledgement.userId}` : 'NOT ACKNOWLEDGED' }}</td>
+                  </tr>
+                @end
+              </tbody>
+            </table>
+          </div>
+        @end
+      </section>
+    </div>
+  @end
+@end

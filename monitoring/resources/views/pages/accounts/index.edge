@@ -1,0 +1,76 @@
+@layouts.app({ title: 'Accounts' })
+  @page({ title: 'Accounts', description: 'Create accounts, change roles, deactivate accounts (FR-USR-03 to 05).' })
+    <div class="panel">
+      @section({ title: 'New account' })
+        @form({ route: 'accounts.store', method: 'POST', class: 'inline-form' })
+          @field.root({ name: 'fullName' })
+            @!field.label({ text: 'Full name' })
+            @!input.control({ autocomplete: 'off' })
+            @!field.error()
+          @end
+          @field.root({ name: 'email' })
+            @!field.label({ text: 'Email' })
+            @!input.control({ type: 'email', autocomplete: 'off' })
+            @!field.error()
+          @end
+          @field.root({ name: 'password' })
+            @!field.label({ text: 'Password (8 characters or more)' })
+            @!input.control({ type: 'password', autocomplete: 'new-password' })
+            @!field.error()
+          @end
+          @field.root({ name: 'role' })
+            @!field.label({ text: 'Role' })
+            @!select.control({ options: roles.map((role) => ({ value: role, name: roleName(role) })) })
+            @!field.error()
+          @end
+          @!button({ text: 'Create account', type: 'submit' })
+        @end
+      @end
+
+      @section({ title: 'Existing accounts' })
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">State</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @each(account in accounts)
+                <tr>
+                  <td>{{ account.fullName ?? '—' }}</td>
+                  <td>{{ account.email }}</td>
+                  <td>
+                    @form({ route: 'accounts.role', routeParams: { id: account.userId }, method: 'POST', class: 'inline-form' })
+                      <label class="sr-only" for="role-{{ account.userId }}">Role of {{ account.email }}</label>
+                      <select id="role-{{ account.userId }}" name="role" class="field__input">
+                        @each(role in roles)
+                          <option value="{{ role }}" {{ role === account.role ? 'selected' : '' }}>{{ roleName(role) }}</option>
+                        @end
+                      </select>
+                      @!button({ text: 'Change', type: 'submit', variant: 'secondary', size: 'sm' })
+                    @end
+                  </td>
+                  <td>
+                    <span class="{{ account.active ? 'label label--ok' : 'label' }}">{{ account.active ? 'ACTIVE' : 'DEACTIVATED' }}</span>
+                  </td>
+                  <td>
+                    @if(account.active && account.userId !== actor.userId)
+                      @form({ route: 'accounts.deactivate', routeParams: { id: account.userId }, method: 'POST' })
+                        @!button({ text: 'Deactivate', type: 'submit', variant: 'secondary', size: 'sm' })
+                      @end
+                    @end
+                  </td>
+                </tr>
+              @end
+            </tbody>
+          </table>
+        </div>
+      @end
+    </div>
+  @end
+@end

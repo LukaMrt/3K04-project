@@ -1,0 +1,85 @@
+@let(title = report.kind === 'consumption' ? 'Medication consumption report' : 'Alarm report')
+@layouts.app({ title })
+  @page({ title, description: `Generated ${formatTime(report.generatedAt)}, figures as at that time (FR-RPT-08).` })
+    @slot('actions')
+      @link({ route: 'reports.index', class: 'btn btn--secondary btn--sm' })
+        All reports
+      @end
+      @if(canExport)
+        @link({ route: 'reports.export', routeParams: { id: report.reportId }, class: 'btn btn--primary btn--sm' })
+          Download (CSV)
+        @end
+      @end
+    @end
+
+    <div class="column" style="gap: 20px;">
+      <section class="panel">
+        <h2 class="section__title">Parameters</h2>
+        <ul class="column" style="margin-top: 8px;">
+          @each((value, name) in report.parameters)
+            <li><span class="muted">{{ name }}</span> {{ ['from', 'to'].includes(name) ? formatTime(value) : value }}</li>
+          @end
+        </ul>
+        <p style="margin-top: 12px; font-size: 18px; font-weight: 600;">
+          @if(report.kind === 'consumption')
+            {{ report.total }} boxes dispensed
+          @else
+            {{ report.total }} alarms occurred
+          @end
+        </p>
+      </section>
+
+      @if(report.rows.length)
+        <section class="panel">
+          <div class="table-wrap">
+            <table class="table">
+              @if(report.kind === 'consumption')
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th><th scope="col">ADC</th><th scope="col">Medication</th>
+                    <th scope="col">Boxes</th><th scope="col">Staff member</th>
+                    @if(report.rows[0].patientId !== undefined)
+                      <th scope="col">Patient</th>
+                    @end
+                  </tr>
+                </thead>
+                <tbody>
+                  @each(row in report.rows)
+                    <tr>
+                      <td>{{ formatTime(row.timestamp) }}</td>
+                      <td>{{ row.adcLabel }}</td>
+                      <td>{{ row.medicationName }}</td>
+                      <td>{{ row.quantityInBoxes }}</td>
+                      <td>{{ row.staffMemberName }}</td>
+                      @if(row.patientId !== undefined)
+                        <td class="mono">{{ row.patientId }}</td>
+                      @end
+                    </tr>
+                  @end
+                </tbody>
+              @else
+                <thead>
+                  <tr>
+                    <th scope="col">Time</th><th scope="col">ADC</th><th scope="col">Type</th>
+                    <th scope="col">Severity</th><th scope="col">Acknowledged</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @each(row in report.rows)
+                    <tr>
+                      <td>{{ formatTime(row.timestamp) }}</td>
+                      <td>{{ row.adcLabel }}</td>
+                      <td>{{ row.alarmType }}</td>
+                      <td><span class="{{ labelClass(row.severity) }}">{{ severityLabel(row.severity) }}</span></td>
+                      <td>{{ row.acknowledgedAt ? formatTime(row.acknowledgedAt) : 'NOT ACKNOWLEDGED' }}</td>
+                    </tr>
+                  @end
+                </tbody>
+              @end
+            </table>
+          </div>
+        </section>
+      @end
+    </div>
+  @end
+@end

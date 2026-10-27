@@ -1,6 +1,6 @@
 @layouts.auth()
-  <h1 class="auth__title">Welcome back</h1>
-  <p class="auth__sub">Sign in to continue building.</p>
+  <h1 class="auth__title">Sign in</h1>
+  <p class="auth__sub">Use the account given to you by an administrator.</p>
   @form({
     route: 'session.store',
     method: 'POST',
@@ -13,7 +13,7 @@
       @!input.control({
         type: 'email',
         autocomplete: 'username',
-        placeholder: 'you@example.com',
+        placeholder: 'name@hospital.test',
       })
       @!field.error()
     @end
@@ -36,18 +36,22 @@
     })
   @end
 
-  <p class="auth__foot">
-    
-    
-    
-
-    New here?
-
-
-
-
-    @link({ route: 'new_account.create', class: 'il' })
-      Create an account
-    @end
-  </p>
+  @if(demoAccounts.length)
+    <section class="auth__demo" aria-labelledby="demo-title">
+      <h2 id="demo-title" class="auth__demo-title">Development: demo accounts</h2>
+      <div class="auth__demo-buttons">
+        @each(account in demoAccounts)
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            data-email="{{ account.email }}"
+            data-password="{{ account.password }}"
+            onclick="const form = document.querySelector('.auth__form'); form.email.value = this.dataset.email; form.password.value = this.dataset.password; form.password.focus()"
+          >
+            {{ account.name }}
+          </button>
+        @end
+      </div>
+    </section>
+  @end
 @end

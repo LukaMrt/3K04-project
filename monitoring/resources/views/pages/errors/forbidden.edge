@@ -1,0 +1,13 @@
+@layouts.app({ title: 'Not permitted' })
+  @page({ title: 'Not permitted' })
+    <div class="panel" role="alert">
+      <p>Your role does not give access to this function.</p>
+      <p class="muted">Ask an administrator if you need it.</p>
+      <p style="margin-top: 16px;">
+        @link({ route: 'dashboard', class: 'il' })
+          Back to the dashboard
+        @end
+      </p>
+    </div>
+  @end
+@end

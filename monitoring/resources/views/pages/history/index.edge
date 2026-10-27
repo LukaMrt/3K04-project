@@ -1,0 +1,20 @@
+@layouts.app({ title: 'Event history' })
+  @page({ title: 'Event history', description: 'Choose an ADC to see its dispensing activities, status changes and alarms (FR-HIS-04).' })
+    <div class="panel">
+      @if(adcs.length === 0)
+        <p class="muted">No ADC registered.</p>
+      @else
+        <ul class="column">
+          @each(adc in adcs)
+            <li>
+              @link({ route: 'adcs.history', routeParams: { id: adc.adcId }, class: 'il' })
+                {{ adc.label }}
+              @end
+              <span class="muted">floor {{ adc.floor }}</span>
+            </li>
+          @end
+        </ul>
+      @end
+    </div>
+  @end
+@end

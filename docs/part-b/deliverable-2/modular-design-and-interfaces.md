@@ -2,21 +2,21 @@
 
 ## 1. Modules
 
-The system is decomposed into nine modules. Seven of them are the components of the D1 high-level architecture; the Operator Dashboard, a D1 component too, becomes the user interface module; the Clock is new (D-29). Each module hides one secret, the design decision most likely to change behind it.
+The system is decomposed into nine leaf modules. Seven of them are the components of the D1 high-level architecture; the Operator Dashboard, a D1 component too, becomes the user interface module; the Clock is new (D-29). Their responsibilities and secrets, the anticipated changes behind the secrets, the classification of the modules (hardware hiding, behaviour hiding, software decision hiding), the USES hierarchy diagram and the design review test are given in the module guide: [modular-decomposition.md](modular-decomposition.md). This document gives the interface of each module; the table below says where each one lives in the code.
 
-| Module | Code | Responsibility | Secret |
-| --- | --- | --- | --- |
-| Clock | `app/modules/clock/` | Give the current time | Where the time comes from (system clock, or a clock controlled by tests and demonstrations) |
-| Historical Data Store | `app/modules/history/` | Keep every record the system must retain, append-only, and answer queries over them | Storage technology and layout, retention mechanism |
-| User Management | `app/modules/users/` | Manage accounts and roles, decide permissions | The role → permission matrix (D-14) and the account storage |
-| Alarm Manager | `app/modules/alarms/` | Record alarms, keep their acknowledgement state, announce them | Alarm lifecycle and presentation rules (repetition of the critical cue) |
-| Cabinet Health Monitor | `app/modules/cabinet_health/` | Keep the registry of ADCs, their reported state and their connectivity | The connectivity state machine and its timeouts (45 s, 75 s) |
-| Inventory Supervisor | `app/modules/inventory/` | Keep the latest inventory of each ADC, flag low stock, find sources | The low-stock threshold and the source search rule |
-| ADC Communication Manager | `app/modules/adc_communication/` | Speak the ADC ↔ Monitoring protocol in both directions | Message formats, transport, ADC contact addresses (D-32) |
-| Reporting | `app/modules/reporting/` | Build, save and export reports; give users the event history and the audit log | Report layouts and export formats, patient identifier filtering (D-33) |
-| Operator Dashboard | `app/modules/dashboard/`, `app/controllers/`, `resources/views/` | Show everything to users and receive their requests | Page layout and wording, delivery technology to the browser (D-27) |
+| ID | Module | Code |
+| --- | --- | --- |
+| 1.1.1 | Clock | `app/modules/clock/` |
+| 1.1.2 | ADC Communication Manager | `app/modules/adc_communication/` |
+| 1.1.3 | Operator Dashboard | `app/modules/dashboard/`, `app/controllers/`, `resources/views/` |
+| 1.2.1 | Cabinet Health Monitor | `app/modules/cabinet_health/` |
+| 1.2.2 | Alarm Manager | `app/modules/alarms/` |
+| 1.2.3 | Inventory Supervisor | `app/modules/inventory/` |
+| 1.2.4 | User Management | `app/modules/users/` |
+| 1.2.5 | Reporting | `app/modules/reporting/` |
+| 1.3.1 | Historical Data Store | `app/modules/history/` |
 
-> The anticipated changes behind each secret, the classification of the modules (hardware hiding, behaviour hiding, software decision hiding) and the USES hierarchy diagram are given in the modular decomposition (issue #32). The USES list of each module below is the source of that diagram.
+The USES list of each module in section 3 is the source of the USES hierarchy diagram.
 
 ## 2. Interface conventions
 
@@ -63,6 +63,7 @@ State: an append-only set of records, each with its kind and its event date. No 
 | `appendSystemLog(entry)` | `SystemLogEntry` (event, ADC if any, details, time) | `void` | - | Stored (FR-HIS-08, NFR-AVL-05) | `StorageUnavailableError` |
 | `saveReport(report)` | `SavedReport` (kind, parameters, figures, generation time) | `ReportId` | - | Stored with its figures as generated (FR-HIS-06, FR-RPT-08) | `StorageUnavailableError` |
 | `findReport(reportId)` | `ReportId` | `SavedReport \| null` | - | None | `StorageUnavailableError` |
+| `listReports(kinds)` | `SavedReport['kind'][]` | `SavedReportHeader[]` (identifier, kind, parameters, generation time), most recent first | - | None | `StorageUnavailableError` |
 | `queryAdcHistory(adcId, range)` | `AdcId`, `DateRange` | `AdcHistory` (dispensing activities, status changes, alarms and acknowledgements) | - | None; patient identifiers included | `StorageUnavailableError` |
 | `queryDispensing(filter)` | `DispensingFilter` (range, ADC?, medication?, patient?, staff member?) | `DispensingRecord[]` | - | None | `StorageUnavailableError` |
 | `queryAlarms(range)` | `DateRange` | `StoredAlarmWithAck[]` | - | None | `StorageUnavailableError` |
@@ -75,13 +76,15 @@ Semantics: a record returned by a query is identical to the record stored, whate
 
 **Uses:** Historical Data Store, Clock. **Used by:** Operator Dashboard, Reporting.
 
-Authentication itself (login form, session, password hashing) is provided by the AdonisJS starter kit; this module adds roles, permissions and account management.
+Authentication itself (login form, session, password hashing) is provided by the AdonisJS starter kit; this module adds roles, permissions and account management. The role → permission matrix is the table `PERMISSIONS` of `users_service.ts`. A deactivated account is refused at login; the role is read at login and kept in the session, so that a role change applies from the next login (FR-USR-04).
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |
 | `can(actor, fn)` | `Actor`, `DashboardFunction` | `boolean` | - | None; answer read from the D-14 matrix (SPEC-USR-01) | - |
 | `canSeePatientIds(actor)` | `Actor` | `boolean` | - | None; true for pharmacist and administrator only (SPEC-USR-02) | - |
 | `actorOf(userId)` | `UserId` | `Actor \| null` | - | None; `null` if the account is deactivated (D-25) | `UnknownUserError` |
+| `nameOf(userId)` | `UserId` | `string`: full name, or email | - | None (FR-ALM-06: name who acknowledged) | `UnknownUserError` |
+| `listAccounts()` | - | `AccountSummary[]` (account number, name, email, role, active), sorted by email | - | None; never the password | - |
 | `createAccount(admin, account)` | `Actor`, `NewAccount` (name, email, password, role) | `UserId` | `admin` may manage accounts | Account created, active; audited (NFR-AUD-04) | `EmailAlreadyUsedError` |
 | `changeRole(admin, userId, role)` | `Actor`, `UserId`, `Role` | `void` | `admin` may manage accounts | Role changed, applies from the next login of that user (FR-USR-04); audited | `UnknownUserError` |
 | `deactivate(admin, userId)` | `Actor`, `UserId` | `void` | `admin` may manage accounts | Account deactivated: refused at login, open sessions closed at their next request (D-25); audited | `UnknownUserError` |
@@ -97,20 +100,20 @@ State: the alarms stored in the Historical Data Store, each `unacknowledged` or 
 | `recordFromAdc(alarm)` | `NewAdcAlarm` (transaction ID, ADC, ADC timestamp, type, severity, description?) | `RecordOutcome` | Alarm validated against SPEC-COM-03 (by the ADC Communication Manager); ADC registered | If `recorded`: stored unacknowledged with the ADC timestamp (A-14), then `raised` announced. If `duplicate`: nothing (D-28) | `StorageUnavailableError` |
 | `raiseCommunicationLoss(adcId)` | `AdcId` | `AlarmId` | Called by the Cabinet Health Monitor only, when `adcId` becomes offline | New alarm, type `communication_loss`, severity `error`, timestamp = now, stored unacknowledged, then `raised` announced (FR-HLT-04, D-15) | `StorageUnavailableError` |
 | `acknowledge(actor, alarmId)` | `Actor`, `AlarmId` | `AcknowledgeResult`: `acknowledged(at)` \| `alreadyAcknowledged(by, at)` | `actor` may acknowledge alarms (D-09, D-31) | If unacknowledged: acknowledgement stored, audited (NFR-AUD-01), then `acknowledged` announced. Else nothing changes (SPEC-ALM-01). If another acknowledgement wins the race between the check and the storage (`AlarmAlreadyAcknowledgedError` from the Historical Data Store), the exception is caught and nothing changes either: answer `alreadyAcknowledged` with the stored acknowledgement | `UnknownAlarmError`, `StorageUnavailableError` |
-| `listUnacknowledged()` | - | `Alarm[]`, most recent first | - | None (FR-ALM-04) | `StorageUnavailableError` |
+| `listUnacknowledged()` | - | `UnacknowledgedAlarm[]`: each `Alarm` with its `audibleRepeatSeconds`, most recent first | - | None (FR-ALM-04); a dashboard opened later repeats the cue too, without knowing the rule (SPEC-ALM-02) | `StorageUnavailableError` |
 | `subscribe(listener)` | `(event: AlarmEvent) => void` | Unsubscribe function | - | `listener` called for every later `raised` and `acknowledged` event | - |
 
 `AlarmEvent` is `{ kind: 'raised', alarm, audibleRepeatSeconds }` or `{ kind: 'acknowledged', alarmId, by, at }`. `audibleRepeatSeconds` is 60 for a critical alarm and `null` otherwise (SPEC-ALM-02, NFR-SAF-04): the rule stays in this module, the Dashboard only plays the sound as told (D-27).
 
 ### 3.5 Cabinet Health Monitor
 
-**Uses:** Alarm Manager, Historical Data Store, Clock. **Used by:** ADC Communication Manager, Inventory Supervisor, Operator Dashboard.
+**Uses:** Alarm Manager, Historical Data Store, Clock. **Used by:** ADC Communication Manager, Inventory Supervisor, Reporting, Operator Dashboard.
 
 State, for each registered ADC: label, location (floor, description), registration time, last contact `m_lastContact`, reported state or `⊥`, connectivity (`Reachable`, `Unreachable`, `Offline`). Invariant: the connectivity is the one SPEC-HLT-02 gives for `silence = now − lastContact`, as of the last call to `checkTimeouts`.
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |
-| `register(identity, at)` | `AdcIdentity` (ID, label, floor, description), `Date` | `RegistrationResult`: `{ firstRegistration }` | Identity validated (interface §3.1) | New ADC: stored, last contact = `at`, reported state `⊥` (FR-HLT-06). Known ADC: label and location replaced, re-registration logged, nothing else changed (D-20) (SPEC-COM-01) | `StorageUnavailableError` |
+| `register(identity, at)` | `AdcIdentity` (ID, label, floor, description), `Date` | `RegistrationResult`: `{ firstRegistration }` | Identity validated (interface §3.1) | New ADC: stored, last contact = `at`, reported state `⊥` (FR-HLT-06), first status change recorded (D-40) and `statusChanged` announced. Known ADC: label and location replaced, re-registration logged, nothing else changed (D-20) (SPEC-COM-01) | `StorageUnavailableError` |
 | `isRegistered(adcId)` | `AdcId` | `boolean` | - | None | - |
 | `recordHeartbeat(adcId, state, at)` | `AdcId`, `ReportedState`, `Date` | `void` | ADC registered | Last contact = `at`, connectivity `Reachable`; status change recorded if the reported state or the connectivity changed (FR-HIS-03); then `statusChanged` announced (SPEC-HLT-02) | `UnknownAdcError` |
 | `checkTimeouts()` | - | `void` | - | For each ADC, with `silence = now − lastContact` (SPEC-HLT-02): `Reachable` ∧ `45 ≤ silence < 75` → `Unreachable`, status change recorded, `statusChanged` announced. Not `Offline` ∧ `silence ≥ 75` → `Offline`, status change recorded, `alarms.raiseCommunicationLoss` called, `statusChanged` announced. Otherwise nothing. The communication loss alarm is raised only when the ADC enters `Offline`, never again while it stays offline. Called every second by a scheduler | `StorageUnavailableError` |
@@ -151,15 +154,18 @@ The protocol names (`set_maintenance_mode`, JSON field names, error codes) never
 
 ### 3.8 Reporting
 
-**Uses:** Historical Data Store, User Management, Clock. **Used by:** Operator Dashboard.
+**Uses:** Historical Data Store, User Management, Cabinet Health Monitor (ADC labels, D-41), Clock. **Used by:** Operator Dashboard.
+
+A `Report` holds its kind, its parameters (dates in ISO format), its generation time, its `total` (boxes dispensed, or number of alarms) and its rows. Reports are saved with all their figures, patient identifiers included, and filtered for each viewer when shown (D-42).
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |
-| `consumptionReport(actor, params)` | `Actor`, `ConsumptionParams` (range, ADC?, medication?, patient?, staff member?) | `Report` | `actor` may generate this report with these filters (D-14) | Report saved with its parameters and generation time (FR-HIS-06); patient identifiers included only if `users.canSeePatientIds(actor)`, and their display audited (SPEC-USR-02) | `StorageUnavailableError` |
-| `alarmReport(actor, range)` | `Actor`, `DateRange` | `Report` | `actor` may generate alarm reports | Report saved (FR-RPT-06) | `StorageUnavailableError` |
-| `exportReport(reportId)` | `ReportId` | `ExportFile` (file name, content type, content) | Report is an alarm report | None (FR-RPT-07); file format hidden in this module | `UnknownReportError` |
-| `openSavedReport(actor, reportId)` | `Actor`, `ReportId` | `Report`, with its figures at generation time | `actor` may generate reports of that kind | Patient identifiers filtered as above (FR-RPT-08) | `UnknownReportError` |
-| `adcHistory(actor, adcId, range)` | `Actor`, `AdcId`, `DateRange` | `AdcHistory` | `actor` may view event history | Patient identifiers filtered and their display audited (FR-HIS-04, D-33) | `StorageUnavailableError` |
+| `consumptionReport(actor, params)` | `Actor`, `ConsumptionParams` (range, ADC?, medication?, patient?, staff member?) | `Report`: total boxes, one row per dispensing activity | `actor` may generate this report with these filters (D-14); `range.from ≤ range.to` | Report saved with its parameters and generation time (FR-HIS-06); patient identifiers shown only if `users.canSeePatientIds(actor)`, and their display audited (SPEC-USR-02, NFR-AUD-06) | `StorageUnavailableError` |
+| `alarmReport(actor, range)` | `Actor`, `DateRange` | `Report`: number of alarms, one row per alarm (time, ADC label, type, severity, acknowledgement) | `actor` may generate alarm reports; `range.from ≤ range.to` | Report saved (FR-RPT-06, FR-HIS-06) | `StorageUnavailableError` |
+| `exportReport(reportId)` | `ReportId` | `ExportFile` (file name, content type, content) | - | None (FR-RPT-07); the file format (CSV today) is hidden in this module | `UnknownReportError` if no alarm report has this identifier |
+| `listSavedReports(actor)` | `Actor` | `SavedReportSummary[]` (identifier, kind, parameters, generation time), most recent first | - | None; only the kinds of reports the role of `actor` may generate (FR-RPT-08, D-14, D-42) | `StorageUnavailableError` |
+| `openSavedReport(actor, reportId)` | `Actor`, `ReportId` | `Report`, with its figures at generation time | `reportId` is one of `listSavedReports(actor)` | Patient identifiers filtered and audited as above (FR-RPT-08) | `UnknownReportError` |
+| `adcHistory(actor, adcId, range)` | `Actor`, `AdcId`, `DateRange` | `AdcHistoryView`: the `AdcHistory` of the Historical Data Store, patient identifiers left out unless allowed | `actor` may view event history | Patient identifiers filtered and their display audited (FR-HIS-04, D-33) | `StorageUnavailableError` |
 | `auditLog(actor, filter)` | `Actor`, `AuditFilter` | `AuditEntry[]` | `actor` may view the audit log | None (FR-HIS-07) | `StorageUnavailableError` |
 
 ### 3.9 Operator Dashboard
@@ -170,12 +176,51 @@ The Dashboard is the top of the USES hierarchy: no module calls it. Its interfac
 
 | Element | Content | Requirements |
 | --- | --- | --- |
-| Pages (server-rendered, `app/controllers/` + `resources/views/`) | Login, ADC list (filter, sort), ADC detail (status, inventory, history), alarms, commands and configuration, reports, accounts, audit log | FR-DSH-01 to 03, FR-INV-02, FR-ALM-04, FR-ALM-05, FR-RPT-01 to 08, FR-USR-03 to 05, FR-HIS-04, FR-HIS-07 |
-| Live channel (`app/modules/dashboard/live_channel.ts`) | Subscribes to the Alarm Manager and the Cabinet Health Monitor and pushes their events to the open dashboards, with the sound and its repetition | NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22, D-27 |
-| Role checks (server side, in the controllers) | Before each call made on behalf of a user, asks `users.can`; on refusal shows the permission message and calls nothing. Nothing is decided in the browser | SPEC-USR-01, D-31 |
+| Pages (server-rendered, `app/controllers/` + `resources/views/`, routes in `start/routes.ts`, one `can` middleware per route) | Login; dashboard (`/dashboard`: alarms with acknowledgement, ADCs needing attention, low stock, ADC list with filter and sort); ADC page (`/adcs/:id`: status, inventory, sources, commands, configuration); event history (`/history`, `/adcs/:id/history`); reports (`/reports`: generate, reopen, export); audit log (`/audit`); accounts (`/accounts`). The menu shows only the pages the role may open | FR-DSH-01 to 03, FR-INV-02, FR-ALM-04, FR-ALM-05, FR-RPT-01 to 08, FR-USR-03 to 05, FR-HIS-04, FR-HIS-07 |
+| Live channel (`app/modules/dashboard/live_channel.ts`, started by `start/live_channel.ts`) | Subscribes to the Alarm Manager and the Cabinet Health Monitor and pushes their events to the open dashboards on two channels, `alarms` and `adcs`, each opened only to the roles that may see it (`viewAlarms`, `viewAdcStatuses`). The browser (`resources/js/app.js`) shows them at once, with the sound and its repetition | NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22, D-27 |
+| Role checks (server side) | The `actor` middleware builds the `Actor` of each request from the session (role read at login) and closes the session of a deactivated account (D-25); the `can` middleware, one per route, asks `users.can` and on refusal shows the permission message and calls nothing. Nothing is decided in the browser | SPEC-USR-01, D-31 |
 
 Every value is shown with its D-16 text label, never by colour alone (NFR-USA-02, NFR-ACC-02), and every function can be reached with the keyboard (NFR-ACC-03).
 
 ## 4. External interface (ADC ↔ Monitoring System)
 
 The external interface is the contract agreed with the Part A sub-team: [interface-adc-monitoring.md](../interface-adc-monitoring.md). It is implemented by the ADC Communication Manager (section 3.7) and nowhere else.
+
+The message formats, error codes and examples are in the contract. This section states the interface from the Monitoring System's side: what it provides to the ADCs, what it requires from them, and how it behaves when they are unavailable. The protocol is the secret of the ADC Communication Manager (AC-02 in the [modular decomposition](modular-decomposition.md)): changing it touches no other module.
+
+### 4.1 Provided by the Monitoring System
+
+| Message (ADC → Monitoring) | Meaning | Answer and timing |
+| --- | --- | --- |
+| `POST /api/v1/adcs/register` (contract §3.1) | The ADC announces itself: identifier, label, contact address, location | `200` with `firstRegistration` and the heartbeat period (30 s), or `400 INVALID_MESSAGE`. Answered at once; a known identifier is accepted again (D-20) |
+| `POST /api/v1/heartbeats` (contract §3.2) | The ADC is alive; it reports its state, its complete inventory and its unacknowledged transactions | `200` with one acknowledgement per transaction (`received` or `rejected` with its reason), sent only once every transaction is stored (FR-REQ-01); `404 ADC_NOT_REGISTERED` from an unknown ADC; `400` for an invalid envelope; `500` if the storage fails, nothing acknowledged |
+
+| Message (Monitoring → ADC) | Meaning | Timing |
+| --- | --- | --- |
+| `POST {contactAddress}/api/v1/commands` (contract §4.1) | A technician or administrator asks the ADC to enter or leave maintenance mode | On user request only; never to an offline ADC (FR-COM-12) |
+| `POST {contactAddress}/api/v1/configuration` (contract §4.2) | An administrator changes the time server or the screen lock timeout | On user request only; never to an offline ADC |
+
+### 4.2 Required from the ADCs
+
+| What the Monitoring System relies on | Used for | Recorded as |
+| --- | --- | --- |
+| A heartbeat at least every 30 s, and at once on a new alarm or a state change | The 45 s and 75 s rules make sense only if a working ADC is never silent for 45 s | NAT-03 (A-05, A-08) |
+| Every transaction kept and resent until it is acknowledged; one heartbeat at a time | No alarm or dispensing activity is lost during an outage | NAT-04 (A-06, A-23, A-24) |
+| A transaction resent unchanged, with the same identifier | Duplicates are recognised by their identifier (D-28) | A-26, NAT-05 |
+| Identifiers that are UUID v4, the ADC identifier kept across restarts | An ADC that restarts is the same ADC | NAT-05 (A-07, A-21) |
+| A clock synchronised with the hospital time server | Alarm times set by the ADC are stored as they are (A-14) | NAT-06 |
+| An answer to a command or configuration within 10 s, carrying the message identifier and the ADC identifier | `delivered` only when the right ADC confirms the right message (FR-COM-11) | D-04 |
+
+### 4.3 Behaviour when an ADC is unavailable
+
+The safety functions of the Monitoring System never wait for an ADC: a silent ADC changes what is displayed, it never blocks the rest of the system (NFR-AVL-01, NFR-AVL-02).
+
+| Situation | Behaviour of the Monitoring System | Specified by |
+| --- | --- | --- |
+| No heartbeat for 45 s | ADC shown `UNREACHABLE`, its status and inventory labelled stale with the time of the last contact; it is no longer proposed as a source of stock | SPEC-HLT-01, SPEC-HLT-02, D-23 |
+| No heartbeat for 75 s | ADC shown `OFFLINE`; one communication loss alarm raised; commands and configurations refused | SPEC-HLT-02, SPEC-COM-04 |
+| The ADC communicates again | Back to its reported state; the communication loss alarm stays until a user acknowledges it; the transactions kept during the outage are recorded once each | SPEC-HLT-02, FR-HLT-07, SPEC-COM-03 |
+| An ADC has registered but never sent a heartbeat | Shown `PENDING`, never as working | SPEC-HLT-01, D-21 |
+| No answer to a command within 10 s | `failed`, the sender is told; no automatic retry | SPEC-COM-05, D-04 |
+| Heartbeat from an unknown ADC | Discarded and logged; the ADC registers again by itself on `404` | SPEC-COM-02, NFR-SEC-03 |
+| The Monitoring System itself is down | Nothing is lost: the ADCs keep their transactions and resend them (contract §7) | NAT-04 |

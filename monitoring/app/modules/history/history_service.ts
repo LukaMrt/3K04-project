@@ -15,6 +15,7 @@ import type {
   DispensingRecord,
   ReportId,
   SavedReport,
+  SavedReportHeader,
   StatusChangeRecord,
   StoredAlarm,
   StoredAlarmWithAck,
@@ -171,6 +172,22 @@ export default class HistoryService {
     return this.store(async () => {
       const report = await SavedReportModel.find(reportId)
       return report?.toRecord() ?? null
+    })
+  }
+
+  /** Saved reports of the given kinds, without their figures, most recent first. */
+  async listReports(kinds: SavedReport['kind'][]): Promise<SavedReportHeader[]> {
+    return this.store(async () => {
+      const reports = await SavedReportModel.query()
+        .whereIn('kind', kinds)
+        .orderBy('generated_at', 'desc')
+        .orderBy('id', 'desc')
+      return reports.map((report) => ({
+        reportId: report.id,
+        kind: report.kind as SavedReport['kind'],
+        parameters: JSON.parse(report.parameters),
+        generatedAt: report.generatedAt.toJSDate(),
+      }))
     })
   }
 

@@ -7,6 +7,8 @@ This section refines the Deliverable 1 requirements into a precise, unambiguous 
 - **Deliverable 1 identifiers are kept.** No FR, NFR, US, A or D identifier is renumbered. Each specification item below names the D1 requirements it refines.
 - **Specification items** are numbered `SPEC-<theme>-<nn>`, with the same themes as the D1 requirements (COM, HLT, INV, ALM, USR, HIS). The prefix `REQ-` is not used, to avoid any confusion with the D1 theme "Request Handling" (`FR-REQ-01`). The traceability table (section 5) extends each D1 requirement forward to these items.
 - **Function tables** are read row by row: when the condition of a row holds, the variables of that row take the given values. In every table, the conditions are **disjoint** (no two rows hold at once) and **complete** (one row always holds); this was checked for every table.
+- **Safety-critical functions.** The four-variable model (section 2) frames the whole system once. Section 3 gives a function table for every requirement that needed one; five functions, whose failure could hurt a patient, are specified further with pre-conditions, post-conditions and state invariants in [safety-critical-specifications.md](safety-critical-specifications.md): offline detection, alarm reception, alarm acknowledgement, command sending, and status and stock display. Their items are SPEC-HLT-01, SPEC-HLT-02, SPEC-COM-03 to 05, SPEC-ALM-01, SPEC-ALM-02, SPEC-INV-01 and SPEC-INV-02.
+- **Items written on inputs and outputs.** REQ is stated with monitored and controlled variables only, except for the ADC communication items SPEC-COM-01, 02, 03 and 05. The FR-COM requirements they refine are themselves about messages (accept a registration, acknowledge each transaction, mark a command delivered only if its acknowledgement carries the right identifiers), so these items state their conditions on the input variables of section 2.4 (`i_register`, `i_heartbeat`, `i_cmdResponse`) and give the outputs of section 2.5 in the terms of the interface contract (HTTP status, error code). They specify the interface with the ADCs, which is part of the requirements (FR-COM-01 to 12, interface contract), not a design choice of this team.
 - **Naming**: `m_` monitored, `c_` controlled, `i_` input, `o_` output; enumerated values are written `e_value`. `t` is the current time (`m_time`), in seconds. `a`, `b` denote ADCs, `med` a medication, `u` a user, `x` an alarm, `k` a command or configuration.
 - Every value shown to users uses the single label fixed by D-16 (NFR-USA-02).
 
@@ -185,7 +187,7 @@ Refines FR-COM-08, FR-COM-09, FR-COM-10, FR-ALM-01, FR-ALM-02, FR-ALM-03, FR-HIS
 | `x.id` not recorded ∧ `x.type = alarm` ∧ a required field missing (`timestamp`, `alarmType`, `severity`) | Rejection logged | `e_rejected(MISSING_FIELD)` |
 | `x.id` not recorded ∧ `x.type = alarm` ∧ fields present ∧ `x.severity ∉ {info, warning, error, critical}` | Rejection logged | `e_rejected(INVALID_SEVERITY)` |
 | `x.id` not recorded ∧ `x.type = alarm` ∧ fields present ∧ severity valid ∧ (a value has a wrong format ∨ `x.alarmType = communication_loss`) | Rejection logged | `e_rejected(INVALID_VALUE)` |
-| `x.id` not recorded ∧ `x.type = alarm` ∧ fields present ∧ severity valid ∧ values well formed | Alarm recorded, unacknowledged, with the ADC timestamp, `a`, its type (unknown types kept as received) and its severity | `e_received` |
+| `x.id` not recorded ∧ `x.type = alarm` ∧ fields present ∧ severity valid ∧ values well formed ∧ `x.alarmType ≠ communication_loss` | Alarm recorded, unacknowledged, with the ADC timestamp, `a`, its type (unknown types kept as received) and its severity | `e_received` |
 | `x.id` not recorded ∧ `x.type = dispensing` ∧ a required field of FR-COM-09 missing | Rejection logged | `e_rejected(MISSING_FIELD)` |
 | `x.id` not recorded ∧ `x.type = dispensing` ∧ fields present ∧ a value has a wrong format (UUID, timestamp, `quantityInBoxes < 1`) | Rejection logged | `e_rejected(INVALID_VALUE)` |
 | `x.id` not recorded ∧ `x.type = dispensing` ∧ fields present ∧ values well formed | Dispensing activity recorded | `e_received` |
@@ -304,9 +306,12 @@ Writing complete tables exposed cases that the D1 requirements left open. The te
 | A medication missing from the inventory of an ADC is neither "low" nor "not low". | Not flagged: the system cannot know that this ADC should hold it. | D-24 | SPEC-INV-01 |
 | FR-USR-05 refuses a deactivated account at login, but says nothing about an open session. | The session is closed on the next request. | D-25 | SPEC-USR-01 |
 | A request refused because of the role is not in the audit log (NFR-AUD-01 lists performed actions only). | Not logged; only the permission message is shown. | D-26 | SPEC-COM-04, SPEC-ALM-01 |
+| FR-HIS-03 keeps every status change, but does not say whether the arrival of a new ADC is one. | Yes: the first registration records the first status (no reported state, reachable). | D-40 | SPEC-HIS-01 |
 | The audible cue assumes a working speaker on the workstation. | Each operator workstation has a working, audible speaker. | A-25 | `o_sound` (section 2.5), SPEC-ALM-02 |
 
 ## 5. Traceability: D1 requirements → specification
+
+This table gives the precise-specification column of the traceability table of this document, which lists every requirement with its specification, its module and its code; it is kept here to show which items refine which requirements.
 
 Requirements not listed here are not refined by a function table: their D1 statement is already precise enough to be implemented and tested as it stands (FR-COM-09, FR-DSH-02, FR-DSH-03, FR-HIS-04, FR-HIS-07, FR-RPT-01 to 08, FR-USR-03, FR-USR-04, NFR-AUD-04), or they are quality targets verified by measurement and not by a relation between M and C (NFR-REL-02, NFR-AVL-01 to 05, NFR-USA-03, NFR-ACC-03, NFR-ACC-04, NFR-SEC-05).
 
@@ -348,3 +353,14 @@ Requirements not listed here are not refined by a function table: their D1 state
 | NFR-USA-01 | SPEC-INV-01 (with SPEC-HLT-01 and SPEC-ALM-02 for the other situations) |
 | NFR-USA-02 | Section 1 (D-16 labels), SPEC-HLT-01 |
 | NFR-ACC-01, NFR-ACC-02 | SPEC-ALM-02 |
+
+### Requirements that involve several modules
+
+A requirement should trace to one module; when it seems to need several, it was checked for atomicity. The cases below are atomic: each states one behaviour, decided by one module, and the other modules only carry out its consequence through their own interface. In the traceability table, each one is traced to the module that decides.
+
+| Requirement | One behaviour | Decided by | Other modules, and why they do not make it non-atomic |
+| --- | --- | --- | --- |
+| FR-HLT-04 | Raise a communication loss alarm when an ADC becomes offline | Cabinet Health Monitor (`checkTimeouts`) | The Alarm Manager records the alarm as any other one, and the Dashboard shows it: "recorded, displayed and acknowledged like an alarm received from an ADC" refers to FR-ALM-01, 04 and 05, which hold for every alarm |
+| FR-COM-06, FR-COM-12 | Outcome of a command or configuration (failed after 10 s; refused while offline) | ADC Communication Manager (`sendCommand`, `sendConfiguration`) | The Dashboard shows the outcome it receives (`DeliveryOutcome`); it decides nothing |
+| FR-ALM-06 | Refuse a second acknowledgement, naming the first one | Alarm Manager (`acknowledge`) | The Dashboard shows the `alreadyAcknowledged(by, at)` result |
+| FR-ALM-02, FR-ALM-03, FR-COM-10 | Reject an invalid transaction and log the rejection | ADC Communication Manager (SPEC-COM-03) | The Historical Data Store only keeps the log entry (`appendSystemLog`): storing is how the decision is recorded, not a second decision |

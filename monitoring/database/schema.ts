@@ -16,6 +16,36 @@ export class AdcContactSchema extends BaseModel {
   declare contactAddress: string
 }
 
+export class AdcSchema extends BaseModel {
+  static $columns = [
+    'adcId',
+    'connectivity',
+    'description',
+    'floor',
+    'label',
+    'lastContact',
+    'registeredAt',
+    'reportedState',
+  ] as const
+  $columns = AdcSchema.$columns
+  @column({ isPrimary: true })
+  declare adcId: string
+  @column()
+  declare connectivity: string
+  @column()
+  declare description: string
+  @column()
+  declare floor: number
+  @column()
+  declare label: string
+  @column.dateTime()
+  declare lastContact: DateTime
+  @column.dateTime()
+  declare registeredAt: DateTime
+  @column()
+  declare reportedState: string | null
+}
+
 export class AlarmAcknowledgementSchema extends BaseModel {
   static $columns = ['alarmId', 'at', 'userId'] as const
   $columns = AlarmAcknowledgementSchema.$columns
@@ -176,8 +206,19 @@ export class SystemLogEntrySchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
+  static $columns = [
+    'active',
+    'createdAt',
+    'email',
+    'fullName',
+    'id',
+    'password',
+    'role',
+    'updatedAt',
+  ] as const
   $columns = UserSchema.$columns
+  @column()
+  declare active: boolean
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
@@ -188,6 +229,8 @@ export class UserSchema extends BaseModel {
   declare id: number
   @column({ serializeAs: null })
   declare password: string
+  @column()
+  declare role: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }
