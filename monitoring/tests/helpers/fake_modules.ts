@@ -10,7 +10,10 @@ import ClockService from '#modules/clock/clock_service'
 import type { AdcId, RecordOutcome, ReportedState } from '#modules/shared/types'
 import { ManualClock } from '#tests/helpers/manual_clock'
 
-/** Stands in for the Cabinet Health Monitor (#39): a set of registered ADCs. */
+/**
+ * Stands in for the Cabinet Health Monitor, so that the ADC Communication Manager is tested
+ * alone: a set of registered ADCs.
+ */
 export class FakeCabinetHealth extends CabinetHealthService {
   registered = new Map<AdcId, AdcIdentity>()
   heartbeats: Array<{ adcId: AdcId; state: ReportedState; at: Date }> = []
@@ -43,7 +46,7 @@ export class FakeCabinetHealth extends CabinetHealthService {
   }
 }
 
-/** Stands in for the Alarm Manager (#38): keeps alarms in memory, once each (D-28). */
+/** Stands in for the Alarm Manager: keeps alarms in memory, once each (D-28). */
 export class FakeAlarms extends AlarmService {
   recorded: NewAdcAlarm[] = []
   failing = false
@@ -57,7 +60,7 @@ export class FakeAlarms extends AlarmService {
 }
 
 /**
- * Before each test of `group`: fresh fakes for the modules not written yet, a clock stopped
+ * Before each test of `group`: fresh fakes for the modules the ADC Communication Manager uses, a clock stopped
  * at `now`, and a database transaction rolled back afterwards.
  */
 export function useFakeModules(group: Group, now: Date) {

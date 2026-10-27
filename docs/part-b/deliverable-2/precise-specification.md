@@ -306,6 +306,7 @@ Writing complete tables exposed cases that the D1 requirements left open. The te
 | A medication missing from the inventory of an ADC is neither "low" nor "not low". | Not flagged: the system cannot know that this ADC should hold it. | D-24 | SPEC-INV-01 |
 | FR-USR-05 refuses a deactivated account at login, but says nothing about an open session. | The session is closed on the next request. | D-25 | SPEC-USR-01 |
 | A request refused because of the role is not in the audit log (NFR-AUD-01 lists performed actions only). | Not logged; only the permission message is shown. | D-26 | SPEC-COM-04, SPEC-ALM-01 |
+| FR-HIS-03 keeps every status change, but does not say whether the arrival of a new ADC is one. | Yes: the first registration records the first status (no reported state, reachable). | D-40 | SPEC-HIS-01 |
 | The audible cue assumes a working speaker on the workstation. | Each operator workstation has a working, audible speaker. | A-25 | `o_sound` (section 2.5), SPEC-ALM-02 |
 
 ## 5. Traceability: D1 requirements → specification

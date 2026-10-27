@@ -38,7 +38,7 @@ What the user then sees of `conn(a)` (never `ONLINE` while silent, stale labels)
 - **INV-HLT-2** (one alarm per loss of communication, D-15): the number of communication loss alarms raised for `a` equals the number of times `conn(a)` entered `Offline`.
 - **INV-HLT-3** (FR-HLT-07): no operation of this module acknowledges or removes an alarm; a heartbeat that brings `a` back to `Reachable` leaves its communication loss alarm unacknowledged.
 
-**Pre-conditions:** none. The scheduler calls the operation every second (`start/scheduler.ts`).
+**Pre-conditions:** no other call of `checkTimeouts` is running. The scheduler calls the operation every second and skips a call while the previous one still runs (`start/scheduler.ts`).
 
 **Post-conditions**, for each registered ADC `a`, with `s = silence(a)`:
 
@@ -53,11 +53,11 @@ What the user then sees of `conn(a)` (never `ONLINE` while silent, stale labels)
 
 `s < 45` is not possible while `conn(a) ≠ Reachable`: only a heartbeat (`recordHeartbeat`) brings `lastContact(a)` forward, and it sets `conn(a) := Reachable` at the same time.
 
-**Exceptions:** `StorageUnavailableError`. For an ADC whose change cannot be stored, `conn'(a) = conn(a)`, so the next call tries the same transition again. The alarm is stored before `conn(a)` becomes `Offline` (D-38): if the storage fails in between, the next call may raise a second alarm for the same loss, but never leaves an offline ADC without an alarm.
+**Exceptions:** `StorageUnavailableError`. For an ADC whose change cannot be stored, `conn'(a) = conn(a)`, so the next call tries the same transition again. The alarm is stored before `conn(a)` becomes `Offline` (D-38): if the storage fails in between, the next call may raise a second alarm for the same loss, but never leaves an offline ADC without an alarm. A heartbeat received while a call is running keeps its last contact; if the call then writes `Unreachable` or `Offline`, the next heartbeat (at most 30 s later, NAT-03) brings the ADC back to `Reachable`: the error is on the safe side, never `ONLINE` while silent.
 
 **Communication loss alarm** - `AlarmService.raiseCommunicationLoss(a)`. Pre: called by `checkTimeouts` only, when `a` enters `Offline`. Post: one new alarm `x` stored with `id(x)` a new UUID v4, `adc(x) = a`, `time(x) = now`, type `communication_loss`, severity `error`, source `communication_loss`, `ack(x) = ⊥`; then `raised(x)` announced with no repetition; returns `id(x)`. The description of the alarm does not mention the thresholds, which are the secret of this module ([modular decomposition](modular-decomposition.md), section 4).
 
-**Code:** `monitoring/app/modules/cabinet_health/cabinet_health_service.ts` (issue #39: not implemented yet, nor its call in the scheduler); `raiseCommunicationLoss` in `monitoring/app/modules/alarms/alarms_service.ts`, tested in `tests/unit/alarms/alarms_service.spec.ts`.
+**Code:** `checkTimeouts` and the transition table `ON_SILENCE` in `monitoring/app/modules/cabinet_health/cabinet_health_service.ts`, called by `monitoring/start/scheduler.ts`; `raiseCommunicationLoss` in `monitoring/app/modules/alarms/alarms_service.ts`. Tested in `tests/unit/cabinet_health/cabinet_health_service.spec.ts`, `tests/unit/alarms/alarms_service.spec.ts`, and end to end in `tests/functional/communication_loss.spec.ts`.
 
 ## 3. Alarm reception - `AdcCommunicationService.receiveHeartbeat()` and `AlarmService.recordFromAdc()`
 
@@ -171,7 +171,7 @@ The action is `send_command` or `send_configuration`. An unreachable ADC (`45 �
 - **INV-DSP-1** (NFR-SAF-03): `displayedStatus(a) = ONLINE ⇒ conn(a) = Reachable`. A silent cabinet is never shown as working.
 - **INV-DSP-2** (D-03): `stale(a) ⇔ conn(a) ≠ Reachable`, and a stale status always comes with `lastContact(a)`.
 - **INV-DSP-3** (NFR-SAF-01, NFR-REL-03): the stock of `a` is never shown without `heartbeatAt(a)`, nor without the stale label when `stale(a)`. The Dashboard reads it with `inventory.getInventory(a)` and labels it from `getStatus(a)` on the same page.
-- **INV-DSP-4** (D-23): a cabinet proposed as a source of stock is reachable: `reachableOnSameFloor(a)` returns only the ADCs `b ≠ a` of the same floor with `conn(b) = Reachable`.
+- **INV-DSP-4** (D-23): a cabinet proposed as a source of stock is reachable: `reachableOnSameFloor(a)` returns only the ADCs `b ≠ a` of the same floor with `silence(b) < 45`, computed at the call (SPEC-INV-01).
 - **INV-DSP-5** (D-22, D-27): every change of `displayedStatus(a)` is announced (`statusChanged`), so an open dashboard shows it within 2 s without reload.
 
 **Pre-conditions:** none.
@@ -189,4 +189,4 @@ The connectivity overrides the reported state (D-02): the last two rows ignore `
 
 **Exceptions:** `getStatus`: `UnknownAdcError` if `a` is not registered. `StorageUnavailableError` for both.
 
-**Code:** `getStatus`, `listAdcs`, `reachableOnSameFloor` in `monitoring/app/modules/cabinet_health/cabinet_health_service.ts` (issue #39: not implemented yet); `getInventory` and `findSources` in `monitoring/app/modules/inventory/inventory_service.ts`, tested in `tests/unit/inventory/inventory_service.spec.ts`; the pages in `monitoring/resources/views/` (issue #40).
+**Code:** `getStatus`, `listAdcs`, `reachableOnSameFloor` and the function `displayedStatus` in `monitoring/app/modules/cabinet_health/cabinet_health_service.ts`, tested in `tests/unit/cabinet_health/cabinet_health_service.spec.ts`; `getInventory` and `findSources` in `monitoring/app/modules/inventory/inventory_service.ts`, tested in `tests/unit/inventory/inventory_service.spec.ts`; the pages in `monitoring/resources/views/` (issue #40).

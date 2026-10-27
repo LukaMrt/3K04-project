@@ -16,6 +16,36 @@ export class AdcContactSchema extends BaseModel {
   declare contactAddress: string
 }
 
+export class AdcSchema extends BaseModel {
+  static $columns = [
+    'adcId',
+    'connectivity',
+    'description',
+    'floor',
+    'label',
+    'lastContact',
+    'registeredAt',
+    'reportedState',
+  ] as const
+  $columns = AdcSchema.$columns
+  @column({ isPrimary: true })
+  declare adcId: string
+  @column()
+  declare connectivity: string
+  @column()
+  declare description: string
+  @column()
+  declare floor: number
+  @column()
+  declare label: string
+  @column.dateTime()
+  declare lastContact: DateTime
+  @column.dateTime()
+  declare registeredAt: DateTime
+  @column()
+  declare reportedState: string | null
+}
+
 export class AlarmAcknowledgementSchema extends BaseModel {
   static $columns = ['alarmId', 'at', 'userId'] as const
   $columns = AlarmAcknowledgementSchema.$columns
