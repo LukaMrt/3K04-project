@@ -11,8 +11,6 @@ export type ScannedRoutes = {
     'system.echo': { paramsTuple?: []; params?: {} }
     'adc_protocol.register': { paramsTuple?: []; params?: {} }
     'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
-    'new_account.create': { paramsTuple?: []; params?: {} }
-    'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
@@ -21,14 +19,12 @@ export type ScannedRoutes = {
   GET: {
     'event_stream': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
-    'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
     'event_stream': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
-    'new_account.create': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
   }
@@ -38,7 +34,6 @@ export type ScannedRoutes = {
     'system.echo': { paramsTuple?: []; params?: {} }
     'adc_protocol.register': { paramsTuple?: []; params?: {} }
     'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
-    'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }
   }

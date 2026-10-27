@@ -32,9 +32,6 @@ router
 
 router
   .group(() => {
-    router.get('signup', [controllers.NewAccount, 'create'])
-    router.post('signup', [controllers.NewAccount, 'store'])
-
     router.get('login', [controllers.Session, 'create'])
     router.post('login', [controllers.Session, 'store'])
   })

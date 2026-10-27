@@ -6,7 +6,6 @@
 export const controllers = {
   AdcProtocol: () => import('#controllers/adc_protocol_controller'),
   Home: () => import('#controllers/home_controller'),
-  NewAccount: () => import('#controllers/new_account_controller'),
   Session: () => import('#controllers/session_controller'),
   System: () => import('#controllers/system_controller'),
 }

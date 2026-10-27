@@ -2,21 +2,21 @@
 
 ## 1. Modules
 
-The system is decomposed into nine modules. Seven of them are the components of the D1 high-level architecture; the Operator Dashboard, a D1 component too, becomes the user interface module; the Clock is new (D-29). Each module hides one secret, the design decision most likely to change behind it.
+The system is decomposed into nine leaf modules. Seven of them are the components of the D1 high-level architecture; the Operator Dashboard, a D1 component too, becomes the user interface module; the Clock is new (D-29). Their responsibilities and secrets, the anticipated changes behind the secrets, the classification of the modules (hardware hiding, behaviour hiding, software decision hiding), the USES hierarchy diagram and the design review test are given in the module guide: [modular-decomposition.md](modular-decomposition.md). This document gives the interface of each module; the table below says where each one lives in the code.
 
-| Module | Code | Responsibility | Secret |
-| --- | --- | --- | --- |
-| Clock | `app/modules/clock/` | Give the current time | Where the time comes from (system clock, or a clock controlled by tests and demonstrations) |
-| Historical Data Store | `app/modules/history/` | Keep every record the system must retain, append-only, and answer queries over them | Storage technology and layout, retention mechanism |
-| User Management | `app/modules/users/` | Manage accounts and roles, decide permissions | The role → permission matrix (D-14) and the account storage |
-| Alarm Manager | `app/modules/alarms/` | Record alarms, keep their acknowledgement state, announce them | Alarm lifecycle and presentation rules (repetition of the critical cue) |
-| Cabinet Health Monitor | `app/modules/cabinet_health/` | Keep the registry of ADCs, their reported state and their connectivity | The connectivity state machine and its timeouts (45 s, 75 s) |
-| Inventory Supervisor | `app/modules/inventory/` | Keep the latest inventory of each ADC, flag low stock, find sources | The low-stock threshold and the source search rule |
-| ADC Communication Manager | `app/modules/adc_communication/` | Speak the ADC ↔ Monitoring protocol in both directions | Message formats, transport, ADC contact addresses (D-32) |
-| Reporting | `app/modules/reporting/` | Build, save and export reports; give users the event history and the audit log | Report layouts and export formats, patient identifier filtering (D-33) |
-| Operator Dashboard | `app/modules/dashboard/`, `app/controllers/`, `resources/views/` | Show everything to users and receive their requests | Page layout and wording, delivery technology to the browser (D-27) |
+| ID | Module | Code |
+| --- | --- | --- |
+| 1.1.1 | Clock | `app/modules/clock/` |
+| 1.1.2 | ADC Communication Manager | `app/modules/adc_communication/` |
+| 1.1.3 | Operator Dashboard | `app/modules/dashboard/`, `app/controllers/`, `resources/views/` |
+| 1.2.1 | Cabinet Health Monitor | `app/modules/cabinet_health/` |
+| 1.2.2 | Alarm Manager | `app/modules/alarms/` |
+| 1.2.3 | Inventory Supervisor | `app/modules/inventory/` |
+| 1.2.4 | User Management | `app/modules/users/` |
+| 1.2.5 | Reporting | `app/modules/reporting/` |
+| 1.3.1 | Historical Data Store | `app/modules/history/` |
 
-> The anticipated changes behind each secret, the classification of the modules (hardware hiding, behaviour hiding, software decision hiding) and the USES hierarchy diagram are given in the modular decomposition (issue #32). The USES list of each module below is the source of that diagram.
+The USES list of each module in section 3 is the source of the USES hierarchy diagram.
 
 ## 2. Interface conventions
 
@@ -179,3 +179,42 @@ Every value is shown with its D-16 text label, never by colour alone (NFR-USA-02
 ## 4. External interface (ADC ↔ Monitoring System)
 
 The external interface is the contract agreed with the Part A sub-team: [interface-adc-monitoring.md](../interface-adc-monitoring.md). It is implemented by the ADC Communication Manager (section 3.7) and nowhere else.
+
+The message formats, error codes and examples are in the contract. This section states the interface from the Monitoring System's side: what it provides to the ADCs, what it requires from them, and how it behaves when they are unavailable. The protocol is the secret of the ADC Communication Manager (AC-02 in the [modular decomposition](modular-decomposition.md)): changing it touches no other module.
+
+### 4.1 Provided by the Monitoring System
+
+| Message (ADC → Monitoring) | Meaning | Answer and timing |
+| --- | --- | --- |
+| `POST /api/v1/adcs/register` (contract §3.1) | The ADC announces itself: identifier, label, contact address, location | `200` with `firstRegistration` and the heartbeat period (30 s), or `400 INVALID_MESSAGE`. Answered at once; a known identifier is accepted again (D-20) |
+| `POST /api/v1/heartbeats` (contract §3.2) | The ADC is alive; it reports its state, its complete inventory and its unacknowledged transactions | `200` with one acknowledgement per transaction (`received` or `rejected` with its reason), sent only once every transaction is stored (FR-REQ-01); `404 ADC_NOT_REGISTERED` from an unknown ADC; `400` for an invalid envelope; `500` if the storage fails, nothing acknowledged |
+
+| Message (Monitoring → ADC) | Meaning | Timing |
+| --- | --- | --- |
+| `POST {contactAddress}/api/v1/commands` (contract §4.1) | A technician or administrator asks the ADC to enter or leave maintenance mode | On user request only; never to an offline ADC (FR-COM-12) |
+| `POST {contactAddress}/api/v1/configuration` (contract §4.2) | An administrator changes the time server or the screen lock timeout | On user request only; never to an offline ADC |
+
+### 4.2 Required from the ADCs
+
+| What the Monitoring System relies on | Used for | Recorded as |
+| --- | --- | --- |
+| A heartbeat at least every 30 s, and at once on a new alarm or a state change | The 45 s and 75 s rules make sense only if a working ADC is never silent for 45 s | NAT-03 (A-05, A-08) |
+| Every transaction kept and resent until it is acknowledged; one heartbeat at a time | No alarm or dispensing activity is lost during an outage | NAT-04 (A-06, A-23, A-24) |
+| A transaction resent unchanged, with the same identifier | Duplicates are recognised by their identifier (D-28) | A-26, NAT-05 |
+| Identifiers that are UUID v4, the ADC identifier kept across restarts | An ADC that restarts is the same ADC | NAT-05 (A-07, A-21) |
+| A clock synchronised with the hospital time server | Alarm times set by the ADC are stored as they are (A-14) | NAT-06 |
+| An answer to a command or configuration within 10 s, carrying the message identifier and the ADC identifier | `delivered` only when the right ADC confirms the right message (FR-COM-11) | D-04 |
+
+### 4.3 Behaviour when an ADC is unavailable
+
+The safety functions of the Monitoring System never wait for an ADC: a silent ADC changes what is displayed, it never blocks the rest of the system (NFR-AVL-01, NFR-AVL-02).
+
+| Situation | Behaviour of the Monitoring System | Specified by |
+| --- | --- | --- |
+| No heartbeat for 45 s | ADC shown `UNREACHABLE`, its status and inventory labelled stale with the time of the last contact; it is no longer proposed as a source of stock | SPEC-HLT-01, SPEC-HLT-02, D-23 |
+| No heartbeat for 75 s | ADC shown `OFFLINE`; one communication loss alarm raised; commands and configurations refused | SPEC-HLT-02, SPEC-COM-04 |
+| The ADC communicates again | Back to its reported state; the communication loss alarm stays until a user acknowledges it; the transactions kept during the outage are recorded once each | SPEC-HLT-02, FR-HLT-07, SPEC-COM-03 |
+| An ADC has registered but never sent a heartbeat | Shown `PENDING`, never as working | SPEC-HLT-01, D-21 |
+| No answer to a command within 10 s | `failed`, the sender is told; no automatic retry | SPEC-COM-05, D-04 |
+| Heartbeat from an unknown ADC | Discarded and logged; the ADC registers again by itself on `404` | SPEC-COM-02, NFR-SEC-03 |
+| The Monitoring System itself is down | Nothing is lost: the ADCs keep their transactions and resend them (contract §7) | NAT-04 |
