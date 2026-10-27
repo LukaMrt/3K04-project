@@ -4,7 +4,7 @@
 
 This document is the design document of the **Hospital Monitoring System**, Part B of the SFWRENG 3K04 project (Fall 2026), for Deliverable 2. Deliverable 1 stated what the system must do; this document states how it is built. It refines the D1 requirements into a precise specification, decomposes the system into modules that each hide an anticipated change, documents their interfaces and the external interface with the ADCs, and shows how this design is realised in the code that is demonstrated.
 
-The D1 requirements document is its base: requirements, user stories, UML models and the D1 assumptions and decisions are kept, with their identifiers, in the appendices. Everything in this document traces back to those identifiers.
+The D1 requirements document is its base: its requirements, user stories, UML models, assumptions and decisions keep their identifiers and remain in force, and everything in this document traces back to them. They are not repeated here; the changes made to them since D1 are listed in section 3.
 
 Intended readers: the team, the teaching assistants, and the ADC team (Part A), with whom the interface between both systems was agreed.
 
@@ -14,11 +14,11 @@ The Monitoring System is the supervisory software that centralises the monitorin
 
 The system is safety-critical even though it never releases medication: hiding an alarm, showing a silent cabinet as healthy, or assuming that an uncertain command succeeded can harm a patient. These hazards decide which functions are specified with pre-conditions, post-conditions and invariants (section 2), and which anticipated changes the modules hide.
 
-The full context (scope, out-of-scope items, actors, the four operational scenarios) is the one of D1 (Appendix A).
+The full context (scope, out-of-scope items, actors, the four operational scenarios) is the one of the D1 document.
 
 ## 3. Changes since Deliverable 1
 
-The D1 identifiers are unchanged: no requirement, story or assumption was renumbered or removed. The changes below were made to the D1 documents, which are given in their updated form in the appendices. The baseline is the D1 document as tagged `deliverable-1` in the team repository.
+The D1 identifiers are unchanged: no requirement, story or assumption was renumbered or removed. The changes below were made to the D1 documents, which the team keeps up to date. The baseline is the D1 document as tagged `deliverable-1` in the team repository.
 
 ### 3.1 Corrected requirements and models
 
@@ -37,7 +37,7 @@ Writing the precise specification as complete tables showed cases that D1 left o
 
 ### 3.3 Closed open points and new items
 
-- **Interface with Part A.** The open points O-01 to O-04 of D1 are closed by the ADC ↔ Monitoring interface contract (Appendix D) and the assumptions A-18 to A-24 that summarise it.
+- **Interface with Part A.** The open points O-01 to O-04 of D1 are closed by the ADC ↔ Monitoring interface contract (Appendix A) and the assumptions A-18 to A-24 that summarise it.
 - **New assumptions and decisions**: A-18 to A-26 and D-20 to D-44, listed with their reasoning in section 6.
 
 ## 4. Document structure
@@ -50,10 +50,6 @@ Writing the precise specification as complete tables showed cases that D1 left o
 | 4. Implementation notes | Which code implements each module, and how the D1 state machines and activity diagrams are realised |
 | 5. Traceability | Every D1 requirement → user story → precise specification → module → code |
 | 6. Assumptions and decisions | Every assumption and decision since D1, with ethical and accessibility considerations |
-| Appendix A | D1 requirements, updated: introduction and system context, stakeholders, functional and non-functional requirements |
-| Appendix B | D1 UML models, updated: high-level architecture, class model, use cases, activity, state machine and sequence diagrams |
-| Appendix C | D1 user stories, with their acceptance criteria |
-| Appendix D | ADC ↔ Monitoring interface contract v1.0 |
-| Appendix E | D1 assumptions and decisions (A-01 to A-17, D-01 to D-19), role permissions matrix and D1 ethical considerations |
+| Appendix A | ADC ↔ Monitoring interface contract v1.0, agreed with Part A |
 
 Identifiers: `FR-`, `NFR-` (requirements), `US-` (stories), `A-`, `D-` (assumptions, decisions) come from D1 and are continued; `SPEC-` (specification items), `INV-` (state invariants of the safety-critical functions), and `AC-` and `UC-` (anticipated and unlikely changes) are new in this document.

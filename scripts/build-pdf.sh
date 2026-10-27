@@ -40,8 +40,8 @@ case "$DELIVERABLE" in
     )
     ;;
   2)
-    # Order of the design document (deliverable-2.pdf, §4); the D1 document, its base,
-    # follows as appendices
+    # Order of the design document (deliverable-2.pdf, §4); the interface contract with
+    # Part A follows as an appendix. The D1 document is submitted on its own (option 1).
     FILES=(
       deliverable-2/cover.md
       deliverable-2/introduction.md
@@ -52,24 +52,8 @@ case "$DELIVERABLE" in
       deliverable-2/implementation-notes.md
       deliverable-2/traceability.md
       deliverable-2/assumptions-and-decisions.md
-      "@part:Appendix A - Requirements (Deliverable 1, updated)"
-      deliverable-1/introduction-and-system-context.md
-      deliverable-1/stakeholders.md
-      deliverable-1/functional-requirements.md
-      deliverable-1/non-functional-requirements.md
-      "@part:Appendix B - UML Models (Deliverable 1, updated)"
-      deliverable-1/diagrams/high-level-architecture.md
-      deliverable-1/diagrams/class-model.md
-      deliverable-1/diagrams/use-case-diagram.md
-      deliverable-1/diagrams/activity-diagram.md
-      deliverable-1/diagrams/state-machine-diagrams.md
-      deliverable-1/diagrams/sequence-diagram.md
-      "@part:Appendix C - User Stories (Deliverable 1, updated)"
-      deliverable-1/user-stories.md
-      "@part:Appendix D - ADC ↔ Monitoring Interface Contract"
+      "@part:Appendix A - ADC ↔ Monitoring Interface Contract"
       interface-adc-monitoring.md
-      "@part:Appendix E - Assumptions and Decisions of Deliverable 1"
-      deliverable-1/assumptions-and-decisions.md
     )
     ;;
   *)
@@ -106,7 +90,9 @@ npx -y -p @mermaid-js/mermaid-cli mmdc \
 # (the change of page size already starts a new page; keeping it adds a blank page).
 perl -0pi -e 's{^# (High-Level Architecture[^\n]*)\n\s*!\[[^\]]*\]\(\./(full-rendered-\d+\.svg)\)\s*<div class="page-break"></div>}{<div class="wide"><h1>$1</h1><img src="./$2"></div>}m' \
   "$BUILD/full-rendered.md"
-grep -q '<div class="wide">' "$BUILD/full-rendered.md" || { echo "Architecture diagram not found" >&2; exit 1; }
+if grep -q '^# High-Level Architecture' "$BUILD/full.md"; then
+  grep -q '<div class="wide">' "$BUILD/full-rendered.md" || { echo "Architecture diagram not found" >&2; exit 1; }
+fi
 
 # 3. Markdown -> PDF (preferCSSPageSize: honour the @page sizes of pdf.css, A3 page included)
 npx -y md-to-pdf "$BUILD/full-rendered.md" \
