@@ -1,8 +1,13 @@
+<div class="tall">
+
 # Activity Diagrams - Part B (Hospital Monitoring System)
+
+Notation: rounded boxes are actions, labelled diamonds are decisions (their outgoing flows carry the guards), and empty diamonds are merges. No action has more than one incoming flow: alternative paths always meet in a merge, since several flows entering an action would be an implicit join. The scenarios have no concurrent paths, hence no fork or join bars.
 
 ## 1. Inventory Monitoring (Scenario 1)
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 600, "rankSpacing": 28, "nodeSpacing": 30}}}%%
 flowchart TD
     Start((" ")) --> Request("Pharmacist requests the inventory overview")
     Request --> Retrieve("Retrieve the inventory of each registered ADC<br/>and the aggregated quantity per medication<br/>(FR-INV-02, FR-INV-06)")
@@ -31,6 +36,7 @@ flowchart TD
 ## 2. Alarm Reception and Acknowledgement (Scenario 2)
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 600, "rankSpacing": 28, "nodeSpacing": 30}}}%%
 flowchart TD
     Start((" ")) --> Receive("Receive a heartbeat containing an alarm transaction<br/>(sent immediately by the ADC when it raises the alarm)")
     Receive --> Registered{"Sending ADC<br/>registered?"}
@@ -67,22 +73,25 @@ flowchart TD
 ## 3. ADC Communication Failure (Scenario 3)
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 600, "rankSpacing": 28, "nodeSpacing": 30}}}%%
 flowchart TD
-    Start((" ")) --> Wait("Wait for the next heartbeat<br/>of a registered ADC")
+    Start((" ")) --> MWait{" "}
+    MWait --> Wait("Wait for the next heartbeat<br/>of a registered ADC")
     Wait --> Within45{"Heartbeat received less than<br/>45 s after the previous one<br/>(or the registration, FR-HLT-06)?"}
-    Within45 -- "yes" --> RecordHb("Record the heartbeat reception time<br/>(FR-COM-03)")
+    Within45 -- "yes" --> MRecord{" "}
+    MRecord --> RecordHb("Record the heartbeat reception time<br/>(FR-COM-03)")
     RecordHb --> Store("Store the reported status, the complete inventory<br/>and the transactions not yet received,<br/>then acknowledge them<br/>(FR-COM-07, FR-COM-08, FR-INV-01, FR-REQ-01)")
     Store --> ShowState("Display the operational state<br/>reported by the ADC<br/>(FR-HLT-01)")
-    ShowState --> Wait
+    ShowState --> MWait
     Within45 -- "no" --> Unreachable("Mark the ADC 'unreachable', label its status<br/>and inventory 'stale', record the status change<br/>(FR-HLT-02, NFR-SAF-01, NFR-SAF-03, FR-HIS-03)")
     Unreachable --> Within75{"Heartbeat received less than<br/>75 s after the previous one?"}
-    Within75 -- "yes" --> Recover("Show the state reported in that heartbeat<br/>(FR-HLT-05)")
-    Recover --> RecordHb
+    Within75 -- "yes" --> MRecover{" "}
+    MRecover --> Recover("Show the state reported in that heartbeat<br/>(FR-HLT-05)")
+    Recover --> MRecord
     Within75 -- "no" --> Offline("Mark the ADC 'offline', regardless of its<br/>last reported state, record the status change<br/>(FR-HLT-03, NFR-SAF-03, FR-HIS-03)")
     Offline --> Alert("Raise a 'communication loss' alarm of severity 'error',<br/>displayed within 2 s and handled like any alarm;<br/>it stays unacknowledged even if the ADC comes back<br/>(FR-HLT-04, FR-HLT-07, NFR-PRF-01)")
-    Alert --> WaitBack{"Heartbeat<br/>received?"}
-    WaitBack -- "no" --> WaitBack
-    WaitBack -- "yes" --> Recover
+    Alert --> WaitBack("Wait for the next heartbeat<br/>of the offline ADC")
+    WaitBack --> MRecover
 
     classDef initial fill:#000,stroke:#000;
     class Start initial;
@@ -93,6 +102,7 @@ This flow has no final node on purpose: the system supervises every registered A
 ## 4. Historical Review (Scenario 4)
 
 ```mermaid
+%%{init: {"flowchart": {"wrappingWidth": 600, "rankSpacing": 28, "nodeSpacing": 30}}}%%
 flowchart TD
     Start((" ")) --> Request("A pharmacist, administrator or risk manager<br/>requests the history of an ADC over a date range")
     Request --> Valid{"End date later than<br/>or equal to start date?"}
@@ -103,8 +113,9 @@ flowchart TD
     Any -- "yes" --> Role{"User is a pharmacist<br/>or an administrator?"}
     Role -- "yes" --> WithId("Include patient identifiers<br/>and log their display<br/>(NFR-SEC-04, NFR-AUD-06)")
     Role -- "no" --> NoId("Hide patient identifiers<br/>(NFR-SEC-04)")
-    WithId --> Show("Display the history in read-only mode")
-    NoId --> Show
+    WithId --> MShow{" "}
+    NoId --> MShow
+    MShow --> Show("Display the history in read-only mode")
     Show --> Alter{"User attempts to modify<br/>or delete an entry?"}
     Alter -- "yes" --> Refuse("Refuse; the entry is unchanged<br/>(NFR-AUD-02, NFR-AUD-03)")
     Alter -- "no" --> M{" "}
@@ -118,3 +129,5 @@ flowchart TD
     class Start initial;
     class End final;
 ```
+
+</div>

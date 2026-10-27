@@ -31,8 +31,10 @@
 
 ## Performance (PRF) - how fast?
 
-- **NFR-PRF-01** The system shall display a new alarm on the dashboard no later than 2 seconds after its receipt, or after its generation for a communication loss alarm.
-- **NFR-PRF-02** The system shall meet NFR-PRF-01 with up to 50 simultaneously connected ADCs.
+- **NFR-PRF-01** The system shall display a new alarm on the dashboard no later than 2 seconds after the moment it enters the system: its receipt from the ADC for an alarm raised by an ADC, or the moment the system raises it for a communication loss alarm.
+- **NFR-PRF-02** The system shall meet NFR-PRF-01 with at least 50 simultaneously connected ADCs.
+
+NFR-PRF-02 sets the load under which NFR-PRF-01 is verified, not a maximum number of ADCs: the system accepts any number of ADCs (FR-COM-01, D-19), and 50 is the size estimated for one hospital (D-12).
 
 ## Traceability / Auditability (AUD) - can we reconstruct what happened?
 
