@@ -28,10 +28,11 @@ test.group('Home page', (group) => {
     response.assertHeader('location', '/dashboard')
   })
 
-  test('the login page speaks of the project', async ({ client }) => {
+  test('the login page shows only the sign-in form', async ({ client, assert }) => {
     const response = await client.get('/login')
 
-    response.assertTextIncludes('Use the account given to you by an administrator')
+    response.assertTextIncludes('Sign in')
+    assert.notInclude(response.text(), 'auth__aside')
   })
 
   test('renders the system check page', async ({ client }) => {

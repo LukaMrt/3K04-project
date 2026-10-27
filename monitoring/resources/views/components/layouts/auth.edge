@@ -17,29 +17,9 @@
     @stack('dumper')
   </head>
   <body>
-    <div class="auth">
-      <div class="auth__form-col">
-        @!logo({ size: 28 })
-        <div class="auth__form-wrap">{{{ await $slots.main() }}}</div>
-        <div style="height: 20px;"></div>
-      </div>
-
-      <aside class="auth__aside">
-        <div class="auth__aside-top">
-          @!themeToggle()
-        </div>
-
-        <p class="auth__quote">Hospital Monitoring System</p>
-
-        <div>
-          <div class="pitch__t">Supervision of the Automated Dispensing Cabinets</div>
-          <p class="pitch__p">
-            Status, inventory and alarms of every cabinet of the hospital, updated live. Accounts are
-            created by an administrator; what each role can see and do is set by its permissions.
-          </p>
-        </div>
-      </aside>
-    </div>
+    <main class="auth">
+      <div class="auth__form-wrap">{{{ await $slots.main() }}}</div>
+    </main>
     @include('partials/flash_alerts')
   </body>
 </html>
