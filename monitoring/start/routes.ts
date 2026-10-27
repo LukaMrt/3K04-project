@@ -18,6 +18,7 @@ import transmit from '@adonisjs/transmit/services/main'
 transmit.registerRoutes()
 
 router.get('/', [controllers.Home, 'index']).as('home')
+router.get('system', [controllers.Home, 'system']).as('system.check')
 router.post('/system/echo', [controllers.System, 'echo']).as('system.echo')
 
 /**

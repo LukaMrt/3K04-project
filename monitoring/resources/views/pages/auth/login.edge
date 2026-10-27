@@ -1,6 +1,6 @@
 @layouts.auth()
-  <h1 class="auth__title">Welcome back</h1>
-  <p class="auth__sub">Sign in to continue building.</p>
+  <h1 class="auth__title">Sign in</h1>
+  <p class="auth__sub">Hospital Monitoring System. Use the account given to you by an administrator.</p>
   @form({
     route: 'session.store',
     method: 'POST',
@@ -13,7 +13,7 @@
       @!input.control({
         type: 'email',
         autocomplete: 'username',
-        placeholder: 'you@example.com',
+        placeholder: 'name@hospital.test',
       })
       @!field.error()
     @end
@@ -37,6 +37,6 @@
   @end
 
   <p class="auth__foot">
-    No account? Ask an administrator to create one (FR-USR-03).
+    No account? Ask an administrator to create one.
   </p>
 @end

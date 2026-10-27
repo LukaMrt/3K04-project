@@ -8,6 +8,7 @@ export type ScannedRoutes = {
     'subscribe': { paramsTuple?: []; params?: {} }
     'unsubscribe': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'system.check': { paramsTuple?: []; params?: {} }
     'system.echo': { paramsTuple?: []; params?: {} }
     'adc_protocol.register': { paramsTuple?: []; params?: {} }
     'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
@@ -35,6 +36,7 @@ export type ScannedRoutes = {
   GET: {
     'event_stream': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'system.check': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
     'adcs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -49,6 +51,7 @@ export type ScannedRoutes = {
   HEAD: {
     'event_stream': { paramsTuple?: []; params?: {} }
     'home': { paramsTuple?: []; params?: {} }
+    'system.check': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
     'adcs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
