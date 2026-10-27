@@ -55,6 +55,9 @@ case "$DELIVERABLE" in
       "@part:Appendix A - ADC ↔ Monitoring Interface Contract"
       interface-adc-monitoring.md
       deliverable-2/appendix-methodology-and-ai-use.md
+      "@part:Appendix C - D1 Behaviour Models, Corrected after the D1 Feedback"
+      deliverable-1/diagrams/state-machine-diagrams.md
+      deliverable-1/diagrams/activity-diagram.md
     )
     ;;
   *)
@@ -72,7 +75,11 @@ for i in "${!FILES[@]}"; do
   if [[ "$entry" == @part:* ]]; then
     printf '<div class="part-title"><h1>%s</h1></div>\n' "${entry#@part:}"
   else
+    printf '<!-- file: %s -->\n' "$entry"
     cat "$SRC/$entry"
+  fi
+  if (( i == 0 )); then
+    printf '\n\n<div class="page-break"></div>\n\n<!-- toc -->\n'
   fi
   if (( i < ${#FILES[@]} - 1 )); then
     printf '\n\n<div class="page-break"></div>\n\n'
@@ -80,7 +87,7 @@ for i in "${!FILES[@]}"; do
 done > "$BUILD/full.md"
 
 # Links to other .md files do not work in a single PDF: keep only their text
-sed -E -i '' 's/\[([^]]*)\]\([^)]*\.md[^)]*\)/\1/g' "$BUILD/full.md"
+python3 "$ROOT/scripts/link-sections.py" "$BUILD/full.md"
 
 # Identifier columns stay on one line (pdf.css); see the script for the rule
 python3 "$ROOT/scripts/mark-id-tables.py" "$BUILD/full.md"
@@ -92,16 +99,18 @@ npx -y -p @mermaid-js/mermaid-cli mmdc \
 # The architecture diagram is too wide for A4: A3 landscape page.
 # Its title moves onto the same page, and the following page break is dropped
 # (the change of page size already starts a new page; keeping it adds a blank page).
-perl -0pi -e 's{^# (High-Level Architecture[^\n]*)\n\s*!\[[^\]]*\]\(\./(full-rendered-\d+\.svg)\)\s*<div class="page-break"></div>}{<div class="wide"><h1>$1</h1><img src="./$2"></div>}m' \
+perl -0pi -e 's{^# ((?:<a id="[^"]*"></a>)?High-Level Architecture[^\n]*)\n\s*!\[[^\]]*\]\(\./(full-rendered-\d+\.svg)\)\s*<div class="page-break"></div>}{<div class="wide"><h1>$1</h1><img src="./$2"></div>}m' \
   "$BUILD/full-rendered.md"
-if grep -q '^# High-Level Architecture' "$BUILD/full.md"; then
+python3 "$ROOT/scripts/size-tall-svgs.py" "$BUILD/full-rendered.md"
+
+if grep -Eq '^# (<a id="[^"]*"></a>)?High-Level Architecture' "$BUILD/full.md"; then
   grep -q '<div class="wide">' "$BUILD/full-rendered.md" || { echo "Architecture diagram not found" >&2; exit 1; }
 fi
 
 # 3. Markdown -> PDF (preferCSSPageSize: honour the @page sizes of pdf.css, A3 page included)
 npx -y md-to-pdf "$BUILD/full-rendered.md" \
   --stylesheet "$ROOT/docs/pdf.css" \
-  --pdf-options '{"format": "A4", "preferCSSPageSize": true, "printBackground": true}'
+  --pdf-options '{"format": "A4", "preferCSSPageSize": true, "printBackground": true, "outline": true, "tagged": true}'
 
 mv "$BUILD/full-rendered.pdf" "$OUTPUT"
 echo "PDF: $OUTPUT"
