@@ -51,5 +51,6 @@ Writing the precise specification as complete tables showed cases that D1 left o
 | 5. Traceability | Every D1 requirement → user story → precise specification → module → code |
 | 6. Assumptions and decisions | Every assumption and decision since D1, with ethical and accessibility considerations |
 | Appendix A | ADC ↔ Monitoring interface contract v1.0, agreed with Part A |
+| Appendix B | How the documents and the code were produced, and our use of AI |
 
 Identifiers: `FR-`, `NFR-` (requirements), `US-` (stories), `A-`, `D-` (assumptions, decisions) come from D1 and are continued; `SPEC-` (specification items), `INV-` (state invariants of the safety-critical functions), and `AC-` and `UC-` (anticipated and unlikely changes) are new in this document.
