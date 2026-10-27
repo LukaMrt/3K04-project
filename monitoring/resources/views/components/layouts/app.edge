@@ -4,6 +4,9 @@
 --}}
 @let(nav = [
   { label: 'Dashboard', route: 'dashboard', icon: 'lucide:house' },
+  { label: 'Event history', route: 'history.index', icon: 'lucide:history', fn: 'viewAdcHistory' },
+  { label: 'Reports', route: 'reports.index', icon: 'lucide:file-text', fn: 'openSavedReport' },
+  { label: 'Audit log', route: 'audit.index', icon: 'lucide:scroll-text', fn: 'viewAuditLog' },
   { label: 'Accounts', route: 'accounts.index', icon: 'lucide:users', fn: 'manageAccounts' },
 ].filter((item) => !item.fn || (typeof can !== 'undefined' && can(item.fn))))
 @let(pageTitle = $props.get('title'))

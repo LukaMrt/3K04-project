@@ -5,7 +5,9 @@
         Back to the dashboard
       @end
       @if(canHistory)
-        <a class="btn btn--secondary btn--sm" href="/adcs/{{ adc.adcId }}/history">Event history</a>
+        @link({ route: 'adcs.history', routeParams: { id: adc.adcId }, class: 'btn btn--secondary btn--sm' })
+          Event history
+        @end
       @end
     @end
 

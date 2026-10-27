@@ -19,6 +19,14 @@ export type ScannedRoutes = {
     'adcs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'adcs.maintenance': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'adcs.configure': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'history.index': { paramsTuple?: []; params?: {} }
+    'adcs.history': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'audit.index': { paramsTuple?: []; params?: {} }
+    'reports.index': { paramsTuple?: []; params?: {} }
+    'reports.consumption': { paramsTuple?: []; params?: {} }
+    'reports.alarms': { paramsTuple?: []; params?: {} }
+    'reports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'reports.export': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.index': { paramsTuple?: []; params?: {} }
     'accounts.store': { paramsTuple?: []; params?: {} }
     'accounts.role': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -30,6 +38,12 @@ export type ScannedRoutes = {
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
     'adcs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'history.index': { paramsTuple?: []; params?: {} }
+    'adcs.history': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'audit.index': { paramsTuple?: []; params?: {} }
+    'reports.index': { paramsTuple?: []; params?: {} }
+    'reports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'reports.export': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.index': { paramsTuple?: []; params?: {} }
   }
   HEAD: {
@@ -38,6 +52,12 @@ export type ScannedRoutes = {
     'session.create': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
     'adcs.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'history.index': { paramsTuple?: []; params?: {} }
+    'adcs.history': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'audit.index': { paramsTuple?: []; params?: {} }
+    'reports.index': { paramsTuple?: []; params?: {} }
+    'reports.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'reports.export': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.index': { paramsTuple?: []; params?: {} }
   }
   POST: {
@@ -51,6 +71,8 @@ export type ScannedRoutes = {
     'alarms.acknowledge': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'adcs.maintenance': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'adcs.configure': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'reports.consumption': { paramsTuple?: []; params?: {} }
+    'reports.alarms': { paramsTuple?: []; params?: {} }
     'accounts.store': { paramsTuple?: []; params?: {} }
     'accounts.role': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.deactivate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

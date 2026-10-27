@@ -65,6 +65,40 @@ router
       .use(middleware.can('sendConfiguration'))
 
     router
+      .get('history', [controllers.History, 'index'])
+      .as('history.index')
+      .use(middleware.can('viewAdcHistory'))
+    router
+      .get('adcs/:id/history', [controllers.History, 'adc'])
+      .as('adcs.history')
+      .use(middleware.can('viewAdcHistory'))
+    router
+      .get('audit', [controllers.History, 'audit'])
+      .as('audit.index')
+      .use(middleware.can('viewAuditLog'))
+
+    router
+      .get('reports', [controllers.Reports, 'index'])
+      .as('reports.index')
+      .use(middleware.can('openSavedReport'))
+    router
+      .post('reports/consumption', [controllers.Reports, 'consumption'])
+      .as('reports.consumption')
+      .use(middleware.can('consumptionReport'))
+    router
+      .post('reports/alarms', [controllers.Reports, 'alarms'])
+      .as('reports.alarms')
+      .use(middleware.can('alarmReport'))
+    router
+      .get('reports/:id', [controllers.Reports, 'show'])
+      .as('reports.show')
+      .use(middleware.can('openSavedReport'))
+    router
+      .get('reports/:id/export', [controllers.Reports, 'export'])
+      .as('reports.export')
+      .use(middleware.can('alarmReport'))
+
+    router
       .group(() => {
         router.get('accounts', [controllers.Accounts, 'index']).as('accounts.index')
         router.post('accounts', [controllers.Accounts, 'store']).as('accounts.store')

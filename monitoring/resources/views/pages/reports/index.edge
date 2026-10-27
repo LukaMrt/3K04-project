@@ -1,0 +1,86 @@
+@layouts.app({ title: 'Reports' })
+  @page({ title: 'Reports', description: 'Generate a report, or reopen a saved one with its figures at generation time.' })
+    <div class="stack" style="gap: 20px;">
+      @if(canConsumption)
+        <section class="panel" aria-labelledby="consumption-title">
+          <h2 id="consumption-title" class="section__title">Medication consumption (FR-RPT-01 to 05)</h2>
+          @form({ route: 'reports.consumption', method: 'POST', class: 'inline-form', style: 'margin-top: 12px;' })
+            <div class="field">
+              <label class="field__label" for="c-from">From</label>
+              <input class="field__input" type="date" id="c-from" name="from" value="{{ period.from }}" required />
+            </div>
+            <div class="field">
+              <label class="field__label" for="c-to">To</label>
+              <input class="field__input" type="date" id="c-to" name="to" value="{{ period.to }}" required />
+            </div>
+            <div class="field">
+              <label class="field__label" for="c-adc">ADC</label>
+              <select class="field__input" id="c-adc" name="adcId">
+                <option value="">All ADCs</option>
+                @each(adc in adcs)
+                  <option value="{{ adc.adcId }}">{{ adc.label }}</option>
+                @end
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="c-medication">Medication</label>
+              <select class="field__input" id="c-medication" name="medicationId">
+                <option value="">All medications</option>
+                @each(medication in medications)
+                  <option value="{{ medication.id }}">{{ medication.name }}</option>
+                @end
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="c-patient">Patient identifier</label>
+              <input class="field__input mono" id="c-patient" name="patientId" placeholder="optional" />
+            </div>
+            @if(canByStaff)
+              <div class="field">
+                <label class="field__label" for="c-staff">Staff member identifier</label>
+                <input class="field__input mono" id="c-staff" name="staffMemberId" placeholder="optional" />
+              </div>
+            @end
+            <button type="submit" class="btn btn--primary">Generate</button>
+          @end
+        </section>
+      @end
+
+      @if(canAlarms)
+        <section class="panel" aria-labelledby="alarm-report-title">
+          <h2 id="alarm-report-title" class="section__title">Alarms (FR-RPT-06, 07)</h2>
+          @form({ route: 'reports.alarms', method: 'POST', class: 'inline-form', style: 'margin-top: 12px;' })
+            <div class="field">
+              <label class="field__label" for="a-from">From</label>
+              <input class="field__input" type="date" id="a-from" name="from" value="{{ period.from }}" required />
+            </div>
+            <div class="field">
+              <label class="field__label" for="a-to">To</label>
+              <input class="field__input" type="date" id="a-to" name="to" value="{{ period.to }}" required />
+            </div>
+            <button type="submit" class="btn btn--primary">Generate</button>
+          @end
+        </section>
+      @end
+
+      <section class="panel" aria-labelledby="saved-title">
+        <h2 id="saved-title" class="section__title">Saved reports (FR-RPT-08)</h2>
+        @if(saved.length === 0)
+          <p class="muted" style="margin-top: 8px;">No saved report.</p>
+        @else
+          <ul class="stack" style="margin-top: 10px;">
+            @each(report in saved)
+              <li>
+                @link({ route: 'reports.show', routeParams: { id: report.reportId }, class: 'il' })
+                  {{ report.kind === 'consumption' ? 'Consumption' : 'Alarms' }},
+                  {{ report.parameters.from.slice(0, 10) }} to {{ report.parameters.to.slice(0, 10) }}
+                @end
+                <span class="muted">generated {{ formatTime(report.generatedAt) }}</span>
+              </li>
+            @end
+          </ul>
+        @end
+      </section>
+    </div>
+  @end
+@end

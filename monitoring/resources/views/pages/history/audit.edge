@@ -1,0 +1,63 @@
+@layouts.app({ title: 'Audit log' })
+  @page({ title: 'Audit log', description: 'Every user action, with its outcome (FR-HIS-07).' })
+    <div class="stack" style="gap: 20px;">
+      <form method="GET" action="{{ route('audit.index') }}" class="panel inline-form">
+        <div class="field">
+          <label class="field__label" for="from">From</label>
+          <input class="field__input" type="date" id="from" name="from" value="{{ filters.from }}" required />
+        </div>
+        <div class="field">
+          <label class="field__label" for="to">To</label>
+          <input class="field__input" type="date" id="to" name="to" value="{{ filters.to }}" required />
+        </div>
+        <div class="field">
+          <label class="field__label" for="adcId">ADC</label>
+          <select class="field__input" id="adcId" name="adcId">
+            <option value="">All ADCs</option>
+            @each(adc in adcs)
+              <option value="{{ adc.adcId }}" {{ filters.adcId === adc.adcId ? 'selected' : '' }}>{{ adc.label }}</option>
+            @end
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label" for="userId">User</label>
+          <select class="field__input" id="userId" name="userId">
+            <option value="">All users</option>
+            @each(account in accounts)
+              <option value="{{ account.userId }}" {{ filters.userId === account.userId ? 'selected' : '' }}>{{ account.fullName ?? account.email }}</option>
+            @end
+          </select>
+        </div>
+        <button type="submit" class="btn btn--primary">Show</button>
+      </form>
+
+      <section class="panel">
+        @if(entries.length === 0)
+          <p class="muted">No entry for these filters.</p>
+        @else
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th><th scope="col">User</th><th scope="col">Action</th>
+                  <th scope="col">Target</th><th scope="col">Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                @each(entry in entries)
+                  <tr>
+                    <td>{{ formatTime(entry.at) }}</td>
+                    <td>{{ names[entry.userId] ?? `account ${entry.userId}` }}</td>
+                    <td>{{ entry.action }}</td>
+                    <td>{{ labels[entry.target] ?? entry.target }}</td>
+                    <td>{{ entry.outcome ?? '—' }}</td>
+                  </tr>
+                @end
+              </tbody>
+            </table>
+          </div>
+        @end
+      </section>
+    </div>
+  @end
+@end
