@@ -63,6 +63,7 @@ State: an append-only set of records, each with its kind and its event date. No 
 | `appendSystemLog(entry)` | `SystemLogEntry` (event, ADC if any, details, time) | `void` | - | Stored (FR-HIS-08, NFR-AVL-05) | `StorageUnavailableError` |
 | `saveReport(report)` | `SavedReport` (kind, parameters, figures, generation time) | `ReportId` | - | Stored with its figures as generated (FR-HIS-06, FR-RPT-08) | `StorageUnavailableError` |
 | `findReport(reportId)` | `ReportId` | `SavedReport \| null` | - | None | `StorageUnavailableError` |
+| `listReports(kinds)` | `SavedReport['kind'][]` | `SavedReportHeader[]` (identifier, kind, parameters, generation time), most recent first | - | None | `StorageUnavailableError` |
 | `queryAdcHistory(adcId, range)` | `AdcId`, `DateRange` | `AdcHistory` (dispensing activities, status changes, alarms and acknowledgements) | - | None; patient identifiers included | `StorageUnavailableError` |
 | `queryDispensing(filter)` | `DispensingFilter` (range, ADC?, medication?, patient?, staff member?) | `DispensingRecord[]` | - | None | `StorageUnavailableError` |
 | `queryAlarms(range)` | `DateRange` | `StoredAlarmWithAck[]` | - | None | `StorageUnavailableError` |
@@ -104,7 +105,7 @@ State: the alarms stored in the Historical Data Store, each `unacknowledged` or 
 
 ### 3.5 Cabinet Health Monitor
 
-**Uses:** Alarm Manager, Historical Data Store, Clock. **Used by:** ADC Communication Manager, Inventory Supervisor, Operator Dashboard.
+**Uses:** Alarm Manager, Historical Data Store, Clock. **Used by:** ADC Communication Manager, Inventory Supervisor, Reporting, Operator Dashboard.
 
 State, for each registered ADC: label, location (floor, description), registration time, last contact `m_lastContact`, reported state or `⊥`, connectivity (`Reachable`, `Unreachable`, `Offline`). Invariant: the connectivity is the one SPEC-HLT-02 gives for `silence = now − lastContact`, as of the last call to `checkTimeouts`.
 
@@ -151,15 +152,18 @@ The protocol names (`set_maintenance_mode`, JSON field names, error codes) never
 
 ### 3.8 Reporting
 
-**Uses:** Historical Data Store, User Management, Clock. **Used by:** Operator Dashboard.
+**Uses:** Historical Data Store, User Management, Cabinet Health Monitor (ADC labels, D-41), Clock. **Used by:** Operator Dashboard.
+
+A `Report` holds its kind, its parameters (dates in ISO format), its generation time, its `total` (boxes dispensed, or number of alarms) and its rows. Reports are saved with all their figures, patient identifiers included, and filtered for each viewer when shown (D-42).
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |
-| `consumptionReport(actor, params)` | `Actor`, `ConsumptionParams` (range, ADC?, medication?, patient?, staff member?) | `Report` | `actor` may generate this report with these filters (D-14) | Report saved with its parameters and generation time (FR-HIS-06); patient identifiers included only if `users.canSeePatientIds(actor)`, and their display audited (SPEC-USR-02) | `StorageUnavailableError` |
-| `alarmReport(actor, range)` | `Actor`, `DateRange` | `Report` | `actor` may generate alarm reports | Report saved (FR-RPT-06) | `StorageUnavailableError` |
-| `exportReport(reportId)` | `ReportId` | `ExportFile` (file name, content type, content) | Report is an alarm report | None (FR-RPT-07); file format hidden in this module | `UnknownReportError` |
-| `openSavedReport(actor, reportId)` | `Actor`, `ReportId` | `Report`, with its figures at generation time | `actor` may generate reports of that kind | Patient identifiers filtered as above (FR-RPT-08) | `UnknownReportError` |
-| `adcHistory(actor, adcId, range)` | `Actor`, `AdcId`, `DateRange` | `AdcHistory` | `actor` may view event history | Patient identifiers filtered and their display audited (FR-HIS-04, D-33) | `StorageUnavailableError` |
+| `consumptionReport(actor, params)` | `Actor`, `ConsumptionParams` (range, ADC?, medication?, patient?, staff member?) | `Report`: total boxes, one row per dispensing activity | `actor` may generate this report with these filters (D-14); `range.from ≤ range.to` | Report saved with its parameters and generation time (FR-HIS-06); patient identifiers shown only if `users.canSeePatientIds(actor)`, and their display audited (SPEC-USR-02, NFR-AUD-06) | `StorageUnavailableError` |
+| `alarmReport(actor, range)` | `Actor`, `DateRange` | `Report`: number of alarms, one row per alarm (time, ADC label, type, severity, acknowledgement) | `actor` may generate alarm reports; `range.from ≤ range.to` | Report saved (FR-RPT-06, FR-HIS-06) | `StorageUnavailableError` |
+| `exportReport(reportId)` | `ReportId` | `ExportFile` (file name, content type, content) | - | None (FR-RPT-07); the file format (CSV today) is hidden in this module | `UnknownReportError` if no alarm report has this identifier |
+| `listSavedReports(actor)` | `Actor` | `SavedReportSummary[]` (identifier, kind, parameters, generation time), most recent first | - | None; only the kinds of reports the role of `actor` may generate (FR-RPT-08, D-14, D-42) | `StorageUnavailableError` |
+| `openSavedReport(actor, reportId)` | `Actor`, `ReportId` | `Report`, with its figures at generation time | `reportId` is one of `listSavedReports(actor)` | Patient identifiers filtered and audited as above (FR-RPT-08) | `UnknownReportError` |
+| `adcHistory(actor, adcId, range)` | `Actor`, `AdcId`, `DateRange` | `AdcHistoryView`: the `AdcHistory` of the Historical Data Store, patient identifiers left out unless allowed | `actor` may view event history | Patient identifiers filtered and their display audited (FR-HIS-04, D-33) | `StorageUnavailableError` |
 | `auditLog(actor, filter)` | `Actor`, `AuditFilter` | `AuditEntry[]` | `actor` may view the audit log | None (FR-HIS-07) | `StorageUnavailableError` |
 
 ### 3.9 Operator Dashboard

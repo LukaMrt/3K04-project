@@ -90,6 +90,7 @@ flowchart TD
   HLT --> HIS
   HLT --> CLK
   RPT --> USR
+  RPT --> HLT
   RPT --> HIS
   RPT --> CLK
   ALM --> HIS
@@ -106,8 +107,8 @@ The relation has no cycle, so the modules can be built and tested bottom-up, lev
 | 0 | Clock | - |
 | 1 | Historical Data Store | 0 |
 | 2 | Alarm Manager, User Management | 0, 1 |
-| 3 | Cabinet Health Monitor, Reporting | 0 to 2 |
-| 4 | Inventory Supervisor | 3 |
+| 3 | Cabinet Health Monitor | 0 to 2 |
+| 4 | Inventory Supervisor, Reporting | 0 to 3 |
 | 5 | ADC Communication Manager | 0 to 4 |
 | 6 | Operator Dashboard | 2 to 5 |
 

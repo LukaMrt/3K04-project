@@ -5,6 +5,27 @@ import { notImplemented } from '#modules/shared/errors'
 import type { Actor, Role, UserId } from '#modules/shared/types'
 import type { DashboardFunction, NewAccount } from '#modules/users/types'
 
+/** The role → permission matrix of D-14: who may use each dashboard function. */
+const PERMISSIONS: Record<DashboardFunction, Role[]> = {
+  viewAdcStatuses: ['nurse', 'pharmacist', 'technician', 'administrator'],
+  viewAdcInventory: ['nurse', 'pharmacist'],
+  viewStockSources: ['pharmacist'],
+  viewAlarms: ['nurse', 'pharmacist', 'technician', 'administrator'],
+  acknowledgeAlarm: ['nurse', 'pharmacist', 'technician'],
+  sendCommand: ['technician', 'administrator'],
+  sendConfiguration: ['administrator'],
+  viewAdcHistory: ['pharmacist', 'administrator', 'risk_management'],
+  consumptionReport: ['pharmacist', 'administrator'],
+  consumptionReportByStaff: ['administrator'],
+  alarmReport: ['administrator', 'risk_management'],
+  openSavedReport: ['pharmacist', 'administrator', 'risk_management'],
+  manageAccounts: ['administrator'],
+  viewAuditLog: ['administrator', 'risk_management'],
+}
+
+/** Roles that may see patient identifiers in reports and event history (D-11). */
+const SEE_PATIENT_IDS: Role[] = ['pharmacist', 'administrator']
+
 /**
  * User Management / Auth — module interface.
  *
@@ -26,12 +47,12 @@ export default class UserService {
 
   /** Whether the role of `actor` gives function `fn`, from the D-14 matrix (SPEC-USR-01). */
   can(actor: Actor, fn: DashboardFunction): boolean {
-    return notImplemented('UserService.can', actor, fn)
+    return PERMISSIONS[fn].includes(actor.role)
   }
 
   /** True for pharmacists and administrators only (SPEC-USR-02, D-11). */
   canSeePatientIds(actor: Actor): boolean {
-    return notImplemented('UserService.canSeePatientIds', actor)
+    return SEE_PATIENT_IDS.includes(actor.role)
   }
 
   /**

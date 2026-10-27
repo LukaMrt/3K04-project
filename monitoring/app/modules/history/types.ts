@@ -80,6 +80,14 @@ export interface SavedReport {
   generatedBy: UserId
 }
 
+/** A saved report without its figures. */
+export interface SavedReportHeader {
+  reportId: ReportId
+  kind: SavedReport['kind']
+  parameters: Record<string, unknown>
+  generatedAt: Date
+}
+
 export interface AdcHistory {
   adcId: AdcId
   range: DateRange
