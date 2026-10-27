@@ -17,15 +17,28 @@
             <h2 id="alarms-title" class="section__title">
               Unacknowledged alarms (<span x-text="alarms.length"></span>)
             </h2>
-            <button
-              type="button"
-              class="btn btn--secondary btn--sm"
-              x-show="!soundOn"
-              x-on:click="enableSound()"
-            >
-              Enable alarm sound
-            </button>
-            <span class="muted" x-show="soundOn">Alarm sound on</span>
+            <div class="inline-form" style="align-items: center;">
+              <button
+                type="button"
+                class="btn btn--secondary btn--sm"
+                x-show="!soundOn"
+                x-on:click="enableSound()"
+              >
+                Enable alarm sound
+              </button>
+              <span class="muted" x-show="soundOn && soundReady">Alarm sound on</span>
+              <span class="stale" x-show="soundOn && !soundReady">
+                Alarm sound on: click anywhere on the page to activate it
+              </span>
+              <button
+                type="button"
+                class="btn btn--ghost btn--sm"
+                x-show="soundOn"
+                x-on:click="disableSound()"
+              >
+                Turn off
+              </button>
+            </div>
           </div>
           <div role="status" aria-live="assertive" class="sr-only" x-text="announcement"></div>
           <p class="muted" x-show="alarms.length === 0">No unacknowledged alarm.</p>

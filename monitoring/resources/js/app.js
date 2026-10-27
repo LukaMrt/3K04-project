@@ -75,9 +75,28 @@ Alpine.data('themeToggle', function () {
 
 /**
  * Audible cue of an alarm (NFR-ACC-01): two short beeps made by the browser, no sound
- * file. Browsers only play sound after a click on the page, hence the "Enable alarm
- * sound" button.
+ * file. Browsers only play sound after a click or a key press on the page itself, so the
+ * choice "sound on" is remembered in the browser, and each new page turns the sound back
+ * on at the first click or key press anywhere on it.
  */
+const SOUND_KEY = 'alarm-sound'
+
+function soundWanted() {
+  try {
+    return localStorage.getItem(SOUND_KEY) === 'on'
+  } catch {
+    return false
+  }
+}
+
+function rememberSound(on) {
+  try {
+    localStorage.setItem(SOUND_KEY, on ? 'on' : 'off')
+  } catch {
+    // Private window or blocked storage: the choice only lasts for this page.
+  }
+}
+
 let audio = null
 function beep() {
   if (!audio || audio.state !== 'running') return
@@ -111,6 +130,7 @@ Alpine.data('dashboard', function (initial) {
   return {
     ...initial,
     soundOn: false,
+    soundReady: false,
     flash: false,
     announcement: '',
     timers: {},
@@ -122,6 +142,7 @@ Alpine.data('dashboard', function (initial) {
     },
 
     init() {
+      if (soundWanted()) this.enableSound()
       for (const alarm of this.alarms) this.startCue(alarm)
       if (this.canAlarms) this.listen('alarms', (event) => this.onAlarm(event))
       if (this.canStatuses) this.listen('adcs', (event) => this.onStatus(event))
@@ -133,10 +154,26 @@ Alpine.data('dashboard', function (initial) {
       await subscription.create()
     },
 
+    /**
+     * Turns the sound on now if the browser allows it, otherwise at the first click or key
+     * press on the page.
+     */
     enableSound() {
       audio = audio ?? new AudioContext()
-      audio.resume()
+      audio.onstatechange = () => (this.soundReady = audio.state === 'running')
+      audio.resume().catch(() => {})
+      this.soundReady = audio.state === 'running'
       this.soundOn = true
+      rememberSound(true)
+      const unlock = () => audio.resume().catch(() => {})
+      window.addEventListener('pointerdown', unlock, { once: true })
+      window.addEventListener('keydown', unlock, { once: true })
+    },
+
+    disableSound() {
+      audio?.suspend()
+      this.soundOn = false
+      rememberSound(false)
     },
 
     /** NFR-PRF-01: a new alarm is shown at once, with a visual and an audible cue. */
