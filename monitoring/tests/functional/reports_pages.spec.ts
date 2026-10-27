@@ -135,6 +135,25 @@ test.group('Dashboard / history and audit (FR-HIS-04, FR-HIS-07, D-11)', (group)
     assert.notInclude(response.text(), PATIENT)
   })
 
+  test('a period without any event says "no data found" (D1 activity 4)', async ({
+    client,
+    assert,
+  }) => {
+    await activity()
+    const pharmacist = await account('pharmacist')
+
+    const empty = await client
+      .get(`/adcs/${ADC}/history`)
+      .qs({ from: '2020-01-01', to: '2020-01-02' })
+      .loginAs(pharmacist)
+    const today = await client.get(`/adcs/${ADC}/history`).loginAs(pharmacist)
+
+    empty.assertTextIncludes('No data found for this period.')
+    today.assertStatus(200)
+    today.assertTextIncludes('Heparin')
+    assert.notInclude(today.text(), 'No data found')
+  })
+
   test('the audit log shows who did what', async ({ client }) => {
     const admin = await account('administrator')
     await client

@@ -13,6 +13,11 @@
         <button type="submit" class="btn btn--primary">Show</button>
       </form>
 
+      @if(!history.dispensing.length && !history.statusChanges.length && !history.alarms.length)
+        {{-- D1 activity diagram 4: an empty period says so in one message --}}
+        <p class="panel muted" role="status">No data found for this period.</p>
+      @end
+
       <section class="panel" aria-labelledby="dispensing-title">
         <h2 id="dispensing-title" class="section__title">Dispensing activities ({{ history.dispensing.length }})</h2>
         @if(history.dispensing.length)
