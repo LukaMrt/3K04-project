@@ -75,6 +75,7 @@ export default defineConfig({
     () => import('#start/view'),
     { file: () => import('#start/scheduler'), environment: ['web'] },
     { file: () => import('#start/live_channel'), environment: ['web'] },
+    { file: () => import('#start/lifecycle'), environment: ['web'] },
   ],
 
   /*

@@ -3,8 +3,8 @@
  *
  * Responsibility: give the current time to every module (D-29).
  *
- * Secret (anticipated change): where the time comes from. Tests and demonstrations
- * replace this class with `app.container.swap(ClockService, ...)` to move time forward by hand.
+ * Secret (anticipated change): where the time comes from. Tests replace this class with
+ * `app.container.swap(ClockService, ...)` to move time forward by hand.
  */
 export default class ClockService {
   /**

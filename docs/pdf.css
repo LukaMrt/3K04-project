@@ -32,3 +32,6 @@ img { max-width: 100%; max-height: 24cm; display: block; margin: 0.8em auto; }
 .cover { text-align: center; padding-top: 6cm; }
 .cover h1 { border: none; font-size: 24pt; }
 .cover table { width: 50%; margin: 3cm auto 0; font-size: 11pt; }
+
+.part-title { text-align: center; padding-top: 10cm; }
+.part-title h1 { border: none; font-size: 22pt; }
