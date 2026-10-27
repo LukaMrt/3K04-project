@@ -47,7 +47,7 @@ system log (NFR-AVL-05); the shutdown is recorded on SIGTERM and Ctrl+C, not on 
 
 `node ace adc:simulate` starts fake ADC units (`--count`, `--label`, `--floor`, `--interval`,
 `--url`). Each one registers, sends a heartbeat every 30 s and answers commands on its own
-port, following the interface contract. A menu then raises alarms, dispenses boxes, changes
+port, following the interface contract. A menu then raises alarms, dispenses and refills boxes, changes
 the state, stops the heartbeats (communication loss: UNREACHABLE after 45 s, OFFLINE after
 75 s) and chooses how commands are answered (applied, error, wrong identifier, no answer).
 Each label keeps its identifier across runs (`tmp/simulated_adcs.json`).

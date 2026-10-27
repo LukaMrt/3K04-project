@@ -144,6 +144,17 @@ export class FakeAdc {
     return true
   }
 
+  /**
+   * Adds boxes of a medication already in the ADC and sends a heartbeat at once. The
+   * contract has no restock transaction: only the complete inventory changes (contract §3.2).
+   */
+  refill(medicationId: string, boxes: number) {
+    const entry = this.inventory.find((e) => e.medicationId === medicationId)
+    if (!entry || !Number.isInteger(boxes) || boxes < 1) return null
+    entry.quantityInBoxes += boxes
+    return this.sendHeartbeat()
+  }
+
   /** Changes the state and sends a heartbeat at once (contract §4.1). */
   setState(state: AdcState) {
     this.state = state
