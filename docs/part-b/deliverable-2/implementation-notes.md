@@ -19,23 +19,25 @@ The code follows the module guide one to one, so that the boundaries are easy to
 
 - **One folder per leaf module** in `app/modules/<module>/`. Each one has a single service class, `<module>_service.ts`. Its public methods are the exported operations of the module, and their doc comments carry the pre-conditions, effects and exceptions of the interface. The folder also has `types.ts` (exported types), `errors.ts` (exceptions) and, for a module that stores data, a private `models/` folder of Lucid models that no other module imports.
 - **`app/modules/shared/`** holds the vocabulary used to write the interfaces: identifiers, `Actor`, `Role`, `DateRange`, severities, states and `StorageUnavailableError`. It is not a module: it has no state, no behaviour and no secret.
-- **Modules are wired by the container.** A service receives the services it uses in its constructor (`@inject()`). The constructor parameters of a service are therefore exactly its "Uses" line in the USES hierarchy, and a test can swap any of them (section 5).
+- **Modules are wired by the container.** A service receives the services it uses in its constructor (`@inject()`). The constructor parameters of a service are therefore exactly its "Uses" line in the USES hierarchy, and a test can swap any of them (section 7).
 - **Controllers only adapt HTTP**: they read the request, call module services, and turn the result into a page or a JSON answer. They hold no rule of the specification.
 - **`start/`** holds what runs at start-up: routes (`routes.ts`), the periodic calls (`scheduler.ts`), the start of the live channel (`live_channel.ts`) and the record of the server's start-ups and shutdowns (`lifecycle.ts`, NFR-AVL-05).
 
 ## 2. Modules → code
 
-| ID | Module | Main class | Other files | Private storage (`models/`) | Unit tests |
-| --- | --- | --- | --- | --- | --- |
-| 1.1.1 | Clock | `ClockService` (`app/modules/clock/clock_service.ts`) | `ManualClock` (`tests/helpers/manual_clock.ts`), its simulated implementation | - | used by every other test |
-| 1.1.2 | ADC Communication Manager | `AdcCommunicationService` | `protocol.ts` (message validators, encoding of commands, reading of answers); `app/controllers/adc_protocol_controller.ts` (the two `/api/v1` routes) | `adc_contact.ts` | `tests/functional/adc_protocol.spec.ts`, `adc_commands.spec.ts` |
-| 1.1.3 | Operator Dashboard | `LiveChannel` (`app/modules/dashboard/live_channel.ts`) | `presentation.ts` (labels, wording, time format); `app/controllers/` except the ADC protocol controller; `app/middleware/actor_middleware.ts`, `can_middleware.ts`; `resources/views/`; `resources/js/app.js` (live updates and sound in the browser); `start/live_channel.ts` | - | `tests/unit/dashboard/live_channel.spec.ts`, `tests/functional/dashboard.spec.ts` and other page tests |
-| 1.2.1 | Cabinet Health Monitor | `CabinetHealthService` | - | `adc.ts` | `tests/unit/cabinet_health/` |
-| 1.2.2 | Alarm Manager | `AlarmService` | - | - (its alarms are kept by the Historical Data Store) | `tests/unit/alarms/` |
-| 1.2.3 | Inventory Supervisor | `InventoryService` | - | `inventory_snapshot.ts`, `inventory_line.ts` | `tests/unit/inventory/` |
-| 1.2.4 | User Management | `UserService` | `app/models/user.ts` (account, used by the framework's login); `database/seeders/` (demonstration accounts) | `app/models/user.ts` | `tests/unit/users/` |
-| 1.2.5 | Reporting | `ReportingService` | - | - (saved reports are kept by the Historical Data Store) | `tests/unit/reporting/` |
-| 1.3.1 | Historical Data Store | `HistoryService` | - | `alarm.ts`, `alarm_acknowledgement.ts`, `dispensing_activity.ts`, `status_change.ts`, `audit_entry.ts`, `system_log_entry.ts`, `saved_report.ts` | `tests/unit/history/` |
+Paths are relative to `app/modules/<module>/` unless they start with `app/`, `start/`, `resources/`, `database/` or `tests/`.
+
+| Module | Code | Tests |
+| --- | --- | --- |
+| 1.1.1 Clock | **Service**: `ClockService`<br>**Simulated**: `ManualClock` (`tests/helpers/manual_clock.ts`) | Used by every other test |
+| 1.1.2 ADC Communication Manager | **Service**: `AdcCommunicationService`<br>**Storage**: `models/adc_contact.ts`<br>**Also**: `protocol.ts` (message validators, encoding of commands, reading of answers); `app/controllers/adc_protocol_controller.ts` (the two `/api/v1` routes) | `tests/functional/adc_protocol.spec.ts`, `adc_commands.spec.ts` |
+| 1.1.3 Operator Dashboard | **Service**: `LiveChannel` (`live_channel.ts`)<br>**Also**: `presentation.ts` (labels, wording, time format); `app/controllers/` except the ADC protocol controller; `app/middleware/actor_middleware.ts`, `can_middleware.ts`; `resources/views/`; `resources/js/app.js` (live updates and sound in the browser); `start/live_channel.ts` | `tests/unit/dashboard/`, `tests/functional/dashboard.spec.ts` and the other page tests |
+| 1.2.1 Cabinet Health Monitor | **Service**: `CabinetHealthService`<br>**Storage**: `models/adc.ts` | `tests/unit/cabinet_health/` |
+| 1.2.2 Alarm Manager | **Service**: `AlarmService`<br>**Storage**: none, its alarms are kept by the Historical Data Store | `tests/unit/alarms/` |
+| 1.2.3 Inventory Supervisor | **Service**: `InventoryService`<br>**Storage**: `models/inventory_snapshot.ts`, `inventory_line.ts` | `tests/unit/inventory/` |
+| 1.2.4 User Management | **Service**: `UserService`<br>**Storage**: `app/models/user.ts` (the account, also used by the framework's login)<br>**Also**: `database/seeders/` (demonstration accounts) | `tests/unit/users/`, `tests/functional/accounts.spec.ts` |
+| 1.2.5 Reporting | **Service**: `ReportingService`<br>**Storage**: none, saved reports are kept by the Historical Data Store | `tests/unit/reporting/`, `tests/functional/reports_pages.spec.ts` |
+| 1.3.1 Historical Data Store | **Service**: `HistoryService`<br>**Storage**: `models/alarm.ts`, `alarm_acknowledgement.ts`, `dispensing_activity.ts`, `status_change.ts`, `audit_entry.ts`, `system_log_entry.ts`, `saved_report.ts` | `tests/unit/history/` |
 
 Remarks on the mapping:
 
