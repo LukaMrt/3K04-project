@@ -48,7 +48,7 @@ test.group('AlarmService / alarms from ADCs (SPEC-COM-03, D-28)', (group) => {
 
     const { transactionId, ...fields } = adcAlarm()
     const expected = { alarmId: transactionId, ...fields, source: 'adc', acknowledgement: null }
-    assert.deepEqual(await alarms.listUnacknowledged(), [expected])
+    assert.deepEqual(await alarms.listUnacknowledged(), [{ ...expected, audibleRepeatSeconds: 60 }])
     assert.deepEqual(events, [{ kind: 'raised', alarm: expected, audibleRepeatSeconds: 60 }])
   })
 
@@ -91,7 +91,9 @@ test.group('AlarmService / communication loss (FR-HLT-04, D-15)', (group) => {
       source: 'communication_loss',
       acknowledgement: null,
     })
-    assert.deepEqual(events, [{ kind: 'raised', alarm: stored, audibleRepeatSeconds: null }])
+    const { audibleRepeatSeconds, ...announced } = stored
+    assert.isNull(audibleRepeatSeconds)
+    assert.deepEqual(events, [{ kind: 'raised', alarm: announced, audibleRepeatSeconds: null }])
   })
 
   test('each loss of communication is a new alarm', async ({ assert }) => {

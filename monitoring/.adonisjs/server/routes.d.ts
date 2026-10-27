@@ -15,6 +15,7 @@ export type ScannedRoutes = {
     'session.store': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }
     'dashboard': { paramsTuple?: []; params?: {} }
+    'alarms.acknowledge': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.index': { paramsTuple?: []; params?: {} }
     'accounts.store': { paramsTuple?: []; params?: {} }
     'accounts.role': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -42,6 +43,7 @@ export type ScannedRoutes = {
     'adc_protocol.heartbeat': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
     'session.destroy': { paramsTuple?: []; params?: {} }
+    'alarms.acknowledge': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.store': { paramsTuple?: []; params?: {} }
     'accounts.role': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'accounts.deactivate': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

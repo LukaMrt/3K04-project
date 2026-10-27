@@ -66,6 +66,12 @@ export default class UserService {
     return user.active ? { userId, role: user.role as Role } : null
   }
 
+  /** The name shown for an account: its full name, or its email (FR-ALM-06). */
+  async nameOf(userId: UserId): Promise<string> {
+    const user = await this.find(userId)
+    return user.fullName ?? user.email
+  }
+
   /** Every account, sorted by email (FR-USR-03 to 05). */
   async listAccounts(): Promise<AccountSummary[]> {
     const users = await User.query().orderBy('email')

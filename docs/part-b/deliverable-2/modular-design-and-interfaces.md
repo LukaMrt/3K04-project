@@ -83,6 +83,7 @@ Authentication itself (login form, session, password hashing) is provided by the
 | `can(actor, fn)` | `Actor`, `DashboardFunction` | `boolean` | - | None; answer read from the D-14 matrix (SPEC-USR-01) | - |
 | `canSeePatientIds(actor)` | `Actor` | `boolean` | - | None; true for pharmacist and administrator only (SPEC-USR-02) | - |
 | `actorOf(userId)` | `UserId` | `Actor \| null` | - | None; `null` if the account is deactivated (D-25) | `UnknownUserError` |
+| `nameOf(userId)` | `UserId` | `string`: full name, or email | - | None (FR-ALM-06: name who acknowledged) | `UnknownUserError` |
 | `listAccounts()` | - | `AccountSummary[]` (account number, name, email, role, active), sorted by email | - | None; never the password | - |
 | `createAccount(admin, account)` | `Actor`, `NewAccount` (name, email, password, role) | `UserId` | `admin` may manage accounts | Account created, active; audited (NFR-AUD-04) | `EmailAlreadyUsedError` |
 | `changeRole(admin, userId, role)` | `Actor`, `UserId`, `Role` | `void` | `admin` may manage accounts | Role changed, applies from the next login of that user (FR-USR-04); audited | `UnknownUserError` |
@@ -99,7 +100,7 @@ State: the alarms stored in the Historical Data Store, each `unacknowledged` or 
 | `recordFromAdc(alarm)` | `NewAdcAlarm` (transaction ID, ADC, ADC timestamp, type, severity, description?) | `RecordOutcome` | Alarm validated against SPEC-COM-03 (by the ADC Communication Manager); ADC registered | If `recorded`: stored unacknowledged with the ADC timestamp (A-14), then `raised` announced. If `duplicate`: nothing (D-28) | `StorageUnavailableError` |
 | `raiseCommunicationLoss(adcId)` | `AdcId` | `AlarmId` | Called by the Cabinet Health Monitor only, when `adcId` becomes offline | New alarm, type `communication_loss`, severity `error`, timestamp = now, stored unacknowledged, then `raised` announced (FR-HLT-04, D-15) | `StorageUnavailableError` |
 | `acknowledge(actor, alarmId)` | `Actor`, `AlarmId` | `AcknowledgeResult`: `acknowledged(at)` \| `alreadyAcknowledged(by, at)` | `actor` may acknowledge alarms (D-09, D-31) | If unacknowledged: acknowledgement stored, audited (NFR-AUD-01), then `acknowledged` announced. Else nothing changes (SPEC-ALM-01). If another acknowledgement wins the race between the check and the storage (`AlarmAlreadyAcknowledgedError` from the Historical Data Store), the exception is caught and nothing changes either: answer `alreadyAcknowledged` with the stored acknowledgement | `UnknownAlarmError`, `StorageUnavailableError` |
-| `listUnacknowledged()` | - | `Alarm[]`, most recent first | - | None (FR-ALM-04) | `StorageUnavailableError` |
+| `listUnacknowledged()` | - | `UnacknowledgedAlarm[]`: each `Alarm` with its `audibleRepeatSeconds`, most recent first | - | None (FR-ALM-04); a dashboard opened later repeats the cue too, without knowing the rule (SPEC-ALM-02) | `StorageUnavailableError` |
 | `subscribe(listener)` | `(event: AlarmEvent) => void` | Unsubscribe function | - | `listener` called for every later `raised` and `acknowledged` event | - |
 
 `AlarmEvent` is `{ kind: 'raised', alarm, audibleRepeatSeconds }` or `{ kind: 'acknowledged', alarmId, by, at }`. `audibleRepeatSeconds` is 60 for a critical alarm and `null` otherwise (SPEC-ALM-02, NFR-SAF-04): the rule stays in this module, the Dashboard only plays the sound as told (D-27).
@@ -176,8 +177,8 @@ The Dashboard is the top of the USES hierarchy: no module calls it. Its interfac
 | Element | Content | Requirements |
 | --- | --- | --- |
 | Pages (server-rendered, `app/controllers/` + `resources/views/`) | Login, ADC list (filter, sort), ADC detail (status, inventory, history), alarms, commands and configuration, reports, accounts, audit log | FR-DSH-01 to 03, FR-INV-02, FR-ALM-04, FR-ALM-05, FR-RPT-01 to 08, FR-USR-03 to 05, FR-HIS-04, FR-HIS-07 |
-| Live channel (`app/modules/dashboard/live_channel.ts`) | Subscribes to the Alarm Manager and the Cabinet Health Monitor and pushes their events to the open dashboards, with the sound and its repetition | NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22, D-27 |
-| Role checks (server side, in the controllers) | Before each call made on behalf of a user, asks `users.can`; on refusal shows the permission message and calls nothing. Nothing is decided in the browser | SPEC-USR-01, D-31 |
+| Live channel (`app/modules/dashboard/live_channel.ts`, started by `start/live_channel.ts`) | Subscribes to the Alarm Manager and the Cabinet Health Monitor and pushes their events to the open dashboards on two channels, `alarms` and `adcs`, each opened only to the roles that may see it (`viewAlarms`, `viewAdcStatuses`). The browser (`resources/js/app.js`) shows them at once, with the sound and its repetition | NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22, D-27 |
+| Role checks (server side) | The `actor` middleware builds the `Actor` of each request from the session (role read at login) and closes the session of a deactivated account (D-25); the `can` middleware, one per route, asks `users.can` and on refusal shows the permission message and calls nothing. Nothing is decided in the browser | SPEC-USR-01, D-31 |
 
 Every value is shown with its D-16 text label, never by colour alone (NFR-USA-02, NFR-ACC-02), and every function can be reached with the keyboard (NFR-ACC-03).
 

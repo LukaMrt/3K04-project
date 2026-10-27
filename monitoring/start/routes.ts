@@ -45,7 +45,11 @@ router.post('logout', [controllers.Session, 'destroy']).use(middleware.auth())
  */
 router
   .group(() => {
-    router.on('/dashboard').render('pages/dashboard').as('dashboard')
+    router.get('dashboard', [controllers.Dashboard, 'index']).as('dashboard')
+    router
+      .post('alarms/:id/acknowledge', [controllers.Alarms, 'acknowledge'])
+      .as('alarms.acknowledge')
+      .use(middleware.can('acknowledgeAlarm'))
 
     router
       .group(() => {

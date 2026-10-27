@@ -9,12 +9,19 @@ import { UnknownAlarmError } from '#modules/alarms/errors'
 import type {
   Actor,
   AdcId,
+  AlarmSeverity,
   AlarmId,
   RecordOutcome,
   Unsubscribe,
   UserId,
 } from '#modules/shared/types'
-import type { AcknowledgeResult, Alarm, AlarmEvent, NewAdcAlarm } from '#modules/alarms/types'
+import type {
+  AcknowledgeResult,
+  Alarm,
+  AlarmEvent,
+  NewAdcAlarm,
+  UnacknowledgedAlarm,
+} from '#modules/alarms/types'
 
 /** The audible cue of an unacknowledged critical alarm is repeated this often (SPEC-ALM-02). */
 const CRITICAL_REPEAT_SECONDS = 60
@@ -108,10 +115,16 @@ export default class AlarmService {
     return { kind: 'acknowledged', at }
   }
 
-  /** Unacknowledged alarms, most recent first (FR-ALM-04). */
-  async listUnacknowledged(): Promise<Alarm[]> {
+  /**
+   * Unacknowledged alarms, most recent first (FR-ALM-04), each with the repetition of its
+   * audible cue, so that a dashboard opened later repeats it too (SPEC-ALM-02).
+   */
+  async listUnacknowledged(): Promise<UnacknowledgedAlarm[]> {
     const stored = await this.history.listUnacknowledgedAlarms()
-    return stored.map(toAlarm)
+    return stored.map((alarm) => ({
+      ...toAlarm(alarm),
+      audibleRepeatSeconds: audibleRepeatSeconds(alarm.severity),
+    }))
   }
 
   /** `listener` is called for every later 'raised' and 'acknowledged' event. */
@@ -127,7 +140,7 @@ export default class AlarmService {
       this.announce({
         kind: 'raised',
         alarm: { ...alarm, acknowledgement: null },
-        audibleRepeatSeconds: alarm.severity === 'critical' ? CRITICAL_REPEAT_SECONDS : null,
+        audibleRepeatSeconds: audibleRepeatSeconds(alarm.severity),
       })
     }
     return outcome
@@ -154,6 +167,11 @@ function toAlarm({ acknowledgement, ...alarm }: StoredAlarmWithAck): Alarm {
     ...alarm,
     acknowledgement: acknowledgement && { by: acknowledgement.userId, at: acknowledgement.at },
   }
+}
+
+/** SPEC-ALM-02: only a critical alarm repeats its audible cue. */
+function audibleRepeatSeconds(severity: AlarmSeverity): number | null {
+  return severity === 'critical' ? CRITICAL_REPEAT_SECONDS : null
 }
 
 function alreadyAcknowledged(ack: { userId: UserId; at: Date }): AcknowledgeResult {

@@ -1,17 +1,149 @@
+{{--
+  Main view of the Operator Dashboard. The server renders the initial state; the
+  `dashboard` Alpine component (resources/js/app.js) keeps it up to date from the live
+  channel (D-27). Every status and severity is a text label (D-16, NFR-ACC-02).
+--}}
 @layouts.app({ title: 'Dashboard' })
-  @page()
-    <div class="empty">
-      <div class="empty__mark">
-        @svg('lucide:layout-grid', { width: 22, height: 22 })
-      </div>
-      <h1>Your dashboard is ready</h1>
-      <p>
-        It's empty on purpose. A clean starting point with nothing to undo. Add your first route and component to begin.
-      </p>
-      <p class="mono" style="font-size: 12.5px; color: var(--subtle); margin-top: 4px;">
-        Start in
-        <span class="kbd">resources/views/pages/dashboard.edge</span>
-      </p>
+  @page({ title: 'Dashboard', description: 'ADC statuses and alarms, updated live.' })
+    <div x-data="dashboard({{ JSON.stringify(initial) }})">
+
+      <template x-if="canAlarms">
+        <section
+          class="alarm-banner"
+          x-bind:class="{ 'alarm-banner--flash': flash }"
+          aria-labelledby="alarms-title"
+        >
+          <div class="page__header" style="margin-bottom: 8px;">
+            <h2 id="alarms-title" class="section__title">
+              Unacknowledged alarms (<span x-text="alarms.length"></span>)
+            </h2>
+            <button
+              type="button"
+              class="btn btn--secondary btn--sm"
+              x-show="!soundOn"
+              x-on:click="enableSound()"
+            >
+              Enable alarm sound
+            </button>
+            <span class="muted" x-show="soundOn">Alarm sound on</span>
+          </div>
+          <div role="status" aria-live="assertive" class="sr-only" x-text="announcement"></div>
+          <p class="muted" x-show="alarms.length === 0">No unacknowledged alarm.</p>
+          <div class="table-wrap" x-show="alarms.length > 0">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Severity</th>
+                  <th scope="col">ADC</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Time</th>
+                  <th scope="col">Description</th>
+                  <th scope="col"><span class="sr-only">Action</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="alarm in alarms" x-bind:key="alarm.alarmId">
+                  <tr>
+                    <td>
+                      <span x-bind:class="labelClass(alarm.severity)" x-text="alarm.severity.toUpperCase()"></span>
+                    </td>
+                    <td x-text="alarm.adcLabel ?? alarm.adcId"></td>
+                    <td x-text="alarm.alarmType"></td>
+                    <td x-text="time(alarm.timestamp)"></td>
+                    <td x-text="alarm.description ?? '—'"></td>
+                    <td>
+                      <form method="POST" x-bind:action="`/alarms/${alarm.alarmId}/acknowledge`" x-show="canAcknowledge">
+                        {{ csrfField() }}
+                        <button type="submit" class="btn btn--primary btn--sm">Acknowledge</button>
+                      </form>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
+
+      <template x-if="canStatuses">
+        <div class="grid-2" style="margin-bottom: 20px;">
+          <section class="panel" aria-labelledby="attention-title">
+            <h2 id="attention-title" class="section__title">ADCs needing attention</h2>
+            <p class="muted" x-show="attention.length === 0">None.</p>
+            <ul class="stack" style="margin-top: 10px;">
+              <template x-for="adc in attention" x-bind:key="adc.adcId">
+                <li>
+                  <span x-bind:class="labelClass(adc.displayedStatus)" x-text="adc.displayedStatus"></span>
+                  <span x-text="adc.label"></span>
+                  <span class="stale" x-show="adc.stale" x-text="`stale, last contact ${time(adc.lastContact)}`"></span>
+                </li>
+              </template>
+            </ul>
+          </section>
+          <section class="panel" aria-labelledby="low-stock-title">
+            <h2 id="low-stock-title" class="section__title">Low stock</h2>
+            <p class="muted" x-show="lowStock.length === 0">None.</p>
+            <ul class="stack" style="margin-top: 10px;">
+              <template x-for="flag in lowStock" x-bind:key="flag.adcId + flag.medicationId">
+                <li>
+                  <span class="label label--danger">LOW STOCK</span>
+                  <span x-text="`${flag.medicationName}: ${flag.quantityInBoxes} boxes in ${flag.adcLabel ?? flag.adcId}`"></span>
+                </li>
+              </template>
+            </ul>
+          </section>
+        </div>
+      </template>
+
+      <template x-if="canStatuses">
+        <section class="panel" aria-labelledby="adcs-title">
+          <div class="page__header" style="margin-bottom: 12px;">
+            <h2 id="adcs-title" class="section__title">ADCs, sorted by label</h2>
+            <form method="GET" action="{{ route('dashboard') }}" class="inline-form">
+              <label class="sr-only" for="status-filter">Filter by status</label>
+              <select id="status-filter" name="status" class="field__input">
+                <option value="">All statuses</option>
+                @each(status in statuses)
+                  <option value="{{ status }}" {{ initial.filter === status ? 'selected' : '' }}>{{ status }}</option>
+                @end
+              </select>
+              <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+            </form>
+          </div>
+          <p class="muted" x-show="adcs.length === 0">No ADC.</p>
+          <div class="table-wrap" x-show="adcs.length > 0">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">ADC</th>
+                  <th scope="col">Floor</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Last contact</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="adc in adcs" x-bind:key="adc.adcId">
+                  <tr>
+                    <td><a class="il" x-bind:href="`/adcs/${adc.adcId}`" x-text="adc.label"></a></td>
+                    <td x-text="adc.floor"></td>
+                    <td>
+                      <span x-bind:class="labelClass(adc.displayedStatus)" x-text="adc.displayedStatus"></span>
+                      <span class="stale" x-show="adc.stale">stale</span>
+                    </td>
+                    <td x-text="time(adc.lastContact)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
+
+      <template x-if="!canStatuses && !canAlarms">
+        <div class="panel">
+          <p>Use the menu to open the reports, the event history and the audit log.</p>
+        </div>
+      </template>
     </div>
   @end
 @end

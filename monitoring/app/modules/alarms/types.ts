@@ -22,6 +22,12 @@ export interface Alarm {
   acknowledgement: { by: UserId; at: Date } | null
 }
 
+/** An unacknowledged alarm with how often its audible cue repeats (SPEC-ALM-02, D-27). */
+export interface UnacknowledgedAlarm extends Alarm {
+  /** 60 for a critical alarm, null otherwise. */
+  audibleRepeatSeconds: number | null
+}
+
 /** Result of acknowledge (SPEC-ALM-01, D-30). */
 export type AcknowledgeResult =
   { kind: 'acknowledged'; at: Date } | { kind: 'alreadyAcknowledged'; by: UserId; at: Date }
