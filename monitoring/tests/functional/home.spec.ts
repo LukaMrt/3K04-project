@@ -39,6 +39,12 @@ test.group('Home page', (group) => {
     assert.notInclude(response.text(), 'auth__aside')
   })
 
+  test('the demo accounts are offered in development only', async ({ client, assert }) => {
+    const response = await client.get('/login')
+
+    assert.notInclude(response.text(), 'demo-admin-2026')
+  })
+
   test('renders the system check page', async ({ client }) => {
     const response = await client.get('/system')
 

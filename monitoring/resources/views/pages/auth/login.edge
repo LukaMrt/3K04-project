@@ -35,4 +35,23 @@
       'x-text': "submitting ? 'One moment…' : 'Sign in'",
     })
   @end
+
+  @if(demoAccounts.length)
+    <section class="auth__demo" aria-labelledby="demo-title">
+      <h2 id="demo-title" class="auth__demo-title">Development: demo accounts</h2>
+      <div class="auth__demo-buttons">
+        @each(account in demoAccounts)
+          <button
+            type="button"
+            class="btn btn--secondary btn--sm"
+            data-email="{{ account.email }}"
+            data-password="{{ account.password }}"
+            onclick="const form = document.querySelector('.auth__form'); form.email.value = this.dataset.email; form.password.value = this.dataset.password; form.password.focus()"
+          >
+            {{ account.name }}
+          </button>
+        @end
+      </div>
+    </section>
+  @end
 @end

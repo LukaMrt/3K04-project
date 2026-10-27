@@ -1,4 +1,7 @@
 import { inject } from '@adonisjs/core'
+import app from '@adonisjs/core/services/app'
+import { DEMO_ACCOUNTS } from '#database/demo_accounts'
+import { roleName } from '#modules/dashboard/presentation'
 import User from '#models/user'
 import UserService from '#modules/users/users_service'
 import { loginValidator } from '#validators/user'
@@ -11,10 +14,17 @@ import type { HttpContext } from '@adonisjs/core/http'
  */
 export default class SessionController {
   /**
-   * Display the login page
+   * Display the login page; in development, with one-click fills of the demo accounts.
    */
   async create({ view }: HttpContext) {
-    return view.render('pages/auth/login')
+    const demoAccounts = app.inDev
+      ? DEMO_ACCOUNTS.map(({ role, email, password }) => ({
+          name: roleName(role),
+          email,
+          password,
+        }))
+      : []
+    return view.render('pages/auth/login', { demoAccounts })
   }
 
   /**
