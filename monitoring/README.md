@@ -40,6 +40,8 @@ Dates go through Lucid's default `datetime` columns, to the second (D-34); value
 
 `start/scheduler.ts` (web server only) runs the periodic operations of the modules: the
 purge of expired records (`history.purgeExpired`, at start-up then every 24 h, FR-HIS-09).
+`start/lifecycle.ts` (web server only) writes `system_start_up` and `system_shutdown` to the
+system log (NFR-AVL-05); the shutdown is recorded on SIGTERM and Ctrl+C, not on a crash.
 
 ## ADC simulator
 
