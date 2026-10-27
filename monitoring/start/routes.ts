@@ -37,9 +37,25 @@ router
   })
   .use(middleware.guest())
 
+router.post('logout', [controllers.Session, 'destroy']).use(middleware.auth())
+
+/**
+ * Operator Dashboard: every page needs an authenticated, active account (FR-USR-01,
+ * D-25), then the permission of its function (SPEC-USR-01, D-14).
+ */
 router
   .group(() => {
     router.on('/dashboard').render('pages/dashboard').as('dashboard')
-    router.post('logout', [controllers.Session, 'destroy'])
+
+    router
+      .group(() => {
+        router.get('accounts', [controllers.Accounts, 'index']).as('accounts.index')
+        router.post('accounts', [controllers.Accounts, 'store']).as('accounts.store')
+        router.post('accounts/:id/role', [controllers.Accounts, 'updateRole']).as('accounts.role')
+        router
+          .post('accounts/:id/deactivate', [controllers.Accounts, 'deactivate'])
+          .as('accounts.deactivate')
+      })
+      .use(middleware.can('manageAccounts'))
   })
-  .use(middleware.auth())
+  .use([middleware.auth(), middleware.actor()])

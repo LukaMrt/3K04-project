@@ -1,9 +1,10 @@
 import { inject } from '@adonisjs/core'
 import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
-import { notImplemented } from '#modules/shared/errors'
+import User from '#models/user'
 import type { Actor, Role, UserId } from '#modules/shared/types'
-import type { DashboardFunction, NewAccount } from '#modules/users/types'
+import { EmailAlreadyUsedError, UnknownUserError } from '#modules/users/errors'
+import type { AccountSummary, DashboardFunction, NewAccount } from '#modules/users/types'
 
 /** The role → permission matrix of D-14: who may use each dashboard function. */
 const PERMISSIONS: Record<DashboardFunction, Role[]> = {
@@ -61,7 +62,20 @@ export default class UserService {
    * Throws: UnknownUserError.
    */
   async actorOf(userId: UserId): Promise<Actor | null> {
-    return notImplemented('UserService.actorOf', userId)
+    const user = await this.find(userId)
+    return user.active ? { userId, role: user.role as Role } : null
+  }
+
+  /** Every account, sorted by email (FR-USR-03 to 05). */
+  async listAccounts(): Promise<AccountSummary[]> {
+    const users = await User.query().orderBy('email')
+    return users.map((user) => ({
+      userId: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role as Role,
+      active: user.active,
+    }))
   }
 
   /**
@@ -70,7 +84,12 @@ export default class UserService {
    * Throws: EmailAlreadyUsedError.
    */
   async createAccount(admin: Actor, account: NewAccount): Promise<UserId> {
-    return notImplemented('UserService.createAccount', admin, account)
+    if (await User.findBy('email', account.email)) {
+      throw new EmailAlreadyUsedError(`An account already uses ${account.email}`)
+    }
+    const user = await User.create({ ...account, active: true })
+    await this.audit(admin, 'create_account', user.id, account.role)
+    return user.id
   }
 
   /**
@@ -80,7 +99,10 @@ export default class UserService {
    * Throws: UnknownUserError.
    */
   async changeRole(admin: Actor, userId: UserId, role: Role): Promise<void> {
-    return notImplemented('UserService.changeRole', admin, userId, role)
+    const user = await this.find(userId)
+    const previous = user.role
+    await user.merge({ role }).save()
+    await this.audit(admin, 'change_role', userId, `${previous} -> ${role}`)
   }
 
   /**
@@ -90,6 +112,25 @@ export default class UserService {
    * Throws: UnknownUserError.
    */
   async deactivate(admin: Actor, userId: UserId): Promise<void> {
-    return notImplemented('UserService.deactivate', admin, userId)
+    const user = await this.find(userId)
+    await user.merge({ active: false }).save()
+    await this.audit(admin, 'deactivate_account', userId, null)
+  }
+
+  private async find(userId: UserId): Promise<User> {
+    const user = await User.find(userId)
+    if (!user) throw new UnknownUserError(`No account ${userId}`)
+    return user
+  }
+
+  /** NFR-AUD-04: account changes are audited with the administrator and the account. */
+  private async audit(admin: Actor, action: string, userId: UserId, outcome: string | null) {
+    await this.history.appendAudit({
+      userId: admin.userId,
+      action,
+      target: `user ${userId}`,
+      outcome,
+      at: this.clock.now(),
+    })
   }
 }

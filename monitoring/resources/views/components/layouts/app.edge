@@ -2,7 +2,10 @@
   Top-level app navigation. Add an entry here for every new area of your
   app, and it shows up in the navigation bar with its active state handled.
 --}}
-@let(nav = [{ label: 'Dashboard', route: 'dashboard', icon: 'lucide:house' }])
+@let(nav = [
+  { label: 'Dashboard', route: 'dashboard', icon: 'lucide:house' },
+  { label: 'Accounts', route: 'accounts.index', icon: 'lucide:users', fn: 'manageAccounts' },
+].filter((item) => !item.fn || (typeof can !== 'undefined' && can(item.fn))))
 @let(pageTitle = $props.get('title'))
 <!DOCTYPE html>
 <html
@@ -33,6 +36,9 @@
       <div class="header__inner">
         @!logo({ size: 28 })
         <div class="header__right">
+          @if(typeof actor !== 'undefined')
+            <span class="muted" style="font-size: 13px;">{{ auth.user?.fullName ?? auth.user?.email }} · {{ roleName(actor.role) }}</span>
+          @end
           @!themeToggle()
           @form({ route: 'session.destroy', method: 'POST' })
             <button type="submit" class="btn btn--secondary btn--sm">

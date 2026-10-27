@@ -924,3 +924,112 @@ input {
     padding: 20px;
   }
 }
+
+/* ==========================================================================
+   Operator Dashboard (Monitoring System)
+   Every status, severity and flag is a text label (D-16); colour only adds to
+   it, never replaces it (NFR-ACC-02).
+   ========================================================================== */
+:root {
+  --danger: #b42318;
+  --warn: #b54708;
+  --danger-bg: #fef3f2;
+  --warn-bg: #fffaeb;
+}
+[data-theme='dark'] {
+  --danger: #f97066;
+  --warn: #fdb022;
+  --danger-bg: #2a1210;
+  --warn-bg: #2a1f0a;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.table th {
+  color: var(--muted);
+  font-weight: 560;
+  font-size: 12.5px;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.label {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.label--danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+.label--warn {
+  color: var(--warn);
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+.label--ok {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.stale {
+  color: var(--warn);
+  font-size: 12.5px;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.inline-form .field {
+  min-width: 160px;
+}
+.alarm-banner {
+  border: 2px solid var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.alarm-banner--flash {
+  animation: alarm-flash 1s ease-in-out 3;
+}
+@keyframes alarm-flash {
+  50% {
+    box-shadow: 0 0 0 6px var(--danger-bg);
+  }
+}
+.muted {
+  color: var(--muted);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}

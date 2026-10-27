@@ -4,6 +4,7 @@
  */
 
 export const controllers = {
+  Accounts: () => import('#controllers/accounts_controller'),
   AdcProtocol: () => import('#controllers/adc_protocol_controller'),
   Home: () => import('#controllers/home_controller'),
   Session: () => import('#controllers/session_controller'),

@@ -46,11 +46,17 @@ async function checkTimeouts() {
   }
 }
 
-await purgeExpiredRecords()
-const purgeTimer = setInterval(purgeExpiredRecords, DAY_MS)
-const timeoutsTimer = setInterval(checkTimeouts, SECOND_MS)
+/**
+ * The timers start once the application is ready, never while it is only warmed up
+ * (`node ace codegen`): otherwise they would keep that command running forever.
+ */
+app.ready(async () => {
+  await purgeExpiredRecords()
+  const purgeTimer = setInterval(purgeExpiredRecords, DAY_MS)
+  const timeoutsTimer = setInterval(checkTimeouts, SECOND_MS)
 
-app.terminating(() => {
-  clearInterval(purgeTimer)
-  clearInterval(timeoutsTimer)
+  app.terminating(() => {
+    clearInterval(purgeTimer)
+    clearInterval(timeoutsTimer)
+  })
 })

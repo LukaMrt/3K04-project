@@ -1,4 +1,6 @@
+import { inject } from '@adonisjs/core'
 import User from '#models/user'
+import UserService from '#modules/users/users_service'
 import { loginValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -16,21 +18,30 @@ export default class SessionController {
   }
 
   /**
-   * Authenticate user credentials and create a new session
+   * Authenticate user credentials and create a new session. A deactivated account is
+   * refused (FR-USR-05); the role is read now and kept for the session (FR-USR-04).
    */
-  async store({ request, auth, response }: HttpContext) {
+  @inject()
+  async store({ request, auth, response, session }: HttpContext, users: UserService) {
     const { email, password } = await request.validateUsing(loginValidator)
     const user = await User.verifyCredentials(email, password)
+    const actor = await users.actorOf(user.id)
+    if (!actor) {
+      session.flash('error', 'This account has been deactivated.')
+      return response.redirect().toRoute('session.create')
+    }
 
     await auth.use('web').login(user)
+    session.put('role', actor.role)
     response.redirect().toRoute('dashboard')
   }
 
   /**
    * Log out the current user and destroy their session
    */
-  async destroy({ auth, response }: HttpContext) {
+  async destroy({ auth, response, session }: HttpContext) {
     await auth.use('web').logout()
+    session.forget('role')
     response.redirect().toRoute('session.create')
   }
 }

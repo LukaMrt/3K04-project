@@ -76,13 +76,14 @@ Semantics: a record returned by a query is identical to the record stored, whate
 
 **Uses:** Historical Data Store, Clock. **Used by:** Operator Dashboard, Reporting.
 
-Authentication itself (login form, session, password hashing) is provided by the AdonisJS starter kit; this module adds roles, permissions and account management.
+Authentication itself (login form, session, password hashing) is provided by the AdonisJS starter kit; this module adds roles, permissions and account management. The role → permission matrix is the table `PERMISSIONS` of `users_service.ts`. A deactivated account is refused at login; the role is read at login and kept in the session, so that a role change applies from the next login (FR-USR-04).
 
 | Operation | Inputs | Output | Pre-conditions | Effects | Exceptions |
 | --- | --- | --- | --- | --- | --- |
 | `can(actor, fn)` | `Actor`, `DashboardFunction` | `boolean` | - | None; answer read from the D-14 matrix (SPEC-USR-01) | - |
 | `canSeePatientIds(actor)` | `Actor` | `boolean` | - | None; true for pharmacist and administrator only (SPEC-USR-02) | - |
 | `actorOf(userId)` | `UserId` | `Actor \| null` | - | None; `null` if the account is deactivated (D-25) | `UnknownUserError` |
+| `listAccounts()` | - | `AccountSummary[]` (account number, name, email, role, active), sorted by email | - | None; never the password | - |
 | `createAccount(admin, account)` | `Actor`, `NewAccount` (name, email, password, role) | `UserId` | `admin` may manage accounts | Account created, active; audited (NFR-AUD-04) | `EmailAlreadyUsedError` |
 | `changeRole(admin, userId, role)` | `Actor`, `UserId`, `Role` | `void` | `admin` may manage accounts | Role changed, applies from the next login of that user (FR-USR-04); audited | `UnknownUserError` |
 | `deactivate(admin, userId)` | `Actor`, `UserId` | `void` | `admin` may manage accounts | Account deactivated: refused at login, open sessions closed at their next request (D-25); audited | `UnknownUserError` |
