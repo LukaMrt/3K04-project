@@ -95,6 +95,7 @@ export default class AdcSimulate extends BaseCommand {
       const action = await this.prompt.choice('Action', [
         { name: 'alarm', message: 'Raise an alarm' },
         { name: 'dispense', message: 'Dispense one box' },
+        { name: 'refill', message: 'Refill a medication' },
         { name: 'state', message: 'Change the state (online / maintenance / fault)' },
         { name: 'pause', message: 'Stop / resume heartbeats (communication loss)' },
         { name: 'reply', message: 'Change how commands are answered' },
@@ -121,6 +122,16 @@ export default class AdcSimulate extends BaseCommand {
         )
         const done = adc.dispense(medicationId, randomUUID(), NURSE.staffMemberId, NURSE.name)
         this.logger.info(done ? 'Dispensed; sent with the next heartbeat' : 'Out of stock')
+      } else if (action === 'refill') {
+        const medicationId = await this.prompt.choice(
+          'Medication',
+          adc.inventory.map((e) => ({ name: e.medicationId, message: describe(e) }))
+        )
+        const boxes = await this.prompt.ask('Boxes to add', {
+          default: '10',
+          validate: (value) => /^[1-9]\d*$/.test(value) || 'A whole number of boxes, at least 1',
+        })
+        await adc.refill(medicationId, Number(boxes))
       } else if (action === 'state') {
         await adc.setState(
           await this.prompt.choice('State', ['online', 'maintenance', 'fault'] as AdcState[])

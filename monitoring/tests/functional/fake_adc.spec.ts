@@ -1,4 +1,6 @@
 import { test } from '@japa/runner'
+import app from '@adonisjs/core/services/app'
+import InventoryService from '#modules/inventory/inventory_service'
 import env from '#start/env'
 import { FakeAdc } from '#simulator/fake_adc'
 import { useFakeModules } from '#tests/helpers/fake_modules'
@@ -132,6 +134,26 @@ test.group('Fake ADC / receiving commands', (group) => {
     })
     assert.equal(adc.state, 'maintenance')
     assert.equal(fakes.cabinetHealth.heartbeats.at(-1)?.state, 'maintenance')
+  })
+
+  test('refills a medication and reports the new inventory at once', async ({
+    assert,
+    cleanup,
+  }) => {
+    const adc = fakeAdc()
+    await adc.start()
+    cleanup(() => adc.stop())
+    await adc.register()
+
+    const result = await adc.refill(MORPHINE, 10)
+
+    assert.equal(result?.httpStatus, 200)
+    assert.lengthOf(adc.pending, 0)
+    const inventoryService = await app.container.make(InventoryService)
+    const inventory = await inventoryService.getInventory(adc.adcId)
+    assert.equal(inventory?.lines[0].quantityInBoxes, 13)
+    assert.isNull(adc.refill(MORPHINE, 0))
+    assert.isNull(adc.refill('00000000-0000-4000-8000-000000000000', 5))
   })
 
   test('refuses a command meant for another ADC or impossible in fault', async ({
