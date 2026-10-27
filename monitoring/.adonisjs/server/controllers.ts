@@ -6,6 +6,7 @@
 export const controllers = {
   Accounts: () => import('#controllers/accounts_controller'),
   AdcProtocol: () => import('#controllers/adc_protocol_controller'),
+  Adcs: () => import('#controllers/adcs_controller'),
   Alarms: () => import('#controllers/alarms_controller'),
   Dashboard: () => import('#controllers/dashboard_controller'),
   Home: () => import('#controllers/home_controller'),

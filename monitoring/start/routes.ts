@@ -52,6 +52,19 @@ router
       .use(middleware.can('acknowledgeAlarm'))
 
     router
+      .get('adcs/:id', [controllers.Adcs, 'show'])
+      .as('adcs.show')
+      .use(middleware.can('viewAdcStatuses'))
+    router
+      .post('adcs/:id/maintenance', [controllers.Adcs, 'maintenance'])
+      .as('adcs.maintenance')
+      .use(middleware.can('sendCommand'))
+    router
+      .post('adcs/:id/configuration', [controllers.Adcs, 'configure'])
+      .as('adcs.configure')
+      .use(middleware.can('sendConfiguration'))
+
+    router
       .group(() => {
         router.get('accounts', [controllers.Accounts, 'index']).as('accounts.index')
         router.post('accounts', [controllers.Accounts, 'store']).as('accounts.store')

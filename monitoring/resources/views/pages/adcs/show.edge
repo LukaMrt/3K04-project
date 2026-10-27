@@ -1,0 +1,121 @@
+@layouts.app({ title: adc.label })
+  @page({ title: adc.label, description: `Floor ${adc.floor}. ${adc.description}` })
+    @slot('actions')
+      @link({ route: 'dashboard', class: 'btn btn--secondary btn--sm' })
+        Back to the dashboard
+      @end
+      @if(canHistory)
+        <a class="btn btn--secondary btn--sm" href="/adcs/{{ adc.adcId }}/history">Event history</a>
+      @end
+    @end
+
+    <div class="stack" style="gap: 20px;">
+      <section class="panel" aria-labelledby="status-title">
+        <h2 id="status-title" class="section__title">Status</h2>
+        <p style="margin-top: 10px;">
+          <span class="{{ labelClass(adc.displayedStatus) }}">{{ adc.displayedStatus }}</span>
+          @if(adc.stale)
+            <span class="stale">stale, last contact {{ formatTime(adc.lastContact) }}</span>
+          @else
+            <span class="muted">last contact {{ formatTime(adc.lastContact) }}</span>
+          @end
+        </p>
+      </section>
+
+      @if(canInventory)
+        <section class="panel" aria-labelledby="inventory-title">
+          <h2 id="inventory-title" class="section__title">Inventory</h2>
+          @if(!inventory)
+            <p class="muted">No heartbeat received yet.</p>
+          @else
+            <p class="section__description">
+              From the heartbeat of {{ formatTime(inventory.heartbeatAt) }}
+              @if(adc.stale)
+                <span class="stale">(stale)</span>
+              @end
+            </p>
+            <div class="table-wrap" style="margin-top: 10px;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Medication</th>
+                    <th scope="col">Boxes</th>
+                    <th scope="col">Flag</th>
+                    @if(inventory.lines.some((line) => line.aggregated !== null))
+                      <th scope="col">All ADCs</th>
+                      <th scope="col">Same-floor sources</th>
+                    @end
+                  </tr>
+                </thead>
+                <tbody>
+                  @each(line in inventory.lines)
+                    <tr>
+                      <td>{{ line.medicationName }}</td>
+                      <td>{{ line.quantityInBoxes }}</td>
+                      <td>
+                        @if(line.lowStock)
+                          <span class="label label--danger">LOW STOCK</span>
+                        @else
+                          <span class="muted">—</span>
+                        @end
+                      </td>
+                      @if(line.aggregated !== null)
+                        <td>{{ line.aggregated }}</td>
+                        <td>
+                          @if(!line.sources)
+                            <span class="muted">—</span>
+                          @elseif(line.sources.kind === 'sources')
+                            {{ line.sources.adcs.map((source) => source.label).join(', ') }}
+                          @else
+                            No stock available
+                          @end
+                        </td>
+                      @end
+                    </tr>
+                  @end
+                </tbody>
+              </table>
+            </div>
+          @end
+        </section>
+      @end
+
+      @if(canCommand)
+        <section class="panel" aria-labelledby="command-title">
+          <h2 id="command-title" class="section__title">Maintenance mode</h2>
+          <p class="section__description">The ADC has 10 seconds to confirm; nothing is sent again automatically.</p>
+          <div class="inline-form" style="margin-top: 12px;">
+            @form({ route: 'adcs.maintenance', routeParams: { id: adc.adcId }, method: 'POST' })
+              <input type="hidden" name="enabled" value="true" />
+              @!button({ text: 'Enter maintenance mode', type: 'submit', variant: 'secondary' })
+            @end
+            @form({ route: 'adcs.maintenance', routeParams: { id: adc.adcId }, method: 'POST' })
+              <input type="hidden" name="enabled" value="false" />
+              @!button({ text: 'Leave maintenance mode', type: 'submit', variant: 'secondary' })
+            @end
+          </div>
+        </section>
+      @end
+
+      @if(canConfigure)
+        <section class="panel" aria-labelledby="configuration-title">
+          <h2 id="configuration-title" class="section__title">Configuration</h2>
+          <p class="section__description">Only the settings you fill in change.</p>
+          @form({ route: 'adcs.configure', routeParams: { id: adc.adcId }, method: 'POST', class: 'inline-form', style: 'margin-top: 12px;' })
+            @field.root({ name: 'timeServer' })
+              @!field.label({ text: 'Time server (host name)' })
+              @!input.control({ placeholder: 'ntp.hospital.local' })
+              @!field.error()
+            @end
+            @field.root({ name: 'screenLockTimeoutSeconds' })
+              @!field.label({ text: 'Screen lock timeout (15 to 600 s)' })
+              @!input.control({ type: 'number', min: 15, max: 600 })
+              @!field.error()
+            @end
+            @!button({ text: 'Send configuration', type: 'submit' })
+          @end
+        </section>
+      @end
+    </div>
+  @end
+@end
