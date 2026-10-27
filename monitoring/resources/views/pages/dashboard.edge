@@ -70,7 +70,7 @@
           <section class="panel" aria-labelledby="attention-title">
             <h2 id="attention-title" class="section__title">ADCs needing attention</h2>
             <p class="muted" x-show="attention.length === 0">None.</p>
-            <ul class="stack" style="margin-top: 10px;">
+            <ul class="column" style="margin-top: 10px;">
               <template x-for="adc in attention" x-bind:key="adc.adcId">
                 <li>
                   <span x-bind:class="labelClass(adc.displayedStatus)" x-text="adc.displayedStatus"></span>
@@ -83,7 +83,7 @@
           <section class="panel" aria-labelledby="low-stock-title">
             <h2 id="low-stock-title" class="section__title">Low stock</h2>
             <p class="muted" x-show="lowStock.length === 0">None.</p>
-            <ul class="stack" style="margin-top: 10px;">
+            <ul class="column" style="margin-top: 10px;">
               <template x-for="flag in lowStock" x-bind:key="flag.adcId + flag.medicationId">
                 <li>
                   <span class="label label--danger">LOW STOCK</span>

@@ -1,10 +1,14 @@
 import { DateTime } from 'luxon'
+import { HOSPITAL_TIME_ZONE } from '#modules/shared/time_zone'
 import type { AlarmSeverity, Role } from '#modules/shared/types'
 
 /**
  * Wording of the dashboard (secret of the Operator Dashboard: page layout and wording).
  * Shared with every Edge view by start/view.ts.
  */
+
+/** Times are stored in UTC and shown in the time zone of the hospital (D-43). */
+export const TIME_ZONE = HOSPITAL_TIME_ZONE
 
 export const ROLES: Role[] = [
   'nurse',
@@ -44,9 +48,9 @@ export function severityLabel(severity: AlarmSeverity): string {
   return severity.toUpperCase()
 }
 
-/** Times are shown to the second (D-34), in the server's time zone. */
+/** Times are shown to the second (D-34), in the time zone of the hospital (D-43). */
 export function formatTime(value: Date | string | null | undefined): string {
   if (!value) return '—'
   const date = typeof value === 'string' ? new Date(value) : value
-  return DateTime.fromJSDate(date).toFormat('yyyy-LL-dd HH:mm:ss')
+  return DateTime.fromJSDate(date, { zone: TIME_ZONE }).toFormat('yyyy-LL-dd HH:mm:ss')
 }

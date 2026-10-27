@@ -1,6 +1,6 @@
 @layouts.app({ title: 'Audit log' })
   @page({ title: 'Audit log', description: 'Every user action, with its outcome (FR-HIS-07).' })
-    <div class="stack" style="gap: 20px;">
+    <div class="column" style="gap: 20px;">
       <form method="GET" action="{{ route('audit.index') }}" class="panel inline-form">
         <div class="field">
           <label class="field__label" for="from">From</label>

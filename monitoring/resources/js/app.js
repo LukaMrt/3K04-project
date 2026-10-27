@@ -102,11 +102,6 @@ function labelClass(value) {
   return 'label'
 }
 
-/** Times to the second, as everywhere on the dashboard (D-34). */
-function time(value) {
-  return value ? new Date(value).toLocaleString('sv-SE') : '—'
-}
-
 /**
  * Main view of the dashboard (resources/views/pages/dashboard.edge). Starts from the state
  * rendered by the server, then follows the "alarms" and "adcs" channels of the live
@@ -120,7 +115,11 @@ Alpine.data('dashboard', function (initial) {
     announcement: '',
     timers: {},
     labelClass,
-    time,
+
+    /** Times to the second (D-34), in the time zone of the hospital given by the server (D-43). */
+    time(value) {
+      return value ? new Date(value).toLocaleString('sv-SE', { timeZone: this.timeZone }) : '—'
+    },
 
     init() {
       for (const alarm of this.alarms) this.startCue(alarm)

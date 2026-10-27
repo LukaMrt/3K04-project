@@ -18,7 +18,8 @@ const PATIENT = '6b0f3c2e-8d1a-4f7b-9e5c-3a2d1f0e9b8c'
 const OTHER_PATIENT = '7c1a4d3f-9e2b-4a8c-8f6d-4b3e2a1f0c9d'
 const STAFF = 'e9d8c7b6-a5f4-4e3d-8c2b-1a0f9e8d7c6b'
 const NOW = new Date('2026-10-01T09:00:00.000Z')
-const SEPTEMBER = { from: new Date('2026-09-01T00:00:00Z'), to: new Date('2026-09-30T23:59:59Z') }
+/** September as days of the hospital (D-43, America/Toronto, UTC−4 in September). */
+const SEPTEMBER = { from: new Date('2026-09-01T04:00:00Z'), to: new Date('2026-10-01T03:59:59Z') }
 
 const as = (role: Role, userId = 7) => ({ userId, role })
 const PHARMACIST = as('pharmacist')

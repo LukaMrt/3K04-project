@@ -12,10 +12,10 @@
       @end
     @end
 
-    <div class="stack" style="gap: 20px;">
+    <div class="column" style="gap: 20px;">
       <section class="panel">
         <h2 class="section__title">Parameters</h2>
-        <ul class="stack" style="margin-top: 8px;">
+        <ul class="column" style="margin-top: 8px;">
           @each((value, name) in report.parameters)
             <li><span class="muted">{{ name }}</span> {{ ['from', 'to'].includes(name) ? formatTime(value) : value }}</li>
           @end

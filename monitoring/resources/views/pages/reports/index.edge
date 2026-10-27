@@ -1,6 +1,6 @@
 @layouts.app({ title: 'Reports' })
   @page({ title: 'Reports', description: 'Generate a report, or reopen a saved one with its figures at generation time.' })
-    <div class="stack" style="gap: 20px;">
+    <div class="column" style="gap: 20px;">
       @if(canConsumption)
         <section class="panel" aria-labelledby="consumption-title">
           <h2 id="consumption-title" class="section__title">Medication consumption (FR-RPT-01 to 05)</h2>
@@ -68,7 +68,7 @@
         @if(saved.length === 0)
           <p class="muted" style="margin-top: 8px;">No saved report.</p>
         @else
-          <ul class="stack" style="margin-top: 10px;">
+          <ul class="column" style="margin-top: 10px;">
             @each(report in saved)
               <li>
                 @link({ route: 'reports.show', routeParams: { id: report.reportId }, class: 'il' })

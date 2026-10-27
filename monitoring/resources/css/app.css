@@ -1033,3 +1033,12 @@ input {
   outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+ul.column {
+  padding-left: 0;
+  list-style: none;
+}

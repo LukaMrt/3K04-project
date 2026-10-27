@@ -4,7 +4,7 @@
       @if(adcs.length === 0)
         <p class="muted">No ADC registered.</p>
       @else
-        <ul class="stack">
+        <ul class="column">
           @each(adc in adcs)
             <li>
               @link({ route: 'adcs.history', routeParams: { id: adc.adcId }, class: 'il' })

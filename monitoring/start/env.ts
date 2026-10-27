@@ -18,6 +18,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   HOST: Env.schema.string({ format: 'host' }),
   LOG_LEVEL: Env.schema.string(),
 
+  /** Time zone in which the dashboard shows times (D-43); storage stays in UTC. */
+  DISPLAY_TIME_ZONE: Env.schema.string.optional(),
+
   // App
   APP_KEY: Env.schema.secret(),
   APP_URL: Env.schema.string({ format: 'url', tld: false }),

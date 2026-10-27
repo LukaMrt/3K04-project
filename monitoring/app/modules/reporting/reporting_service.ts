@@ -1,9 +1,11 @@
 import { inject } from '@adonisjs/core'
+import { DateTime } from 'luxon'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
 import UserService from '#modules/users/users_service'
 import type { Actor, AdcId, DateRange } from '#modules/shared/types'
+import { HOSPITAL_TIME_ZONE } from '#modules/shared/time_zone'
 import type { AuditEntry, AuditFilter, ReportId } from '#modules/history/types'
 import { UnknownReportError } from '#modules/reporting/errors'
 import type {
@@ -123,7 +125,7 @@ export default class ReportingService {
     const lines = [ALARM_COLUMNS, ...rows.map((row) => ALARM_COLUMNS.map((column) => row[column]))]
     const { from, to } = saved.parameters as { from: string; to: string }
     return {
-      fileName: `alarm-report-${from.slice(0, 10)}-to-${to.slice(0, 10)}.csv`,
+      fileName: `alarm-report-${day(from)}-to-${day(to)}.csv`,
       contentType: 'text/csv',
       content: lines.map((line) => line.map(csvCell).join(',')).join('\r\n') + '\r\n',
     }
@@ -222,6 +224,11 @@ export default class ReportingService {
     const adcs = await this.cabinetHealth.listAdcs({})
     return new Map(adcs.map((adc) => [adc.adcId, adc.label]))
   }
+}
+
+/** The day of an ISO time in the hospital (D-43), for file names. */
+function day(iso: string): string {
+  return DateTime.fromISO(iso, { zone: HOSPITAL_TIME_ZONE }).toISODate()!
 }
 
 function isoRange(range: DateRange) {

@@ -5,6 +5,7 @@ import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service
 import type { DisplayedStatus } from '#modules/cabinet_health/types'
 import InventoryService from '#modules/inventory/inventory_service'
 import UserService from '#modules/users/users_service'
+import { TIME_ZONE } from '#modules/dashboard/presentation'
 
 const STATUSES: DisplayedStatus[] = [
   'ONLINE',
@@ -48,6 +49,7 @@ export default class DashboardController {
         canAlarms,
         canAcknowledge: this.users.can(actor, 'acknowledgeAlarm'),
         filter,
+        timeZone: TIME_ZONE,
         attentionStatuses: ATTENTION,
         adcs: allAdcs.filter((adc) => !filter || adc.displayedStatus === filter),
         attention: allAdcs.filter((adc) => ATTENTION.includes(adc.displayedStatus)),

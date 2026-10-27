@@ -1,6 +1,6 @@
 @layouts.app({ title: `History of ${adc.label}` })
   @page({ title: `Event history of ${adc.label}`, description: 'Dispensing activities, status changes, alarms and their acknowledgements (FR-HIS-04).' })
-    <div class="stack" style="gap: 20px;">
+    <div class="column" style="gap: 20px;">
       <form method="GET" action="{{ route('adcs.history', { id: adc.adcId }) }}" class="panel inline-form">
         <div class="field">
           <label class="field__label" for="from">From</label>
