@@ -43,7 +43,7 @@ These rules hold for every module; they are not repeated in each table.
 | --- | --- | --- | --- | --- | --- |
 | `now()` | - | `Date` | - | None | - |
 
-Semantics: two successive calls never go backwards (NAT-07). Tests and demonstrations swap the Clock for one they move forward by hand (`app.container.swap`), so that the 45 s and 75 s transitions can be shown at once.
+Semantics: two successive calls never go backwards (NAT-07). Tests swap the Clock for one they move forward by hand (`app.container.swap`), so that the 45 s and 75 s transitions are checked at once. The demonstration runs on the real clock: a simulated ADC stops its heartbeats and the transitions happen 45 s and 75 s later.
 
 ### 3.2 Historical Data Store
 

@@ -8,7 +8,7 @@ Each anticipated change is the secret of exactly one leaf module (section 2).
 
 | ID | Anticipated change | Hidden by |
 | --- | --- | --- |
-| AC-01 | The source of time: the system clock in production, a clock moved by hand in tests and demonstrations (D-29) | Clock |
+| AC-01 | The source of time: the system clock in production, a clock moved by hand in tests, or in a demonstration that must jump forward (D-29) | Clock |
 | AC-02 | The ADC ↔ Monitoring protocol: message encoding (JSON today), transport (HTTP today, a message broker tomorrow), endpoint paths, the contact address of each ADC (D-32) | ADC Communication Manager |
 | AC-03 | How information reaches the operator: page layout, wording and language, delivery technology to the browser (Server-Sent Events today, WebSockets or a native client tomorrow, D-27), how the sound is played | Operator Dashboard |
 | AC-04 | The connectivity rules: the 45 s and 75 s thresholds (D-01), the connectivity states and their transitions (SPEC-HLT-02) | Cabinet Health Monitor |
@@ -42,7 +42,7 @@ Modules 1.x are conceptual: they group leaf modules by the kind of secret they h
 | --- | --- | --- | --- |
 | 1 | Monitoring System | Supervise the ADCs of the hospital | All the secrets below |
 | 1.1 | Hardware hiding | Talk to the devices at the boundary: the time source, the ADCs, the operator workstations | How each device is reached and what its messages look like |
-| 1.1.1 | Clock | Give the current time | AC-01. Real implementation: `ClockService`; simulated: `ManualClock` (tests and demonstration) |
+| 1.1.1 | Clock | Give the current time | AC-01. Real implementation: `ClockService`; simulated: `ManualClock` (tests) |
 | 1.1.2 | ADC Communication Manager | Speak the ADC ↔ Monitoring protocol in both directions | AC-02. Real ADCs of Part A, or the ADC simulator (`monitoring/simulator/`) |
 | 1.1.3 | Operator Dashboard | Show everything to the users and receive their requests | AC-03. The workstation's screen, keyboard and speaker are reached through the browser only |
 | 1.2 | Behaviour hiding | Apply the rules of the specification | The rules that the hospital may change |
