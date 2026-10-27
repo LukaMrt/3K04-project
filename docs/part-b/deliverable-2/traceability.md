@@ -132,7 +132,7 @@ How to read it:
 | NFR-AVL-04 | 30 days without restart | - | N/A | - | Verified by measurement, from the records of NFR-AVL-05 |
 | NFR-AVL-05 | Record own start-ups and shutdowns | - | N/A | Historical Data Store | `recordLifecycleEvent()` in `start/lifecycle.ts` → `HistoryService.appendSystemLog()` (events `system_start_up`, `system_shutdown`); graceful stop on SIGTERM and Ctrl+C: `bin/server.ts` |
 | NFR-PRF-01 | Alarm displayed within 2 s | US-ALM-01, US-HLT-02 | SPEC-ALM-02 | Operator Dashboard | `LiveChannel.push()` (Server-Sent Events); `onAlarm()` in `resources/js/app.js` |
-| NFR-PRF-02 | NFR-PRF-01 holds with 50 ADCs | US-ALM-01 | SPEC-ALM-02 | Operator Dashboard | Verified by measurement with the ADC simulator (`node ace adc:simulate --count=50`) |
+| NFR-PRF-02 | NFR-PRF-01 holds with at least 50 ADCs | US-ALM-01 | SPEC-ALM-02 | Operator Dashboard | Verified by measurement with the ADC simulator (`node ace adc:simulate --count=50`) |
 | NFR-AUD-01 | Log acknowledgements, commands, configs | US-COM-02, US-COM-03, US-ALM-02, US-HIS-02 | SPEC-COM-04, SPEC-ALM-01 | Alarm Manager; ADC Communication Manager | `AlarmService.acknowledge()` and `AdcCommunicationService.deliver()` → `HistoryService.appendAudit()` |
 | NFR-AUD-02 | History cannot be modified | US-HIS-01 | SPEC-HIS-01 | Historical Data Store | `HistoryService` exports no update operation; acknowledgements are a separate table, so a stored alarm is never modified |
 | NFR-AUD-03 | History cannot be deleted | US-HIS-01 | SPEC-HIS-01 | Historical Data Store | `HistoryService` exports no delete operation except `purgeExpired()` |

@@ -74,15 +74,15 @@ The machine is kept by the Cabinet Health Monitor, one row of `adcs` per registe
 
 | D1 element | Code |
 | --- | --- |
-| Registration choice: *Rejected* | `AdcCommunicationService.receiveRegistration()`: the validator of `protocol.ts` fails → `registration_rejected` written to the system log, answer 400 |
-| Registration choice: *new identifier* → *Monitored* | `CabinetHealthService.register()`: row created with `connectivity = 'reachable'`, `reportedState = null`, `lastContact` = registration time (FR-HLT-06); first status change recorded (D-40) |
+| Registration choice: `[request invalid]` → back to *Unregistered* | `AdcCommunicationService.receiveRegistration()`: the validator of `protocol.ts` fails → `registration_rejected` written to the system log, answer 400 |
+| Registration choice: `[request valid]` → *Monitored* | `CabinetHealthService.register()`: row created with `connectivity = 'reachable'`, `reportedState = null`, `lastContact` = registration time (FR-HLT-06); first status change recorded (D-40) |
 | Re-registration (no transition) | `register()` on a known ADC: label and location replaced, `re_registration` logged; `receiveRegistration()` replaces the contact address in `adc_contacts` |
 | Region *Connectivity* | Column `connectivity` (`reachable`, `unreachable`, `offline`) |
 | Region *Reported operational state* | Column `reportedState` (`null` for *NotReported*, then `online`, `maintenance`, `fault`) |
 | Event *heartbeat* (all heartbeat transitions of both regions) | `CabinetHealthService.recordHeartbeat(adcId, state, at)`, called last by `receiveHeartbeat()`: `lastContact = at`, `connectivity = 'reachable'`, `reportedState = state`; a status change is recorded when either region changed |
-| `after(45 s)`, `after(75 s)` | `CabinetHealthService.checkTimeouts()`, called every second by `start/scheduler.ts`. It computes `silence = clock.now() − lastContact`, puts it in a band (`recent`, `pastUnreachableDelay`, `pastOfflineDelay`) and reads the target state in the transition table `ON_SILENCE[connectivity][band]` |
+| `when(silence ≥ 45 s)`, `when(silence ≥ 75 s)` | `CabinetHealthService.checkTimeouts()`, called every second by `start/scheduler.ts`. It computes `silence = clock.now() − lastContact`, puts it in a band (`recent`, `pastUnreachableDelay`, `pastOfflineDelay`) and reads the target state in the transition table `ON_SILENCE[connectivity][band]` |
 | Actions of the timed transitions | `moveTo()`: on the way to *Offline*, `alarms.raiseCommunicationLoss()` first (D-38), then the new connectivity is saved, the status change recorded and announced |
-| Invalid event: heartbeat of an unregistered ADC | `receiveHeartbeat()` checks `isRegistered()` before anything else: `heartbeat_discarded` logged, answer 404, no transition |
+| *Unregistered*: `heartbeat / discard and log` | `receiveHeartbeat()` checks `isRegistered()` before anything else: `heartbeat_discarded` logged, answer 404, no transition |
 | Displayed status (D-02, NFR-SAF-03) | `displayedStatus()`: OFFLINE or UNREACHABLE from the connectivity first, otherwise PENDING for *NotReported* (D-21), otherwise the reported state |
 
 The table `ON_SILENCE` (`cabinet_health_service.ts`) is the timed part of the machine written as a tabular expression: one row per current connectivity, one column per silence band, the next connectivity in each cell (`null`: no transition).
@@ -101,18 +101,18 @@ The alarm lifecycle is split between the Alarm Manager, which owns the rules, an
 
 | D1 element | Code |
 | --- | --- |
-| Origin: alarm transaction in a heartbeat | `receiveHeartbeat()` → `handleTransaction()` → `AlarmService.recordFromAdc()` |
-| Origin: ADC marked offline | `CabinetHealthService.moveTo()` → `AlarmService.raiseCommunicationLoss()`: type `communication_loss`, severity `error`, time from the Clock |
-| Validation: incomplete or unknown severity → *Rejected* | `readTransaction()` in `protocol.ts` returns `rejected` with a reason; `handleTransaction()` writes `transaction_rejected` to the system log and acknowledges the transaction as `rejected`. A rejected alarm is never given to the Alarm Manager: *Rejected* only exists as a system log entry |
-| Validation: transaction already received | `HistoryService.recordAlarm()` answers `duplicate` (D-28); `handleTransaction()` acknowledges it as `received` anyway |
+| Creation from a valid alarm transaction (`[*]` → *Unacknowledged*) | `receiveHeartbeat()` → `handleTransaction()` → `AlarmService.recordFromAdc()` |
+| Creation of a communication loss alarm (`[*]` → *Unacknowledged*) | `CabinetHealthService.moveTo()` → `AlarmService.raiseCommunicationLoss()`: type `communication_loss`, severity `error`, time from the Clock |
+| Transaction incomplete or with an unknown severity: no alarm is created (activity 2) | `readTransaction()` in `protocol.ts` returns `rejected` with a reason; `handleTransaction()` writes `transaction_rejected` to the system log and acknowledges the transaction as `rejected`. A rejected alarm is never given to the Alarm Manager: it only exists as a system log entry |
+| Transaction already received: no alarm is created (activity 2) | `HistoryService.recordAlarm()` answers `duplicate` (D-28); `handleTransaction()` acknowledges it as `received` anyway |
 | *Unacknowledged* | An `alarms` row without an `alarm_acknowledgements` row |
 | `entry / display within 2 s` | `AlarmService.record()` announces a `raised` event once the alarm is stored; `LiveChannel` pushes it on the `alarms` channel; `resources/js/app.js` (`onAlarm`) adds it to the list, flashes the page, plays a sound and writes a text announcement |
 | `do / repeat the audible cue every 60 s if critical` | The Alarm Manager decides the period (`audibleRepeatSeconds()`: 60 for `critical`, `null` otherwise) and sends it with the event and with `listUnacknowledged()`; the browser only repeats what it receives (`startCue`), so a dashboard opened later repeats it too |
-| Acknowledge request, role not permitted | `can_middleware.ts` refuses before the Alarm Manager is called (D-31): 403 and the permission page |
+| *Unacknowledged*: internal transition `acknowledge request [role not permitted]` | `can_middleware.ts` refuses before the Alarm Manager is called (D-31): 403 and the permission page |
 | *Unacknowledged* → *Acknowledged* | `AlarmService.acknowledge()`: `history.recordAcknowledgement()` stores the user and the time, then the audit entry is written and an `acknowledged` event announced; the browser stops the cue (`stopCue`) |
-| *Acknowledged* → *Acknowledged* (refused) | `acknowledge()` returns `{ kind: 'alreadyAcknowledged', by, at }`; `AlarmsController` shows who acknowledged it and when. The same result is returned when two acknowledgements race: the unique key makes the second insertion fail with `AlarmAlreadyAcknowledgedError`, which `acknowledge()` turns into this result |
-| ADC communicates again: stays unacknowledged | `recordHeartbeat()` never touches alarms (FR-HLT-07) |
-| `after(1 year) / purge` | `HistoryService.purgeExpired()`, called by the scheduler: alarms older than one year are deleted with their acknowledgements, in one transaction |
+| *Acknowledged*: internal transition `acknowledge request / refuse` | `acknowledge()` returns `{ kind: 'alreadyAcknowledged', by, at }`; `AlarmsController` shows who acknowledged it and when. The same result is returned when two acknowledgements race: the unique key makes the second insertion fail with `AlarmAlreadyAcknowledgedError`, which `acknowledge()` turns into this result |
+| No transition when the ADC communicates again (note of the diagram) | `recordHeartbeat()` never touches alarms (FR-HLT-07) |
+| `when(age ≥ 1 year) / purge` | `HistoryService.purgeExpired()`, called by the scheduler: alarms older than one year are deleted with their acknowledgements, in one transaction |
 
 ## 5. D1 activity diagrams → code
 
@@ -152,12 +152,12 @@ Each scenario of D1 is one request (or one periodic call) that goes down the USE
 
 ## 6. Differences from the D1 models
 
-Writing the code against the D1 diagrams showed a few places where the code does not follow them step by step. None of them changes a D1 requirement. Each one is either a refinement already stated in the D2 specification, or an order of steps that the diagrams did not fix and that the code had to choose. The D1 diagrams were left as they were; the specification and the safety-critical specifications describe the behaviour of the code.
+Writing the code against the D1 diagrams showed a few places where the code does not follow them step by step. None of them changes a D1 requirement. Each one is either a refinement already stated in the D2 specification, or an order of steps that the diagrams did not fix and that the code had to choose. Apart from the notation corrections made after the D1 feedback (introduction, section 3.4; Appendix C), the D1 diagrams were left as they were; the specification and the safety-critical specifications describe the behaviour of the code.
 
 | D1 element | What the code does | Why |
 | --- | --- | --- |
-| State machine 1, *Connectivity*: *Reachable* → *Unreachable* → *Offline* | An ADC can go from `reachable` directly to `offline` (third column of `ON_SILENCE`, section 4.1). | If a check is missed, for example while the server restarts, the silence of an ADC can jump past 75 s in one step. Going through *Unreachable* first would delay the communication loss alarm by one second for no benefit. Specified in safety-critical specifications, section 2. |
-| State machine 1, `after(45 s)`, `after(75 s)` | The timed transitions are found by a check every second (`checkTimeouts()`), not by one timer per ADC. A transition is at most one second late. | The connectivity is then a function of the time of last contact, which survives a restart; timers in memory would not. The 1 s delay is part of the invariant INV-HLT-1. |
+| State machine 1, *Connectivity*: *Reachable* → *Offline* | An ADC can go from `reachable` directly to `offline` (third column of `ON_SILENCE`, section 4.1). This transition was added to the D1 diagram after the D1 feedback. | If a check is missed, for example while the server restarts, the silence of an ADC can jump past 75 s in one step. Going through *Unreachable* first would delay the communication loss alarm by one second for no benefit. Specified in safety-critical specifications, section 2. |
+| State machine 1, `when(silence ≥ 45 s)`, `when(silence ≥ 75 s)` | The timed transitions are found by a check every second (`checkTimeouts()`), not by one timer per ADC. A transition is at most one second late. | The connectivity is then a function of the time of last contact, which survives a restart; timers in memory would not. The 1 s delay is part of the invariant INV-HLT-1. |
 | State machine 1, *Reported operational state* | Before its first heartbeat, an ADC (*NotReported*) is shown PENDING. | D1 did not say what to show in *NotReported*; every other label would be false (D-21). |
 | State machine 1 and activity 3, *Unreachable* → *Offline* / "record status change, raise communication loss alarm" | The alarm is stored first, then the connectivity becomes `offline` and the status change is recorded. | If storage fails between both steps, the next check finds the ADC still not offline and tries again. The worst case is then a second alarm, never an offline ADC without an alarm (D-38). |
 | Activity 2: "Transaction identifier already received?" before "ADC, timestamp, type and severity present?" | The content of a transaction is checked first (`readTransaction()`); the duplicate is found afterwards, when the Historical Data Store records it. | The module that stores transactions is the only one that knows which identifiers it holds (D-28). A transaction sent again is identical to the first sending (A-26), so it passes the checks again and gets the same acknowledgement as in D1. |

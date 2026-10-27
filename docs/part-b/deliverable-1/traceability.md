@@ -77,7 +77,7 @@
 | NFR-AVL-04 | 30 days without restart | - (verified without a user story, see user-stories.md) | Operator Dashboard, User Management / Auth, Inventory Supervisor, Alarm Manager, Cabinet Health Monitor, Reporting, Historical Data Store, ADC Communication Manager | Hospital IT |
 | NFR-AVL-05 | Record own start-ups and shutdowns | - (verified without a user story, see user-stories.md) | Cabinet Health Monitor, Historical Data Store | Hospital IT |
 | NFR-PRF-01 | Alarm displayed within 2 s | US-ALM-01, US-HLT-02 | ADC Communication Manager, Alarm Manager, Operator Dashboard | Nurse; Scenario 2 |
-| NFR-PRF-02 | NFR-PRF-01 holds with 50 ADCs | US-ALM-01 | ADC Communication Manager, Alarm Manager | Hospital IT |
+| NFR-PRF-02 | NFR-PRF-01 holds with at least 50 ADCs | US-ALM-01 | ADC Communication Manager, Alarm Manager | Hospital IT |
 | NFR-AUD-01 | Log acknowledgements, commands, configs | US-COM-02, US-COM-03, US-ALM-02, US-HIS-02 | Alarm Manager, ADC Communication Manager, Historical Data Store | Hospital risk management |
 | NFR-AUD-02 | History cannot be modified | US-HIS-01 | Historical Data Store | Hospital risk management |
 | NFR-AUD-03 | History cannot be deleted | US-HIS-01 | Historical Data Store | Hospital risk management |

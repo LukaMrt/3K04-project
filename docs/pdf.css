@@ -32,6 +32,13 @@ tr { page-break-inside: avoid; }
 .wide { page: wide; }
 .wide img { max-width: 100%; max-height: 27cm; }
 
+/* The activity diagrams are tall and narrow: A3 portrait pages, so that their text stays readable */
+@page tall { size: A3; margin: 12mm 15mm; }
+.tall { page: tall; }
+/* Scaled up to the page, not left at the SVG's own size. md-to-pdf lays the A3 pages out at the
+   A4 width and then scales them by about 0.7, hence 50cm here for about 35cm on paper. */
+.tall img { height: 50cm !important; width: auto !important; max-width: 100% !important; max-height: none !important; }
+
 img { max-width: 100%; max-height: 24cm; display: block; margin: 0.8em auto; }
 
 .page-break { page-break-after: always; }
@@ -42,3 +49,10 @@ img { max-width: 100%; max-height: 24cm; display: block; margin: 0.8em auto; }
 
 .part-title { text-align: center; padding-top: 10cm; }
 .part-title h1 { border: none; font-size: 22pt; }
+
+/* Table of contents written by scripts/link-sections.py */
+.toc ul { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc .toc-1 { font-weight: bold; margin-top: 0.5em; }
+.toc .toc-2 { padding-left: 1.5em; font-size: 9pt; }
+.toc a, a[href^="#"] { color: #1a4f8b; text-decoration: none; }

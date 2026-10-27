@@ -257,7 +257,7 @@ Refines FR-ALM-04, NFR-PRF-01, NFR-PRF-02, NFR-SAF-04, NFR-ACC-01, NFR-ACC-02.
 | `c_alarmAck(x) = e_unacknowledged` ∧ `x.severity ≠ critical` | yes, from `t₀ + 2 s` at the latest, with text labels and a visual cue | at first display only |
 | `c_alarmAck(x) = e_acknowledged(·)` | no | none |
 
-The 2-second bound holds with up to 50 ADCs connected (NFR-PRF-02). `t₀` is the reception time for an alarm from an ADC, and the generation time for a communication loss alarm.
+The 2-second bound holds with at least 50 ADCs connected (NFR-PRF-02). `t₀` is the reception time for an alarm from an ADC, and the generation time for a communication loss alarm.
 
 ### 3.5 Users and access (USR)
 
