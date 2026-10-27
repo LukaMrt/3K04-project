@@ -18,6 +18,13 @@
   </head>
   <body>
     <main class="auth">
+      <div class="auth__top">
+        <div class="auth__brand">
+          @!logo({ size: 28 })
+          <span>Hospital Monitoring System</span>
+        </div>
+        @!themeToggle()
+      </div>
       <div class="auth__form-wrap">{{{ await $slots.main() }}}</div>
     </main>
     @include('partials/flash_alerts')

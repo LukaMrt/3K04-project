@@ -28,9 +28,13 @@ test.group('Home page', (group) => {
     response.assertHeader('location', '/dashboard')
   })
 
-  test('the login page shows only the sign-in form', async ({ client, assert }) => {
+  test('the login page shows the sign-in form under the name of the application', async ({
+    client,
+    assert,
+  }) => {
     const response = await client.get('/login')
 
+    response.assertTextIncludes('Hospital Monitoring System')
     response.assertTextIncludes('Sign in')
     assert.notInclude(response.text(), 'auth__aside')
   })

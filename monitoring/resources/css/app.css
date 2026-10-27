@@ -527,18 +527,32 @@ input {
 }
 
 /* ==========================================================================
-   Auth — the sign-in form alone, centred
+   Auth — the sign-in form, centred, under the name of the application
    ========================================================================== */
 .auth {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  padding: 30px 20px;
+  padding: 30px 36px;
   background: var(--card);
+}
+.auth__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.auth__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 560;
+  font-size: 15px;
 }
 .auth__form-wrap {
   margin: auto;
   width: 100%;
   max-width: 344px;
+  padding: 20px 0;
 }
 .auth__form {
   display: flex;
@@ -552,6 +566,11 @@ input {
   font-size: 27px;
   letter-spacing: 0.2px;
   text-wrap: balance;
+}
+.auth__sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
 }
 
 .subnav {
