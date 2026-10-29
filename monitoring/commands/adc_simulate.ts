@@ -1,20 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { readFile, writeFile } from 'node:fs/promises'
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import { FakeAdc, type AdcState, type InventoryEntry, type ReplyMode } from '#simulator/fake_adc'
+import { FakeAdc, type AdcState, type ReplyMode } from '#simulator/fake_adc'
+import { describe, inventoryFor, loadAdcIds, saveAdcIds } from '#simulator/demo_data'
 
-/** Medications shared by every simulated ADC, so that same-floor sources can be shown. */
-const MEDICATIONS = [
-  { medicationId: '8c1d5e2a-4f3b-4a9e-b7d6-1e2f3a4b5c6d', medicationName: 'Morphine 10 mg/mL' },
-  { medicationId: 'b2e4f6a8-1c3d-4e5f-8a9b-0c1d2e3f4a5b', medicationName: 'Insulin glargine' },
-  { medicationId: '4d5e6f70-8192-4a3b-9c4d-5e6f7a8b9c0d', medicationName: 'Paracetamol 500 mg' },
-]
-/** Quantities of the first ADCs: low morphine in the first one, enough in the second. */
-const QUANTITIES = [
-  [4, 12, 30],
-  [20, 6, 25],
-]
 const NURSE = { staffMemberId: 'e9d8c7b6-a5f4-4e3d-8c2b-1a0f9e8d7c6b', name: 'Jane Doe, RN' }
 const ALARM_TYPES = [
   'temperature_out_of_range',
@@ -63,7 +52,7 @@ export default class AdcSimulate extends BaseCommand {
   private timer?: NodeJS.Timeout
 
   async run() {
-    const ids = await this.loadIds()
+    const ids = await loadAdcIds(this.idsFile)
     for (let i = 0; i < this.count; i++) {
       const label = this.count > 1 ? `${this.label} ${i + 1}` : this.label
       ids[label] ??= randomUUID()
@@ -81,7 +70,7 @@ export default class AdcSimulate extends BaseCommand {
       await adc.sendHeartbeat()
       this.adcs.push(adc)
     }
-    await this.saveIds(ids)
+    await saveAdcIds(this.idsFile, ids)
 
     this.timer = setInterval(() => {
       for (const adc of this.adcs) if (!this.paused.has(adc)) adc.sendHeartbeat()
@@ -187,29 +176,7 @@ export default class AdcSimulate extends BaseCommand {
     await this.terminate()
   }
 
-  /** Each label keeps its identifier across runs, like a real ADC (contract §2). */
-  private async loadIds(): Promise<Record<string, string>> {
-    try {
-      return JSON.parse(await readFile(this.idsFile, 'utf8'))
-    } catch {
-      return {}
-    }
-  }
-
-  private async saveIds(ids: Record<string, string>) {
-    await writeFile(this.idsFile, JSON.stringify(ids, null, 2))
-  }
-
   private get idsFile() {
     return this.app.tmpPath('simulated_adcs.json')
   }
-}
-
-function inventoryFor(index: number): InventoryEntry[] {
-  const quantities = QUANTITIES[index] ?? [15, 15, 15]
-  return MEDICATIONS.map((m, i) => ({ ...m, quantityInBoxes: quantities[i] }))
-}
-
-function describe(entry: InventoryEntry) {
-  return `${entry.medicationName}: ${entry.quantityInBoxes} box(es)`
 }
