@@ -100,7 +100,7 @@
               <template x-for="flag in lowStock" x-bind:key="flag.adcId + flag.medicationId">
                 <li>
                   <span class="label label--danger">LOW STOCK</span>
-                  <span x-text="`${flag.medicationName}: ${flag.quantityInBoxes} boxes in ${flag.adcLabel ?? flag.adcId}`"></span>
+                  <a class="il" x-bind:href="`/adcs/${flag.adcId}`" x-text="`${flag.medicationName}: ${flag.quantityInBoxes} boxes in ${flag.adcLabel ?? flag.adcId}`"></a>
                 </li>
               </template>
             </ul>
