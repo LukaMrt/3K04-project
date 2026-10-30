@@ -1,14 +1,17 @@
 import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
+import { DateTime } from 'luxon'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import HistoryService from '#modules/history/history_service'
 import { account } from '#tests/helpers/accounts'
+import { HOSPITAL_TIME_ZONE } from '#modules/shared/time_zone'
 
 const ADC = 'c4a1e8f2-7b3d-4e9a-a5c6-2d8f0b1e3a47'
 const PATIENT = '6b0f3c2e-8d1a-4f7b-9e5c-3a2d1f0e9b8c'
 const STAFF = 'e9d8c7b6-a5f4-4e3d-8c2b-1a0f9e8d7c6b'
-const TODAY = new Date().toLocaleDateString('sv-SE')
+/** Report dates are days of the hospital, not of the machine (TZ=UTC in .env). */
+const TODAY = DateTime.now().setZone(HOSPITAL_TIME_ZONE).toISODate()!
 
 /** One ADC with a dispensing of 6 boxes and a critical alarm, today. */
 async function activity() {
