@@ -39,3 +39,6 @@ export async function loadAdcIds(file: string): Promise<Record<string, string>> 
 export async function saveAdcIds(file: string, ids: Record<string, string>) {
   await writeFile(file, JSON.stringify(ids, null, 2))
 }
+
+/** Port of the control server of `adc:demo`, polled by the demo banner of the application. */
+export const DEMO_CONTROL_PORT = 3334

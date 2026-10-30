@@ -1,0 +1,22 @@
+{{--
+  Demo banner: shown while `node ace adc:demo` runs, in development only. Next does the
+  next step of the demonstration, like Enter in the terminal (commands/adc_demo.ts).
+--}}
+@if(demoControlUrl)
+  <div class="demo-banner" x-data="demoBanner('{{ demoControlUrl }}')" x-show="state" x-cloak>
+    <div class="demo-banner__inner">
+      <span class="demo-banner__step">
+        <span class="label">DEMO</span>
+        <span x-text="step"></span>
+        <span class="muted" x-show="state?.countdown" x-text="`· offline in ${state?.countdown} s`"></span>
+      </span>
+      {{-- Same label at every step, so that the button does not move under the pointer. --}}
+      <span class="demo-banner__next">
+        <span class="muted" x-text="state?.busy ? 'Running…' : `Then: ${state?.next ?? ''}`"></span>
+        <button type="button" class="btn btn--primary btn--sm" x-on:click="next()" x-bind:disabled="state?.busy">
+          Next →
+        </button>
+      </span>
+    </div>
+  </div>
+@end

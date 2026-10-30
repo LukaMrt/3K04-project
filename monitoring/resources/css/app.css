@@ -1026,3 +1026,36 @@ ul.column {
   width: auto;
   height: 34px;
 }
+
+/* --- demo banner (development only, partials/demo_banner.edge) --- */
+.demo-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--card);
+  border-bottom: 1px solid var(--line-2);
+  box-shadow: 0 1px 8px var(--ring);
+}
+.demo-banner__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.demo-banner__next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  font-size: 13.5px;
+}
+.demo-banner__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}

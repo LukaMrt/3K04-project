@@ -224,4 +224,70 @@ Alpine.data('dashboard', function (initial) {
   }
 })
 
+const DEMO_SEEN_KEY = 'demo-step-seen'
+
+/**
+ * Demo banner (partials/demo_banner.edge): follows the control server of `adc:demo` and
+ * stays hidden when it does not run. When a step done since the last look has a page,
+ * this tab opens it.
+ */
+Alpine.data('demoBanner', function (controlUrl) {
+  return {
+    state: null,
+
+    /** The step running, else the last one done. */
+    get step() {
+      if (!this.state) return ''
+      const { done, total, current, next, busy } = this.state
+      return busy ? `${done + 1}/${total} ${next}` : `${done}/${total} ${current ?? 'Ready'}`
+    },
+
+    init() {
+      this.poll()
+    },
+
+    async poll() {
+      try {
+        this.state = await (await fetch(`${controlUrl}/state`)).json()
+        this.follow()
+      } catch {
+        this.state = null
+      }
+      setTimeout(() => this.poll(), this.state ? 1000 : 5000)
+    },
+
+    follow() {
+      if (this.state.busy) return
+      const seen = readSeenStep()
+      if (seen === this.state.done) return
+      rememberSeenStep(this.state.done)
+      // A first look, or a new run of the demo: nothing to open.
+      if (seen === null || seen > this.state.done) return
+      const visit = this.state.visit
+      if (visit && window.location.pathname !== visit) window.location.assign(visit)
+    },
+
+    async next() {
+      await fetch(`${controlUrl}/next`, { method: 'POST' }).catch(() => {})
+    },
+  }
+})
+
+function readSeenStep() {
+  try {
+    const seen = sessionStorage.getItem(DEMO_SEEN_KEY)
+    return seen === null ? null : Number(seen)
+  } catch {
+    return null
+  }
+}
+
+function rememberSeenStep(done) {
+  try {
+    sessionStorage.setItem(DEMO_SEEN_KEY, String(done))
+  } catch {
+    // Blocked storage: the banner then never opens pages by itself.
+  }
+}
+
 Alpine.start()
