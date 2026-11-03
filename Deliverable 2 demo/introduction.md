@@ -72,4 +72,4 @@ The current Part A prototype uses synthetic IDs such as `ADC-DEMO-001`, `MED-001
 | [traceability.md](traceability.md) | **82 FR + 50 NFR**, with user stories, precise-spec IDs, modules and code. |
 | [assumptions-and-decisions.md](assumptions-and-decisions.md) | D1 assumptions carried forward, D2 decisions, hazards, privacy and accessibility. |
 
-The intended repository arrangement is to keep these eight files together so relative Markdown links resolve. The project's Python code may live alongside them or in a sibling `ADC_Project_D2/` folder; code paths in these documents are relative to that Python project folder.
+
