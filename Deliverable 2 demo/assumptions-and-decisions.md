@@ -91,9 +91,3 @@ These decisions explain the current design and recommended safety refinements. A
 | Cybersecurity | Individual salted password verifiers, role controls, authenticated transport, validated remote requests, replay protection. | PBKDF2 and local role checks present; remote demo string marker is not cryptographic authentication |
 | Responsible disclosure | Distinguish required formal behaviour from incomplete demonstration implementations. | This package marks gaps explicitly; real medication/patient use is prohibited |
 
-## 6. Team review before submission
-
-- Verify any new assumptions/decisions against the *current shared repository*, D1 feedback and the actual Part B interface contract; none are represented as approved changes by another team.
-- Compare each formal operation in [safety-critical-specifications.md](safety-critical-specifications.md) with the exact current method body in Python.
-- Keep the traceability row for an unimplemented requirement, with a clear honest code/status note; do not remove rows to make coverage look complete.
-- If these Markdown files are committed without the Python code, adjust the code links or preserve the `ADC_Project_D2/` folder as specified in the README.
