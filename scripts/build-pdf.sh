@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds the PDF of a Part B deliverable from the Markdown files of docs/part-b.
-# Usage: scripts/build-pdf.sh [1|2]   (default: 2)
-# Output: build/part-b-deliverable-<n>.pdf
+# Builds the PDF of a deliverable: Part B for D1 and D2 (docs/part-b), whole team for D3 (docs/d3).
+# Usage: scripts/build-pdf.sh [1|2|3]   (default: 2)
+# Output: build/part-b-deliverable-<n>.pdf (D1, D2), build/deliverable-3.pdf (D3)
 set -euo pipefail
 
 DELIVERABLE="${1:-2}"
@@ -60,8 +60,28 @@ case "$DELIVERABLE" in
       deliverable-1/diagrams/activity-diagram.md
     )
     ;;
+  3)
+    # Whole-team document (deliverable-3.pdf, §4): sources in docs/d3, per-part sections
+    # labeled ADC / Monitoring System; the interface contract follows as Appendix A.
+    SRC="$ROOT/docs/d3"
+    OUTPUT="$ROOT/build/deliverable-3.pdf"
+    FILES=(
+      cover.md
+      introduction.md
+      hazard-analysis-adc.md
+      hazard-analysis-monitoring.md
+      testing-plan-adc.md
+      testing-plan-monitoring.md
+      integration-report.md
+      ethics-reflection.md
+      assumptions-and-decisions.md
+      "@part:Appendix A - ADC ↔ Monitoring Interface Contract"
+      ../part-b/interface-adc-monitoring.md
+      appendix-methodology-and-ai-use.md
+    )
+    ;;
   *)
-    echo "Usage: $0 [1|2]" >&2
+    echo "Usage: $0 [1|2|3]" >&2
     exit 1
     ;;
 esac
