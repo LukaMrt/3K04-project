@@ -1,31 +1,48 @@
+
 # 3. Testing Plan - Monitoring System
 
-<!-- Handout §4.3: this plan must not depend on the integration; the other part is replaced by a stub
-or driver. Lectures W9: choose the criterion per module, "criterion, where, and the hazard that earns
-it" (p. 62-65); derive the tests from the function tables, one per row and one per boundary, legal
-values only, expected result from the specification (p. 54-60). -->
+This plan tests the Monitoring System independently of the ADC (Part A). Any communication with an ADC is exercised using a fake ADC, stub, or test driver; the plan does not require the two project parts to be integrated.
 
 ## 3.4 Test criterion - Monitoring System
 
-_(To write: the coverage criterion (statement, branch, condition or MC/DC), where it applies, and one sentence on why it suits the Monitoring System.)_
+Coverage is selected per module, based on the decisions each module makes and the hazard associated with an incorrect outcome.
 
-| Module | Criterion | Justification (hazard) |
+| Module | Coverage criterion | Where it applies and why it suits the module (hazard) |
 | --- | --- | --- |
-| | | |
+| Cabinet Health Monitor (`CabinetHealthService`) | **Branch coverage** | Apply to the `ON_SILENCE` connectivity transitions and the status decisions in `SPEC-HLT-01`/`SPEC-HLT-02`. Each transition determines whether a cabinet remains reachable, becomes unreachable, or becomes offline; missing a branch could leave an unavailable cabinet appearing operational or fail to raise a communication-loss alarm. |
+| Alarm Manager (`AlarmService`) | **Branch coverage** | Apply to alarm recording and acknowledgement outcomes, including new versus duplicate alarms and unacknowledged versus already-acknowledged alarms. Missing a branch could lose an alarm, announce a duplicate, or incorrectly change a final acknowledgement. |
+| ADC Communication Manager (`AdcCommunicationService` and `protocol.ts`) | **Branch coverage, plus MC/DC for the compound identifier check in `readDeliveryAnswer`** | Apply branch coverage to valid/invalid communication outcomes, HTTP errors and timeouts. Apply MC/DC to `answer.body?.[expected.idField] !== expected.id || answer.body?.adcId !== expected.adcId`, because either identifier mismatch must independently cause a command to be reported as failed rather than delivered. Incorrectly accepting an acknowledgement could make staff believe a command was applied when it was not. ADC responses and failures are supplied by a fake ADC/test driver. |
+| Inventory Supervisor (`InventoryService`) | **Branch coverage** | Apply to the low-stock threshold and stock-source decisions in `SPEC-INV-01`. The `< 10` low-stock threshold and `> 10` source threshold must be exercised at and on either side of their boundaries; an incorrect branch could misstate medication availability or suggest an unsuitable source. |
+| Clock (`ClockService`) | **Statement coverage** | Apply to the time-source operation used by other modules. The module provides the current time rather than making a safety decision; statement coverage checks that the time-provision operation executes. |
+| Historical Data Store (`HistoryService`) | **Statement coverage** | Apply to the main record, query, acknowledgement, retention and report-storage operations. This module primarily persists and retrieves records; statement coverage checks that the relevant data-handling operations execute. |
+| User Management (`UserService`) | **Branch coverage** | Apply to role and permission decisions, including which dashboard actions and report types a user may access. Missing a permission branch could allow an unauthorized action or prevent an authorized user from carrying out a required task. |
+| Reporting (`ReportingService`) | **Statement coverage** | Apply to report generation, saving, reopening, filtering and export operations. These operations primarily retrieve, transform and present stored information; statement coverage is an appropriate baseline for this data-processing module. |
+| Operator Dashboard (`LiveChannel`, presentation helpers and controllers) | **Statement coverage** | Apply to the main status/alarm payload, presentation helpers and controller paths under `app/`. The Dashboard primarily converts module data and events into information shown to users; statement coverage checks execution of those data-presentation operations. The current c8 configuration includes `app/**`, so view templates outside that path are not included in this measurement. |
 
-**Coverage achieved:** _(To fill after the final run: figure per module, and the reason for each uncovered branch.)_
+**MC/DC test design:** For the two-condition identifier guard in `readDeliveryAnswer`, use three successful-HTTP-response cases: (1) both identifiers match, (2) only the message identifier differs, and (3) only the ADC identifier differs. This demonstrates that each condition can independently change the decision. c8 does not measure MC/DC; the test cases provide the evidence for this target.
+
+**Coverage measurement and achieved results:** Run `npm run test:coverage` from the `monitoring/` directory. Record the actual statement and branch coverage for each module above using the generated c8 report in `monitoring/coverage/`. Do not treat the global percentage as the result for every module. c8 reports statement and branch coverage; it does not report MC/DC. Any uncovered branches must be identified and briefly explained (for example, defensive/error paths that the current test setup cannot reliably induce). **Results are pending execution in a Node.js version compatible with the project's `engines` requirement (`>=24.0.0`).** No coverage percentage is claimed in this draft.
 
 ## 3.5 Unit test cases - Monitoring System
 
+The cases below are proposed unit-level tests derived from the Deliverable 2 function tables and safety-critical specifications. They use the Monitoring System's own modules; they do not call a live ADC from Part A. The `Traces to` column currently references the existing Deliverable 2 specifications and functional requirements. Once the team's SR-MON requirements are finalized, add the corresponding `SR-MON-xx` identifiers to each applicable row.
+
 | ID | Test case (inputs) | Expected result | Traces to | Observed result | Pass/Fail |
 | --- | --- | --- | --- | --- | --- |
-| T-MON-01 | | | | | |
-| T-MON-02 | | | | | |
-| T-MON-03 | | | | | |
-| T-MON-04 | | | | | |
-| T-MON-05 | | | | | |
-| T-MON-06 | | | | | |
+| T-MON-01 | **Cabinet Health:** registered ADC is `Reachable`; last heartbeat was 44 seconds ago; call `checkTimeouts()`. | Connectivity remains `Reachable`; no status-change event and no communication-loss alarm are produced. | SPEC-HLT-01, SPEC-HLT-02, FR-HLT-02 | Pending execution | Pending |
+| T-MON-02 | **Cabinet Health (boundary):** registered ADC is `Reachable`; last heartbeat was exactly 45 seconds ago; call `checkTimeouts()`. | Connectivity changes to `Unreachable`; the status change is recorded and announced; no communication-loss alarm is raised yet. | SPEC-HLT-01, SPEC-HLT-02, FR-HLT-02, FR-HIS-03 | Pending execution | Pending |
+| T-MON-03 | **Cabinet Health (boundary/off-normal):** registered ADC is `Unreachable`; last heartbeat was exactly 75 seconds ago; call `checkTimeouts()` twice. | ADC changes to `Offline`; one communication-loss alarm is stored and announced on entry to `Offline`; the second call does not raise another alarm while it remains offline. | SPEC-HLT-02, FR-HLT-03, FR-HLT-04, INV-HLT-2 | Pending execution | Pending |
+| T-MON-04 | **Cabinet Health (recovery):** ADC is `Offline` and has an unacknowledged communication-loss alarm; record a valid heartbeat. | ADC returns to `Reachable`; last-contact time and reported state are updated; the existing communication-loss alarm remains unacknowledged. | SPEC-HLT-02, FR-HLT-07, INV-HLT-3 | Pending execution | Pending |
+| T-MON-05 | **Alarm Manager:** call `recordFromAdc()` with a valid alarm transaction ID that has not previously been stored, then submit the same alarm again with the same ID. | First call returns `recorded`, stores the alarm as unacknowledged and announces one `raised` event; second call returns `duplicate` and does not store or announce another alarm. | SPEC-COM-03, FR-ALM-01, FR-COM-08, INV-ALM-1, INV-ALM-3 | Pending execution | Pending |
+| T-MON-06 | **Alarm Manager:** call `acknowledge()` for a stored, unacknowledged alarm using an eligible actor. | Acknowledgement is stored with the actor and current time; one audit entry is written; one `acknowledged` event is announced; the alarm is no longer in the unacknowledged list. | SPEC-ALM-01, FR-ALM-05, NFR-SAF-02, NFR-AUD-01, INV-ALM-2 | Pending execution | Pending |
+| T-MON-07 | **Alarm Manager (off-normal):** call `acknowledge()` for an alarm that has already been acknowledged by another user. | Result is `alreadyAcknowledged` and identifies the original user and timestamp; the original acknowledgement is unchanged; no second acknowledgement event or audit entry is created. | SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | Pending execution | Pending |
+| T-MON-08 | **Inventory Supervisor (boundary):** replace an ADC's inventory with one medication at quantity 9, then quantity 10; retrieve its inventory and low-stock list after each update. | Quantity 9 is flagged as low stock; quantity 10 is not flagged. The latest inventory replaces the previous inventory. | SPEC-INV-01, SPEC-INV-02, FR-INV-01, FR-INV-02, FR-INV-03 | Pending execution | Pending |
+| T-MON-09 | **Inventory Supervisor (source boundary):** the target ADC has fewer than 10 boxes; test same-floor candidate ADCs with the medication quantity at 10 and at 11, and include a candidate that is not reachable. | Only reachable same-floor ADCs holding more than 10 boxes are returned as sources. If none qualify, the result is `noStockAvailable`. | SPEC-INV-01, FR-INV-04, FR-INV-05, D-23 | Pending execution | Pending |
+| T-MON-10 | **ADC Communication Manager / MC/DC baseline:** call `readDeliveryAnswer()` with HTTP status 200, the expected message identifier, and the expected ADC identifier. | Returns `{ kind: 'delivered' }`. This is the case where both mismatch conditions are false. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
+| T-MON-11 | **ADC Communication Manager / MC/DC condition 1:** call `readDeliveryAnswer()` with HTTP status 200, a message identifier different from the expected identifier, and the correct ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`. The message-identifier condition independently makes the compound guard true. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
+| T-MON-12 | **ADC Communication Manager / MC/DC condition 2:** call `readDeliveryAnswer()` with HTTP status 200, the correct message identifier, and an ADC identifier different from the expected ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`. The ADC-identifier condition independently makes the compound guard true. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
+| T-MON-13 | **ADC Communication Manager (off-normal):** call `readDeliveryAnswer()` once with no response (`null`) and once with a non-200 HTTP response containing an error code and message. | The missing response returns a failed `TIMEOUT` outcome; the non-200 response returns a failed outcome preserving the ADC's error code and message (or the specified fallback when absent). | SPEC-COM-05, FR-COM-06, FR-COM-11, INV-CMD-2 | Pending execution | Pending |
 
 ## 3.6 Integration testing within the Monitoring System
 
-_(To write, one or two sentences: top-down or bottom-up along the USES relation, and which stubs and drivers are needed. Our own modules only, not the ADC ↔ Monitoring connection.)_
+Integrate the Monitoring modules **bottom-up along the USES hierarchy**: test the Clock first, then the Historical Data Store, then the Alarm Manager and User Management, followed by the Cabinet Health Monitor, Inventory Supervisor and Reporting, the ADC Communication Manager, and finally the Operator Dashboard. Use the real lower-level Monitoring modules where available, with a controllable clock and isolated test database; use stubs for lower-level modules that are not part of the test and a fake ADC/test driver to supply valid, invalid, delayed and missing protocol responses at the external ADC boundary. The Dashboard's browser/live-channel output can be driven or observed with test doubles, so no Part A integration is required.
