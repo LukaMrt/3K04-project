@@ -11,6 +11,11 @@ of it lives in one module: `MonitorCommunication` is the only class that knows t
 rest of the ADC (dispensing, inventory, faults) does not need to change, apart from the points of
 section 8 that need a decision from both teams.
 
+**Status (Nov 13, 2026).** Every gap of sections 1 to 7 is closed by `adc/monitor_link.py` (launcher
+`adc/connected_gui.py`, branch `feat/adc-monitoring-link`), without changing the other ADC modules,
+and checked against the real Monitoring System (see the integration log). G-26 is realized by mapping
+`screenLockTimeoutSeconds` to the inactivity delay before the ADC starts its lock countdown.
+
 Each gap has an ID so that it can be followed in the integration log and in the integration report.
 **Blocks** says which integration scenario cannot run until the gap is closed (#74 dispense → dashboard,
 #75 alarm → dashboard, #76 link drop, #73 commands).

@@ -1,0 +1,5 @@
+__pycache__/
+# Written at run time: identity of the ADC and JSON exports of the prototype
+adc_identity*.json
+adc_status.json
+adc_outbox.json

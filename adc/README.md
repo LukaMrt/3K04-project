@@ -1,5 +1,15 @@
 # ADC Part A – Deliverable 2 prototype
 
+## NEW (D3) — Connected to the Hospital Monitoring System
+
+Start the Monitoring System (`npm run dev` in `../monitoring`), then run:
+
+```bash
+python connected_gui.py --monitor http://localhost:3333 --port 8701 --label "ADC West 214" --floor 2
+```
+
+The ADC registers with the Monitoring System, sends a heartbeat every 30 s (at once on a new fault or mode change) with its complete inventory, completed dispenses and faults, and answers the `set_maintenance_mode` command and configurations sent from the dashboard. Everything is in `monitor_link.py`, which follows the interface contract (`../docs/part-b/interface-adc-monitoring.md`) and the D3 decisions; the other modules are unchanged. The window title shows the state of the link. `adc_identity.json` keeps the ADC identifier across restarts: a second ADC on the same machine needs another `--port` and `--identity`. Tests: `python -m unittest test_monitor_link -v` (against a fake Monitoring System).
+
 ## NEW — Graphical interface for the technical demo
 
 Run **`python gui_main.py`** (or on Windows, double-click **`Launch_ADC_GUI.bat`**) to open the ADC Control Center graphical desktop interface. It runs on Python standard-library Tkinter, retains the original backend safety modules and adds screens for Login, Overview, Inventory, Dispensing, Faults, Monitoring, Audit Logs and Level-3 Settings. For a full walkthrough, see [GUI_README.md](GUI_README.md) and [GUI_DESIGN_UPDATE.md](GUI_DESIGN_UPDATE.md). The command **`python main.py`** still launches the original terminal version. GUI status cycles are scheduled in the Tkinter event loop while the application is open; there is still no live Part B network interface.
