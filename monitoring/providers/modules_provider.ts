@@ -3,6 +3,7 @@ import AlarmService from '#modules/alarms/alarms_service'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
+import InventoryService from '#modules/inventory/inventory_service'
 
 /**
  * Modules that keep subscribers in memory are created once (D-37): the Operator Dashboard
@@ -26,6 +27,10 @@ export default class ModulesProvider {
           await resolver.make(HistoryService),
           await resolver.make(ClockService)
         )
+    )
+    this.app.container.singleton(
+      InventoryService,
+      async (resolver) => new InventoryService(await resolver.make(CabinetHealthService))
     )
   }
 }

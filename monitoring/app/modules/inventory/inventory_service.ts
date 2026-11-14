@@ -1,13 +1,15 @@
 import { inject } from '@adonisjs/core'
 import { Exception } from '@adonisjs/core/exceptions'
+import logger from '@adonisjs/core/services/logger'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import { StorageUnavailableError } from '#modules/shared/errors'
-import type { AdcId, MedicationId } from '#modules/shared/types'
+import type { AdcId, MedicationId, Unsubscribe } from '#modules/shared/types'
 import type {
   AdcInventory,
   InventoryLine,
+  LowStockChangedEvent,
   LowStockFlag,
   StockSources,
 } from '#modules/inventory/types'
@@ -22,7 +24,8 @@ const SOURCE_ABOVE = 10
 /**
  * Inventory Supervisor — module interface.
  *
- * Responsibility: keep the latest inventory of each ADC (FR-INV-01) and flag low stock.
+ * Responsibility: keep the latest inventory of each ADC (FR-INV-01), flag low stock, and
+ * announce the changes of low stock to subscribers (the Operator Dashboard, D3-D-05).
  *
  * Secret (anticipated change): low-stock thresholds and how alternative sources
  * (e.g. same-floor cabinets) are computed.
@@ -31,15 +34,20 @@ const SOURCE_ABOVE = 10
  */
 @inject()
 export default class InventoryService {
+  private listeners = new Set<(event: LowStockChangedEvent) => void>()
+
   constructor(protected cabinetHealth: CabinetHealthService) {}
 
   /**
    * Pre: the ADC is registered; at most one line per medication (NAT-02).
-   * Effects: the inventory of `adcId` becomes exactly `items`, dated `at` (NFR-REL-03).
+   * Effects: the inventory of `adcId` becomes exactly `items`, dated `at` (NFR-REL-03);
+   * then, if its low-stock medications or their quantities changed, a LowStockChangedEvent
+   * is announced (D3-D-05).
    * Throws: StorageUnavailableError.
    */
   async replaceInventory(adcId: AdcId, items: InventoryLine[], at: Date): Promise<void> {
-    return this.store(() =>
+    const before = await this.lowStockOf(adcId)
+    await this.store(() =>
       db.transaction(async (client) => {
         await InventoryLineModel.query({ client }).where('adc_id', adcId).delete()
         await InventorySnapshotModel.updateOrCreate(
@@ -53,6 +61,14 @@ export default class InventoryService {
         )
       })
     )
+    const after = await this.lowStockOf(adcId)
+    if (JSON.stringify(after) !== JSON.stringify(before)) this.announce({ adcId, lowStock: after })
+  }
+
+  /** `listener` is called for every later change of the low stock of an ADC. */
+  subscribe(listener: (event: LowStockChangedEvent) => void): Unsubscribe {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
   }
 
   /** Latest inventory with low-stock flags (FR-INV-02); null before the first heartbeat. */
@@ -82,11 +98,15 @@ export default class InventoryService {
    * from an inventory is not flagged (D-24).
    */
   async listLowStock(): Promise<LowStockFlag[]> {
+    return this.lowStockOf()
+  }
+
+  /** Medications flagged low stock in `adcId`, or in every ADC, sorted by ADC then name. */
+  private async lowStockOf(adcId?: AdcId): Promise<LowStockFlag[]> {
     return this.store(async () => {
-      const lines = await InventoryLineModel.query()
-        .where('quantity_in_boxes', '<', LOW_STOCK_BELOW)
-        .orderBy('adc_id')
-        .orderBy('medication_name')
+      const query = InventoryLineModel.query().where('quantity_in_boxes', '<', LOW_STOCK_BELOW)
+      if (adcId) query.where('adc_id', adcId)
+      const lines = await query.orderBy('adc_id').orderBy('medication_name')
       return lines.map((line) => ({
         adcId: line.adcId,
         medicationId: line.medicationId,
@@ -138,6 +158,20 @@ export default class InventoryService {
     } catch (error) {
       if (error instanceof Exception) throw error
       throw new StorageUnavailableError('The inventory storage cannot be used', { cause: error })
+    }
+  }
+
+  /**
+   * Calls every listener once the change is stored (D-27). A failing listener is logged
+   * and does not stop the others nor undo the change (D-36).
+   */
+  private announce(event: LowStockChangedEvent) {
+    for (const listener of this.listeners) {
+      try {
+        listener(event)
+      } catch (error) {
+        logger.error({ err: error, adcId: event.adcId }, 'Low stock listener failed')
+      }
     }
   }
 }

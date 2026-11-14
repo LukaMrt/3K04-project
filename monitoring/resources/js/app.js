@@ -123,7 +123,7 @@ function labelClass(value) {
 
 /**
  * Main view of the dashboard (resources/views/pages/dashboard.edge). Starts from the state
- * rendered by the server, then follows the "alarms" and "adcs" channels of the live
+ * rendered by the server, then follows the "alarms", "adcs" and "inventory" channels of the live
  * channel (app/modules/dashboard/live_channel.ts).
  */
 Alpine.data('dashboard', function (initial) {
@@ -146,6 +146,7 @@ Alpine.data('dashboard', function (initial) {
       for (const alarm of this.alarms) this.startCue(alarm)
       if (this.canAlarms) this.listen('alarms', (event) => this.onAlarm(event))
       if (this.canStatuses) this.listen('adcs', (event) => this.onStatus(event))
+      if (this.canStatuses) this.listen('inventory', (event) => this.onLowStock(event))
     },
 
     async listen(channel, handler) {
@@ -220,6 +221,13 @@ Alpine.data('dashboard', function (initial) {
       if (this.attentionStatuses.includes(status.displayedStatus)) {
         this.attention.push({ ...status, label })
       }
+    },
+
+    /** D3-D-05: the low stock of one ADC is replaced, in the order of the server (ADC, name). */
+    onLowStock({ adcId, lowStock }) {
+      this.lowStock = [...this.lowStock.filter((flag) => flag.adcId !== adcId), ...lowStock].sort(
+        (a, b) => a.adcId.localeCompare(b.adcId) || a.medicationName.localeCompare(b.medicationName)
+      )
     },
   }
 })

@@ -3,8 +3,13 @@ import testUtils from '@adonisjs/core/services/test_utils'
 import transmit from '@adonisjs/transmit/services/main'
 import AlarmService from '#modules/alarms/alarms_service'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
-import LiveChannel, { ADCS_CHANNEL, ALARMS_CHANNEL } from '#modules/dashboard/live_channel'
+import LiveChannel, {
+  ADCS_CHANNEL,
+  ALARMS_CHANNEL,
+  INVENTORY_CHANNEL,
+} from '#modules/dashboard/live_channel'
 import HistoryService from '#modules/history/history_service'
+import InventoryService from '#modules/inventory/inventory_service'
 import UserService from '#modules/users/users_service'
 import { ManualClock } from '#tests/helpers/manual_clock'
 
@@ -14,7 +19,7 @@ const NOW = new Date('2026-10-16T14:00:00.000Z')
 test.group('LiveChannel (D-27, NFR-PRF-01)', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
-  test('pushes status changes and raised alarms, with the label of the ADC', async ({
+  test('pushes status changes, raised alarms and low stock, with the label of the ADC', async ({
     assert,
     cleanup,
   }) => {
@@ -22,7 +27,8 @@ test.group('LiveChannel (D-27, NFR-PRF-01)', (group) => {
     const history = new HistoryService(clock)
     const alarms = new AlarmService(history, clock)
     const health = new CabinetHealthService(alarms, history, clock)
-    const live = new LiveChannel(alarms, health, new UserService(history, clock))
+    const inventory = new InventoryService(health)
+    const live = new LiveChannel(alarms, health, new UserService(history, clock), inventory)
 
     const pushed: Array<{ channel: string; payload: any }> = []
     const broadcast = transmit.broadcast
@@ -43,11 +49,22 @@ test.group('LiveChannel (D-27, NFR-PRF-01)', (group) => {
       severity: 'critical',
       description: null,
     })
+    await inventory.replaceInventory(
+      ADC,
+      [
+        {
+          medicationId: '8c1d5e2a-4f3b-4a9e-b7d6-1e2f3a4b5c6d',
+          medicationName: 'Morphine 10 mg/mL',
+          quantityInBoxes: 4,
+        },
+      ],
+      NOW
+    )
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     assert.deepEqual(
       pushed.map(({ channel }) => channel),
-      [ADCS_CHANNEL, ALARMS_CHANNEL]
+      [ADCS_CHANNEL, ALARMS_CHANNEL, INVENTORY_CHANNEL]
     )
     assert.containsSubset(pushed[0].payload, {
       label: 'ADC-101',
@@ -59,6 +76,10 @@ test.group('LiveChannel (D-27, NFR-PRF-01)', (group) => {
       adcLabel: 'ADC-101',
       audibleRepeatSeconds: 60,
       alarm: { timestamp: NOW.toISOString() },
+    })
+    assert.containsSubset(pushed[2].payload, {
+      adcId: ADC,
+      lowStock: [{ medicationName: 'Morphine 10 mg/mL', quantityInBoxes: 4, adcLabel: 'ADC-101' }],
     })
   })
 })

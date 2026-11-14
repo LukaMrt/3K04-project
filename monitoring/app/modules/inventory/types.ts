@@ -21,5 +21,14 @@ export interface LowStockFlag {
   quantityInBoxes: number
 }
 
+/**
+ * Announced to subscribers when the medications flagged low stock in an ADC, or their
+ * quantities, change; `lowStock` is the new list for that ADC (D3-D-05).
+ */
+export interface LowStockChangedEvent {
+  adcId: AdcId
+  lowStock: LowStockFlag[]
+}
+
 /** SPEC-INV-01. */
 export type StockSources = { kind: 'sources'; adcs: AdcRef[] } | { kind: 'noStockAvailable' }

@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import testUtils from '@adonisjs/core/services/test_utils'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import type { AdcRef } from '#modules/cabinet_health/types'
 import InventoryService from '#modules/inventory/inventory_service'
+import type { LowStockChangedEvent } from '#modules/inventory/types'
 import type { AdcId } from '#modules/shared/types'
 
 const WEST = 'c4a1e8f2-7b3d-4e9a-a5c6-2d8f0b1e3a47'
@@ -32,13 +32,11 @@ class FakeCabinetHealth extends CabinetHealthService {
 async function setup(reachable: Record<AdcId, AdcRef[]> = {}) {
   const fake = new FakeCabinetHealth(null as any, null as any, null as any)
   fake.reachable = reachable
-  app.container.swap(CabinetHealthService, () => fake)
-  return app.container.make(InventoryService)
+  return new InventoryService(fake)
 }
 
 test.group('InventoryService / latest inventory (FR-INV-01, NFR-REL-03)', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
-  group.each.teardown(() => app.container.restore(CabinetHealthService))
 
   test('has no inventory before the first heartbeat', async ({ assert }) => {
     const inventory = await setup()
@@ -73,7 +71,6 @@ test.group('InventoryService / latest inventory (FR-INV-01, NFR-REL-03)', (group
 
 test.group('InventoryService / low stock (SPEC-INV-01)', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
-  group.each.teardown(() => app.container.restore(CabinetHealthService))
 
   test('flags a medication below 10 boxes, not at 10', async ({ assert }) => {
     const inventory = await setup()
@@ -111,9 +108,46 @@ test.group('InventoryService / low stock (SPEC-INV-01)', (group) => {
   })
 })
 
+test.group('InventoryService / low stock announcements (D3-D-05)', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  test('announces the low stock of an ADC only when it changes', async ({ assert }) => {
+    const inventory = await setup()
+    const events: LowStockChangedEvent[] = []
+    inventory.subscribe((event) => events.push(event))
+
+    await inventory.replaceInventory(WEST, [line(MORPHINE, 14)], new Date(1000)) // none
+    await inventory.replaceInventory(WEST, [line(MORPHINE, 9)], new Date(2000)) // becomes low
+    await inventory.replaceInventory(WEST, [line(MORPHINE, 9)], new Date(3000)) // unchanged
+    await inventory.replaceInventory(WEST, [line(MORPHINE, 7)], new Date(4000)) // quantity
+    await inventory.replaceInventory(WEST, [line(MORPHINE, 12)], new Date(5000)) // back above
+
+    assert.deepEqual(events, [
+      { adcId: WEST, lowStock: [{ adcId: WEST, ...line(MORPHINE, 9) }] },
+      { adcId: WEST, lowStock: [{ adcId: WEST, ...line(MORPHINE, 7) }] },
+      { adcId: WEST, lowStock: [] },
+    ])
+  })
+
+  test('a failing listener neither stops the others nor undoes the change (D-36)', async ({
+    assert,
+  }) => {
+    const inventory = await setup()
+    const events: LowStockChangedEvent[] = []
+    inventory.subscribe(() => {
+      throw new Error('dashboard down')
+    })
+    inventory.subscribe((event) => events.push(event))
+
+    await inventory.replaceInventory(WEST, [line(INSULIN, 3)], new Date(1000))
+
+    assert.lengthOf(events, 1)
+    assert.deepEqual(await inventory.listLowStock(), [{ adcId: WEST, ...line(INSULIN, 3) }])
+  })
+})
+
 test.group('InventoryService / aggregated quantity (FR-INV-06)', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
-  group.each.teardown(() => app.container.restore(CabinetHealthService))
 
   test('sums the latest quantities over every ADC', async ({ assert }) => {
     const inventory = await setup()

@@ -6,6 +6,8 @@ import AlarmService from '#modules/alarms/alarms_service'
 import type { AlarmEvent } from '#modules/alarms/types'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import type { StatusChangedEvent } from '#modules/cabinet_health/types'
+import InventoryService from '#modules/inventory/inventory_service'
+import type { LowStockChangedEvent } from '#modules/inventory/types'
 import type { Role } from '#modules/shared/types'
 import type { DashboardFunction } from '#modules/users/types'
 import UserService from '#modules/users/users_service'
@@ -14,6 +16,8 @@ import UserService from '#modules/users/users_service'
 export const ALARMS_CHANNEL = 'alarms'
 /** Channel of the status changes of the ADCs. */
 export const ADCS_CHANNEL = 'adcs'
+/** Channel of the changes of low stock (D3-D-05). */
+export const INVENTORY_CHANNEL = 'inventory'
 
 /**
  * Operator Dashboard — live channel.
@@ -31,21 +35,26 @@ export default class LiveChannel {
   constructor(
     protected alarms: AlarmService,
     protected cabinetHealth: CabinetHealthService,
-    protected users: UserService
+    protected users: UserService,
+    protected inventory: InventoryService
   ) {}
 
   /**
-   * Effects: subscribes to the Alarm Manager and the Cabinet Health Monitor, and pushes
-   * each of their events to the open dashboards, with the audible cue and its repetition
-   * as told by the event (NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22). A browser receives a
+   * Effects: subscribes to the Alarm Manager, the Cabinet Health Monitor and the Inventory
+   * Supervisor, and pushes each of their events to the open dashboards, with the audible cue and its repetition
+   * as told by the event (NFR-PRF-01, NFR-SAF-04, NFR-ACC-01, D-22, D3-D-05). A browser receives a
    * channel only if the role of its session may see it (SPEC-USR-01).
    * Called once at start-up.
    */
   start(): void {
     transmit.authorize(ALARMS_CHANNEL, (ctx) => this.allows(ctx, 'viewAlarms'))
     transmit.authorize(ADCS_CHANNEL, (ctx) => this.allows(ctx, 'viewAdcStatuses'))
+    transmit.authorize(INVENTORY_CHANNEL, (ctx) => this.allows(ctx, 'viewAdcStatuses'))
     this.alarms.subscribe((event) => this.push(ALARMS_CHANNEL, () => this.alarmPayload(event)))
     this.cabinetHealth.subscribe((event) => this.push(ADCS_CHANNEL, () => this.adcPayload(event)))
+    this.inventory.subscribe((event) =>
+      this.push(INVENTORY_CHANNEL, () => this.lowStockPayload(event))
+    )
   }
 
   private allows(ctx: HttpContext, fn: DashboardFunction): boolean {
@@ -75,6 +84,12 @@ export default class LiveChannel {
   /** The new status with the label of the ADC (FR-DSH-01). */
   async adcPayload(event: StatusChangedEvent): Promise<object> {
     return { ...event, label: await this.labelOf(event.status.adcId) }
+  }
+
+  /** The new low stock of the ADC, each line with the label of the ADC (NFR-USA-01). */
+  async lowStockPayload(event: LowStockChangedEvent): Promise<object> {
+    const adcLabel = await this.labelOf(event.adcId)
+    return { ...event, lowStock: event.lowStock.map((flag) => ({ ...flag, adcLabel })) }
   }
 
   private async labelOf(adcId: string): Promise<string> {

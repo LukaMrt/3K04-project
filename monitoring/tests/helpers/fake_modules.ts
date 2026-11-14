@@ -7,6 +7,7 @@ import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service
 import { UnknownAdcError } from '#modules/cabinet_health/errors'
 import type { AdcIdentity, AdcStatus, RegistrationResult } from '#modules/cabinet_health/types'
 import ClockService from '#modules/clock/clock_service'
+import InventoryService from '#modules/inventory/inventory_service'
 import type { AdcId, RecordOutcome, ReportedState } from '#modules/shared/types'
 import { ManualClock } from '#tests/helpers/manual_clock'
 
@@ -71,10 +72,13 @@ export function useFakeModules(group: Group, now: Date) {
     fakes.alarms = new FakeAlarms(null as any, null as any)
     app.container.swap(CabinetHealthService, () => fakes.cabinetHealth)
     app.container.swap(AlarmService, () => fakes.alarms)
+    // The Inventory Supervisor is created once (D-37): give it the fake Cabinet Health Monitor
+    const inventory = new InventoryService(fakes.cabinetHealth)
+    app.container.swap(InventoryService, () => inventory)
     app.container.swap(ClockService, () => new ManualClock(now))
     const rollback = await testUtils.db().withGlobalTransaction()
     return () => {
-      app.container.restoreAll([CabinetHealthService, AlarmService, ClockService])
+      app.container.restoreAll([CabinetHealthService, AlarmService, ClockService, InventoryService])
       return rollback()
     }
   })

@@ -6,6 +6,7 @@ import AlarmService from '#modules/alarms/alarms_service'
 import CabinetHealthService from '#modules/cabinet_health/cabinet_health_service'
 import ClockService from '#modules/clock/clock_service'
 import HistoryService from '#modules/history/history_service'
+import InventoryService from '#modules/inventory/inventory_service'
 import { ManualClock } from '#tests/helpers/manual_clock'
 
 const ADC = 'c4a1e8f2-7b3d-4e9a-a5c6-2d8f0b1e3a47'
@@ -43,9 +44,11 @@ test.group('Demonstration scenarios (real modules)', (group) => {
     app.container.swap(ClockService, () => clock)
     app.container.swap(AlarmService, () => alarms)
     app.container.swap(CabinetHealthService, () => health)
+    const inventory = new InventoryService(health)
+    app.container.swap(InventoryService, () => inventory)
     const rollback = await testUtils.db().withGlobalTransaction()
     return () => {
-      app.container.restoreAll([ClockService, AlarmService, CabinetHealthService])
+      app.container.restoreAll([ClockService, AlarmService, CabinetHealthService, InventoryService])
       return rollback()
     }
   })
