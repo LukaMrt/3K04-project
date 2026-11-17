@@ -1,12 +1,9 @@
 # 5. Ethics Reflection
 
-<!-- Handout §4.5: about half a page, assessed in the document only. One short paragraph each,
-specific to our system. -->
-
 ## 5.1 Conflicting stakeholder interests
 
-_(To write: one situation where stakeholders' interests conflict, how the design balances them, justified with an ethical framework or code, e.g. the PEO Code of Ethics' duty to public welfare.)_
+When the network between a cabinet and the Monitoring System fails, two legitimate interests collide. The pharmacy and hospital risk management want every dispense of a controlled substance to be seen centrally, as it happens, so they would rather lock a cabinet that cannot report. The nurses of the ward need medication during the outage, which no amount of oversight replaces. A cabinet either locks or keeps working: it cannot do both. Our design keeps it working, but not unconditionally: the ADC continues only the operations that its own checks still allow (authentication, permission, withdrawal policy, local audit; Part A FR-COM-10), a blocking fault still stops dispensing even while offline, and every transaction is kept and sent again once the link is back, so central oversight is delayed, never lost (SR-MON-02, contract section 7). We justify it with the PEO Code of Ethics: the duty to public welfare is paramount. A locked cabinet makes a patient, who had no say, wait for a treatment; a late view of the dispenses is a cost carried by the hospital, and it can be recovered. In return, the outage cannot go unnoticed: the Monitoring System labels the cabinet stale after 45 s and raises one communication loss alarm at 75 s (SR-MON-01), which sends someone to check. Our integration test E2E-03 shows that the dispense made during an outage is recorded once when the link returns.
 
 ## 5.2 Equitable treatment of users
 
-_(To write: one way the system does, or should, accommodate users with different needs so that everyone can use it safely.)_
+Every user must be able to notice an alarm and read a status, whatever their vision or hearing. On the Monitoring System, an alarm is announced in three ways (a page flash, a sound, and a text read by screen readers), and colour is only added to text labels that are always shown, such as OFFLINE or CRITICAL (NFR-ACC-01, NFR-ACC-02, D-16). Running the ADC on a second operating system during the integration revealed that its buttons showed light text on a light grey background, unreadable for everyone and worse for users with low vision; they now keep their contrast on every system (8:1 or more for every active button) and can be used from the keyboard. The ADC should go further: its screen gives no audible cue when a fault blocks dispensing and cannot be read by a screen reader, so a nurse who does not look at it may not understand why a drawer stays locked. An audible cue and a larger-text option are the next changes we would ask for.
