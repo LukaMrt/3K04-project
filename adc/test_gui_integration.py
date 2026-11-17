@@ -7,7 +7,7 @@ import os
 import tkinter as tk
 import unittest
 
-from adc_gui import ADCDesktopApp
+from adc_gui import ADCDesktopApp, FlatButton
 from models import Severity, Mode
 
 
@@ -19,7 +19,7 @@ def descendants(widget):
 
 def button_named(root, name):
     buttons = [w for w in descendants(root)
-               if isinstance(w, tk.Button) and name in w.cget("text")]
+               if isinstance(w, (tk.Button, FlatButton)) and name in w.cget("text")]
     if not buttons:
         raise AssertionError("Button not found: " + name)
     return buttons[0]

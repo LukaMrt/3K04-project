@@ -33,6 +33,39 @@ GOOD = "#79E2AD"
 FONT = "Segoe UI"
 
 
+class FlatButton(tk.Label):
+    """A button drawn as a label, so that its colours are the same on every system.
+
+    On macOS, Tk draws tk.Button natively and ignores its background colour: light text
+    ended up on a light grey button. A label keeps its colours everywhere and already has
+    the state, activebackground and disabledforeground options of a button; this class adds
+    the command, invoke(), hover, and the keyboard (Tab, then Space or Return).
+    """
+
+    TAG = "FlatButton"
+
+    def __init__(self, parent, command=None, state="normal", **kwargs):
+        super().__init__(parent, state=state, takefocus=1, **kwargs)
+        self._command = command
+        # Events are bound once per window for the whole class, as Tk does for tk.Button,
+        # not once per button: per-widget Python callbacks can be freed by another thread.
+        self.bindtags((str(self), self.TAG, str(self.winfo_toplevel()), "all"))
+        if not self.bind_class(self.TAG):
+            self.bind_class(self.TAG, "<Enter>", lambda e: e.widget._hover("active"))
+            self.bind_class(self.TAG, "<Leave>", lambda e: e.widget._hover("normal"))
+            for sequence in ("<ButtonRelease-1>", "<space>", "<Return>"):
+                self.bind_class(self.TAG, sequence, lambda e: e.widget.invoke())
+
+    def _hover(self, state):
+        if str(self.cget("state")) != "disabled":
+            self.configure(state=state)
+
+    def invoke(self):
+        """Runs the command, as tk.Button.invoke(); does nothing when disabled."""
+        if str(self.cget("state")) != "disabled" and self._command:
+            return self._command()
+
+
 class ADCDesktopApp:
     """Graphical presentation module; all business rules remain in ADCApplication's services."""
 
@@ -190,7 +223,7 @@ class ADCDesktopApp:
                 compact=False, state="normal", **kwargs):
         background = RED if danger else ACCENT if primary else PANEL_HI
         foreground = BG if (primary or danger) else TEXT
-        btn = tk.Button(parent, text=text, command=command, state=state,
+        btn = FlatButton(parent, text=text, command=command, state=state,
                         bg=background, fg=foreground, activebackground=BLUE,
                         activeforeground=BG, disabledforeground=MUTED,
                         border=0, relief="flat", cursor="hand2",
@@ -267,7 +300,7 @@ class ADCDesktopApp:
             allowed = name not in ("Audit Log", "Settings") or (
                 self.app.current_user.level >= (2 if name == "Audit Log" else 3))
             active = (self.page == name)
-            btn = tk.Button(sidebar, text=f"{glyph}   {name}", anchor="w",
+            btn = FlatButton(sidebar, text=f"{glyph}   {name}", anchor="w",
                             command=lambda value=name: self._navigate(value),
                             bg=(PANEL_HI if active else SIDEBAR),
                             fg=(ACCENT if active else TEXT if allowed else "#61768E"),
