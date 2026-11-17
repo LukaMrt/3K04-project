@@ -1,48 +1,50 @@
+from datetime import datetime, timedelta
 from data_store import verify_password, password_is_valid, hash_password
 from models import now_iso
 
 class Authentication:
+    """Login, lockout and passwords.
+
+    Lockouts are kept per account (SR-ADC-05, D3): failed logins block only the account that
+    failed, until the configured duration has passed or a Level 2/3 user clears it.
+    """
     def __init__(self, store, logger, max_attempts=3, lockout_seconds=60):
         self.store, self.logger = store, logger
         self.max_attempts, self.lockout_seconds = max_attempts, lockout_seconds
-        self.failed_attempts = 0
-        self.locked_until = None
-        self._lockout_manual = False
+        self._failed = {}        # username -> consecutive failed logins
+        self._locked_until = {}  # username -> end of its lockout
 
     def login(self, username, password, recovery=False):
         user = self.store.get_user(username)
-        if self.locked_until and not recovery:
-            from datetime import datetime
-            if datetime.now().astimezone() < self.locked_until:
-                raise PermissionError("Login temporarily locked until {}.".format(self.locked_until.isoformat(timespec="seconds")))
-            if self._lockout_manual:
-                raise PermissionError("Manual lockout remains. Level 2/3 recovery authorization is required.")
-            self.locked_until = None
+        until = self._locked_until.get(username)
+        if until and not recovery:
+            if datetime.now().astimezone() < until:
+                raise PermissionError("Login temporarily locked until {}.".format(until.isoformat(timespec="seconds")))
+            # The lockout duration has passed: the account can log in again
+            del self._locked_until[username]
+            self._failed.pop(username, None)
         valid = user is not None and verify_password(password, user.password_hash)
         self.logger.record("LOGIN_ATTEMPT", username, {"success": valid, "recovery_path": recovery},
                            "SUCCESS" if valid else "FAILED")
         if valid:
-            if recovery and self._lockout_manual:
+            if recovery and self._locked_until:
                 if user.level < 2:
                     raise PermissionError("Recovery requires Level 2 or Level 3.")
                 self.clear_lockout(user)
-            elif not self._lockout_manual:
-                self.failed_attempts = 0
+            self._failed.pop(username, None)
             return user
-        self.failed_attempts += 1
-        if self.failed_attempts >= self.max_attempts:
-            from datetime import datetime, timedelta
-            self.locked_until = datetime.now().astimezone() + timedelta(seconds=self.lockout_seconds)
-            self._lockout_manual = True
-            self.logger.record("LOGIN_LOCKOUT", username, {"attempts": self.failed_attempts}, "LOCKED")
+        self._failed[username] = self._failed.get(username, 0) + 1
+        if self._failed[username] >= self.max_attempts:
+            self._locked_until[username] = datetime.now().astimezone() + timedelta(seconds=self.lockout_seconds)
+            self.logger.record("LOGIN_LOCKOUT", username, {"attempts": self._failed[username]}, "LOCKED")
         raise ValueError("Invalid username or password.")
 
     def clear_lockout(self, user):
+        """Clears the lockout of every account (FR-AUTH-06)."""
         if user.level < 2:
             raise PermissionError("Only Level 2 or Level 3 can clear login lockout.")
-        self.failed_attempts = 0
-        self.locked_until = None
-        self._lockout_manual = False
+        self._failed.clear()
+        self._locked_until.clear()
         self.logger.record("LOGIN_LOCKOUT_CLEARED", user.username)
 
     def configure(self, user, attempts, seconds):

@@ -3,6 +3,7 @@
 The original Python safety modules remain the source of truth. These tests
 exercise GUI buttons and pages with the actual backend to catch wiring errors.
 """
+import gc
 import os
 import tkinter as tk
 import unittest
@@ -44,6 +45,10 @@ class DesktopWorkflowTests(unittest.TestCase):
     def tearDown(self):
         self.gui._closing = True
         self.root.destroy()
+        # Free the Tk objects now, in the main thread: a later garbage collection could run
+        # in a thread of another test (test_monitor_link), and Tcl must not be called there.
+        del self.gui, self.root
+        gc.collect()
 
     def login(self, user, password):
         self.gui.app.current_user = self.gui.app.auth.login(user, password)

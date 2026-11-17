@@ -1,4 +1,5 @@
 """Regression tests for Deliverable 2 demo safety fixes."""
+import time
 import unittest
 
 from adc_app import ADCApplication
@@ -174,6 +175,56 @@ class SafetyRegressionTests(unittest.TestCase):
         self.app.dispensing.close_dispense_drawer(self.nurse)
         self.app.dispensing.complete_dispense(self.nurse, 1)
         self.assertEqual(9, self.med.quantity)
+
+
+class AvailabilityRegressionTests(unittest.TestCase):
+    """SR-ADC-05 (D3): the cabinet must not lock out its staff (F-ADC-05, F-ADC-06)."""
+
+    def setUp(self):
+        self.app = ADCApplication()
+        self.auth = self.app.auth
+
+    def fail_logins(self, username, times=3):
+        for _ in range(times):
+            with self.assertRaises(ValueError):
+                self.auth.login(username, "wrong password")
+
+    def test_failed_logins_lock_only_that_account(self):
+        self.fail_logins("nurse1")
+        with self.assertRaises(PermissionError):
+            self.auth.login("nurse1", "Nurse123!!!")
+        self.assertEqual("admin1", self.auth.login("admin1", "Admin123!!!").username)
+
+    def test_lockout_ends_after_its_duration(self):
+        self.auth.lockout_seconds = 1
+        self.fail_logins("nurse1")
+        time.sleep(1.1)
+        self.assertEqual("nurse1", self.auth.login("nurse1", "Nurse123!!!").username)
+
+    def test_level2_recovery_login_clears_the_lockout(self):
+        self.fail_logins("nurse1")
+        self.auth.login("pharm1", "Pharm123!!!", recovery=True)
+        self.assertEqual("nurse1", self.auth.login("nurse1", "Nurse123!!!").username)
+
+    def test_level1_recovery_login_is_refused(self):
+        self.fail_logins("pharm1")
+        with self.assertRaises(PermissionError):
+            self.auth.login("nurse1", "Nurse123!!!", recovery=True)
+
+    def nearly_full_faults(self):
+        return [f for f in self.app.faults.active_faults() if f.fault_type == "AUDIT_LOG_NEARLY_FULL"]
+
+    def test_audit_log_warns_once_at_90_percent_without_blocking(self):
+        self.app.logger.EVENT_CAPACITY = 20
+        for index in range(17):
+            self.app.logger.record("FILL", None, {"index": index})
+        self.assertEqual([], self.nearly_full_faults())
+        self.app.logger.record("FILL", None, {"index": 17})  # 18 of 20 records
+        self.assertEqual(1, len(self.nearly_full_faults()))
+        self.assertEqual(Severity.WARNING, self.nearly_full_faults()[0].severity)
+        self.assertEqual(Mode.NORMAL, self.app.faults.mode)
+        self.app.logger.record("FILL", None, {"index": 19})
+        self.assertEqual(1, len(self.nearly_full_faults()))
 
 
 if __name__ == "__main__":

@@ -16,6 +16,11 @@ class ADCApplication:
         self.store = DataStore()
         self.logger = EventLogger()
         self.faults = FaultManager(self.logger)
+        # SR-ADC-05 (D3): a Warning, shown locally and sent to the Monitoring System
+        self.logger.on_nearly_full = lambda used, capacity: self.faults.raise_fault(
+            Severity.WARNING, "AUDIT_LOG_NEARLY_FULL",
+            "Audit log at {}/{} records: archive it before it blocks the cabinet.".format(used, capacity),
+            False)
         self.auth = Authentication(self.store, self.logger)
         self.access = AccessControl()
         self.hardware = HardwareInterface()
