@@ -214,7 +214,8 @@ class MonitorLinkTest(unittest.TestCase):
         status, _ = configure({"screenLockTimeoutSeconds": 120, "timeServer": "ntp.test"},
                               "2a3b4c5d-6e7f-4a8b-9c0d-1e2f3a4b5c6d")
         self.assertEqual(status, 200)
-        self.assertEqual((self.app.inactivity_grace, self.app.time_server), (120, "ntp.test"))
+        self.assertEqual((self.app.inactivity_timeout, self.app.time_server), (120, "ntp.test"))
+        self.assertEqual(self.app.inactivity_grace, 15)  # fixed by Part A FR-AUTH-04
 
     def test_command_server_answers_over_http(self):
         self.link.start()

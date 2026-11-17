@@ -14,7 +14,8 @@ section 8 that need a decision from both teams.
 **Status (Nov 13, 2026).** Every gap of sections 1 to 7 is closed by `adc/monitor_link.py` (launcher
 `adc/connected_gui.py`, branch `feat/adc-monitoring-link`), without changing the other ADC modules,
 and checked against the real Monitoring System (see the integration log). G-26 is realized by mapping
-`screenLockTimeoutSeconds` to the inactivity delay before the ADC starts its lock countdown.
+`screenLockTimeoutSeconds` to the length of the ADC lock countdown, which starts after 15 s without input
+(Part A FR-AUTH-04, D3-D-10).
 
 Each gap has an ID so that it can be followed in the integration log and in the integration report.
 **Blocks** says which integration scenario cannot run until the gap is closed (#74 dispense → dashboard,

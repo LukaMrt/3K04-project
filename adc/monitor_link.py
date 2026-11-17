@@ -346,8 +346,8 @@ class MonitorLink:
         except RuntimeError as exc:
             return 500, error_body("INTERNAL_ERROR", str(exc))
         if "screenLockTimeoutSeconds" in settings:
-            # Inactivity before the ADC starts its lock countdown (same 15 s minimum as the CLI)
-            self.app.inactivity_grace = delay
+            # Length of the lock countdown, which starts after 15 s without input (Part A FR-AUTH-04)
+            self.app.inactivity_timeout = delay
         if "timeServer" in settings:
             self.app.time_server = server
         return None
