@@ -1,24 +1,27 @@
 # 2. Hazard Analysis (FMEA) - ADC
 
-<!-- Handout §4.2: at least five failure modes of the safety-critical components. The "System effect"
-column must name the hazard or harm. Then three to five safety requirements, each stating which
-row(s) it mitigates. Lectures W8: template p. 29; rewrite every "shall not" as an invariant plus a
-bounded, observable reaction (p. 13); no RPN column (p. 24). -->
+
+The analysis is bottom-up: it starts from the five safety-critical functions identified in the Part A D2 safety-critical specifications (authentication and authorization, safe dispensing and unlock, duplicate prevention, inventory integrity, fault response) and, for each module that realizes them, asks how it can fail and where the failure leads. A *failure mode* is what goes observably wrong; its *causal factors* are the faults, in the code, the hardware or the way the cabinet is used, that can produce it. Two rows (F-ADC-05 and F-ADC-06) come from faults found in the prototype code while preparing the integration; both were then fixed to meet SR-ADC-05 (per-account lockout, warning at 90 % of the audit log). Rows are ordered by function, not by a risk score.
 
 ## 2.1 FMEA table - ADC
 
 | ID | Component | Failure mode | Causal factors | Immediate effect | System effect (hazard / harm) |
 | --- | --- | --- | --- | --- | --- |
-| F-ADC-01 | | | | | |
-| F-ADC-02 | | | | | |
-| F-ADC-03 | | | | | |
-| F-ADC-04 | | | | | |
-| F-ADC-05 | | | | | |
+| F-ADC-01 | Dispensing Controller and Hardware Interface (`start_dispense`, `unlock`) | Unlocks a drawer other than the one holding the requested medication | Wrong medication-to-location mapping (two records on one container, location changed without moving the stock); lock wiring or address error | The wrong medication is made accessible | **Wrong-medication dispense**: a patient receives a medication that was not prescribed |
+| F-ADC-02 | Dispensing Controller and Access Control (`start_dispense`, `require_medication`, `policy_status`) | Grants access to a user who is not allowed to take that medication, or above the allowed quantity | A path that skips the permission or withdrawal-policy check; policy window computed on part of the withdrawals; session not expired after inactivity; a remote request evaluated with the rights of whoever is logged in locally | An unlock that the gate should have refused | **Overdose** or **diversion** of a controlled substance (e.g. morphine), unnoticed until a stock count |
+| F-ADC-03 | Dispensing Controller and Inventory Manager (`complete_dispense`, `cancel_dispense`) | The recorded quantity no longer matches the physical stock | Requested quantity taken as removed; quantity confirmed before the drawer is opened or closed; wrong number typed at confirmation; drawer that fails to close | Recorded stock higher or lower than reality | A nurse relies on stock that is not there (**delayed treatment**), or a missing quantity is **hidden** from reconciliation |
+| F-ADC-04 | Fault Manager (`raise_fault`, `clear_fault`) | Normal dispensing continues while a hazardous fault is present | Fault not detected (sensor failure); fault cleared while its cause is still present, the cause being declared resolved by hand; mode not switched to Fault | Drawers keep opening in a cabinet that is not safe | Medication taken from a jammed or failing cabinet: **wrong quantity**, mechanical injury, or degraded medication administered |
+| F-ADC-05 | Authentication (`login`) | Legitimate staff cannot log in | One failed-login counter shared by **all** accounts: three mistakes by one user lock everybody out; after a lockout, a Level 2/3 recovery is always required, even once the lockout duration has passed | The cabinet refuses every login | A nurse cannot get an urgent medication: **delayed treatment** |
+| F-ADC-06 | Event Logger (`record`, `can_record`) | Every protected operation is refused, including login | The audit log holds 500 records and only frees the records acknowledged by the Monitoring System; records that are never sent (logins, configuration) are never freed, so the log fills up, faster during a long communication outage | The cabinet becomes unusable, with no warning beforehand | **Delayed treatment** until a technician intervenes; if the log were instead overwritten, **loss of accountability** for controlled substances |
 
 ## 2.2 Safety requirements - ADC
 
+Each requirement is written as an invariant plus an observable reaction with a time bound, so that it can be tested (section 3.2). The last column names the module that enforces it and, where the Part A D2 already stated it, the invariant of its safety-critical specifications.
+
 | ID | Safety requirement | Mitigates | Enforced by (module + invariant) |
 | --- | --- | --- | --- |
-| SR-ADC-01 | | F-ADC-xx | |
-| SR-ADC-02 | | F-ADC-xx | |
-| SR-ADC-03 | | F-ADC-xx | |
+| SR-ADC-01 | No two active medication records shall share a container, and a dispense of medication `m` shall unlock only the container recorded for `m`. A request whose medication or container cannot be determined shall be rejected with no unlock. | F-ADC-01 | Inventory Manager (`add_medication`) and Dispensing Controller (`start_dispense`); INV-INV-2, INV-DISP-2 |
+| SR-ADC-02 | A drawer shall be unlocked only if, immediately before the unlock, the user's session is active, the user may take that medication in that quantity, the quantity does not exceed the recorded stock nor the remaining withdrawal-policy allowance, the cabinet is in Normal mode and an audit record can be written. Otherwise the request is rejected with no unlock and the rejection is recorded. | F-ADC-02 | Dispensing Controller (`start_dispense`) and Access Control; INV-AUTH-1, INV-DISP-1, INV-DISP-3, INV-DISP-4 |
+| SR-ADC-03 | The recorded stock shall decrease only by the quantity the user confirms after the drawer is closed, at most the requested quantity. If the withdrawal is not confirmed, or the drawer fails to close, the medication shall be marked unavailable until a Level 2/3 user corrects its quantity. | F-ADC-03 | Dispensing Controller (`close_dispense_drawer`, `complete_dispense`, `cancel_dispense`); INV-DISP-5, INV-DISP-6, INV-INV-5 |
+| SR-ADC-04 | An Error or Critical fault shall put the cabinet in Fault mode within 3 s; no drawer shall be unlocked for dispensing while a blocking fault is active; a fault shall be cleared only once its cause is no longer present, by a Level 2/3 user for an Error and a Level 3 user for a Critical fault. | F-ADC-04 | Fault Manager (`raise_fault`, `clear_fault`) and Dispensing Controller; INV-FAULT-1 to INV-FAULT-4, INV-DISP-3 |
+| SR-ADC-05 | Failed logins shall block only the account that failed, for the configured lockout duration (1 to 3600 s), after which that account can log in again. When the audit log reaches 90 % of its capacity, the ADC shall raise a Warning, shown on its screen and sent to the Monitoring System, so that it is archived before it blocks the cabinet. | F-ADC-05, F-ADC-06 | Authentication (`login`) and Event Logger (`record`); INV-AUTH-4 |
