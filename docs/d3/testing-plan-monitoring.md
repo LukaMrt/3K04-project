@@ -51,48 +51,82 @@ Statement and branch coverage are measured using c8 by executing `npm run test:c
 
 Coverage is reported individually for each module rather than relying solely on the overall project coverage percentage. ADC communication is exercised using simulated responses and test doubles, allowing the Monitoring System to be tested independently of Part A.
 
+
 ### Measured Coverage
 
-The following results are taken from the archived coverage report generated on November 10, 2026. These results establish a baseline and must be verified against the final implementation before submission.
+The Monitoring System test suite was executed on November 24, 2026, using `npm run test:coverage` from the `monitoring/` directory.
+
+All 124 unit and functional tests passed, with a total execution time of approximately 3 seconds.
+
+Overall project coverage:
+
+- Statement coverage: 86.02%
+- Branch coverage: 89.39%
+- Function coverage: 91.89%
+- Line coverage: 86.02%
+
+The following table reports coverage individually for each Monitoring System module.
 
 | Module | Target criterion | Statement coverage | Branch coverage |
 | --- | --- | ---: | ---: |
 | Cabinet Health Monitor | Branch | 85.87% | 96.49% |
 | Alarm Manager | Branch | 81.14% | 89.65% |
 | ADC Communication Manager | Branch and MC/DC | 95.09% | 89.81% |
-| Inventory Supervisor | Branch | 83.33% | 89.28% |
+| Inventory Supervisor | Branch | 82.46% | 91.42% |
 | User Management | Branch | 81.81% | 85.71% |
 | Historical Data Store | Statement | 74.55% | 97.29% |
 | Reporting | Statement | 83.82% | 94.23% |
-| Operator Dashboard | Statement | 94.28% | 77.77% |
+| Operator Dashboard | Statement | 94.83% | 80.64% |
 | Clock | Statement | 100% | 100% |
 
 These percentages represent the corresponding module directories in the c8 report. Nested model directories and controllers are reported separately, and view templates outside the configured coverage scope are excluded.
 
 ### Safety-Critical Implementation Coverage
 
-The following file-level results provide additional detail on the coverage achieved within the safety-critical service implementations.
+File-level coverage is also reported for the primary safety-critical implementations to distinguish executable service logic from supporting module files.
 
-| Implementation file | Statement coverage | Branch coverage |
-| --- | ---: | ---: |
-| `cabinet_health_service.ts` | 98.98% | 98.18% (54/55) |
-| `alarms_service.ts` | 100% | 92.59% (25/27) |
-| `adc_communication_service.ts` | 99.22% | 95.91% (47/49) |
-| `protocol.ts` | 99.13% | 86.20% (50/58) |
-| `inventory_service.ts` | 97.90% | 92.59% (25/27) |
-| `users_service.ts` | 100% | 88.88% (16/18) |
+| Implementation file | Statement coverage | Branch coverage | Reported uncovered lines |
+| --- | ---: | ---: | --- |
+| `cabinet_health_service.ts` | 98.98% | 98.18% | 258-260 |
+| `alarms_service.ts` | 100% | 92.59% | 102, 168 |
+| `adc_communication_service.ts` | 99.22% | 95.91% | 75-76 |
+| `protocol.ts` | 99.13% | 86.20% | 110-111 |
+| `inventory_service.ts` | 98.30% | 94.11% | 159-161 |
+| `users_service.ts` | 100% | 88.88% | 72, 128 |
 
 ### Coverage Limitations
 
-The module-level coverage percentages include files such as `types.ts`, which contain type definitions and are reported as having zero coverage. Consequently, module-level percentages may be lower than those of the corresponding executable service implementations.
+The module-level coverage percentages include files such as `types.ts`, which contain type definitions and are reported as having zero coverage. Consequently, module-level percentages are lower than those of the corresponding executable service implementations.
 
-Although the archived results demonstrate substantial coverage of the safety-critical modules, complete branch coverage has not been achieved. The ADC communication protocol has the largest number of uncovered branches among the safety-critical implementation files listed above.
+Although all 124 tests passed, complete branch coverage was not achieved. Inspection of the reported uncovered lines identifies the following remaining gaps.
 
-The specific uncovered branches and their explanations will be verified against the final coverage report. Uncovered branches must not be assumed to be unreachable or non-critical without inspection.
+| Implementation file | Uncovered behaviour | Explanation and limitation |
+| --- | --- | --- |
+| `cabinet_health_service.ts` | Storage exception handling (lines 258-260). | The exception propagation and conversion to `StorageUnavailableError` are not fully exercised. The behaviour of the cabinet registry during storage failures therefore remains incompletely verified. |
+| `alarms_service.ts` | Unexpected acknowledgement errors and acknowledgement conversion (lines 102 and 168). | The acknowledgement race is tested, but propagation of other exceptions and all outcomes of the acknowledgement conversion expression are not fully exercised. |
+| `adc_communication_service.ts` | Internal error response during ADC registration (lines 75-76). | Successful and invalid registration cases are tested, but the internal registration error path remains uncovered. |
+| `protocol.ts` | Rejection of an invalid alarm description (lines 110-111). | Invalid transaction handling is tested, but rejection of a description that is neither a string, null, nor undefined remains uncovered. |
+| `inventory_service.ts` | Inventory storage exception handling (lines 159-161). | Inventory replacement, stock thresholds, and stock-source selection are tested, but storage exception handling remains incompletely verified. |
+| `users_service.ts` | Email fallback for account names and unknown account handling (lines 72 and 128). | Role-based permissions are tested, but all outcomes of account-name resolution and account lookup are not exercised. |
 
-MC/DC achievement remains subject to verification of the corresponding test cases and cannot be inferred from the measured branch coverage percentages.
+These gaps are primarily associated with defensive error handling, input validation, and exceptional storage conditions. They are retained as testing limitations rather than assumed to be unreachable or irrelevant to system safety.
 
-Final coverage measurements and any remaining coverage limitations will be confirmed when the test suite is executed against the final implementation.
+The reported uncovered lines identify specific coverage gaps but do not necessarily enumerate every uncovered branch within a compound expression.
+
+The existing test suite verifies key safety-related behaviours, including:
+
+- Transition to UNREACHABLE after 45 seconds of silence.
+- Transition to OFFLINE after 75 seconds of silence, with exactly one communication-loss alarm.
+- Preservation of an existing alarm acknowledgement.
+- Prevention of duplicate transaction storage.
+- Refusal to send commands to offline ADCs.
+- Command delivery failure handling.
+- Low-stock threshold and reachable stock-source selection.
+- Role-based restrictions on alarm acknowledgement.
+
+MC/DC remains a targeted criterion for the compound identifier validation guard in `readDeliveryAnswer()`. The passing functional tests provide evidence of command failure handling, but the aggregate c8 report does not independently establish that both identifier conditions have been exercised in isolation. Full MC/DC achievement is therefore not claimed.
+
+The measured coverage provides evidence of substantial testing of the Monitoring System's safety-critical behaviour while acknowledging the remaining unverified execution paths.
 
 ## 3.5 Unit test cases - Monitoring System
 
