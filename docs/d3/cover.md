@@ -9,7 +9,7 @@ McMaster University
 
 | Name              | Student ID | D1/D2 part      |
 | ----------------- | ---------- | --------------- |
-| _(Part A member)_ | _(ID)_     | A (ADC)         |
+| Karanvir Narewal  | 400394446  | A (ADC)         |
 | Malika Mehta      | 400566025  | B (Monitoring)  |
 | Luka Maret        | 400743235  | B (Monitoring)  |
 
