@@ -24,6 +24,10 @@ tr { page-break-inside: avoid; }
    the tables whose first column is short. A long first column wraps like the others, so that
    no table is wider than the page (Chrome would then shrink every page to fit it). */
 .short-first-col td:first-child { white-space: nowrap; }
+/* Test case tables of the testing plans (<div class="test-table">): the requirement IDs of
+   "Traces to" keep a readable width, and Pass/Fail stays on one line. */
+.test-table td:nth-child(4) { min-width: 7.5em; }
+.test-table td:nth-child(6) { white-space: nowrap; }
 /* Long code names (paths, Class.method()) may break anywhere rather than push the
    table past the page edge. */
 

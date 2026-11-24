@@ -56,12 +56,12 @@ Coverage is reported individually for each module rather than relying solely on 
 
 The Monitoring System test suite was executed on November 24, 2026, using `npm run test:coverage` from the `monitoring/` directory.
 
-All 124 unit and functional tests passed, with a total execution time of approximately 3 seconds.
+All 130 unit and functional tests passed, with a total execution time of approximately 3 seconds.
 
 Overall project coverage:
 
 - Statement coverage: 86.02%
-- Branch coverage: 89.39%
+- Branch coverage: 89.78%
 - Function coverage: 91.89%
 - Line coverage: 86.02%
 
@@ -71,7 +71,7 @@ The following table reports coverage individually for each Monitoring System mod
 | --- | --- | ---: | ---: |
 | Cabinet Health Monitor | Branch | 85.87% | 96.49% |
 | Alarm Manager | Branch | 81.14% | 89.65% |
-| ADC Communication Manager | Branch and MC/DC | 95.09% | 89.81% |
+| ADC Communication Manager | Branch and MC/DC | 95.09% | 91.81% |
 | Inventory Supervisor | Branch | 82.46% | 91.42% |
 | User Management | Branch | 81.81% | 85.71% |
 | Historical Data Store | Statement | 74.55% | 97.29% |
@@ -90,15 +90,15 @@ File-level coverage is also reported for the primary safety-critical implementat
 | `cabinet_health_service.ts` | 98.98% | 98.18% | 258-260 |
 | `alarms_service.ts` | 100% | 92.59% | 102, 168 |
 | `adc_communication_service.ts` | 99.22% | 95.91% | 75-76 |
-| `protocol.ts` | 99.13% | 86.20% | 110-111 |
+| `protocol.ts` | 99.13% | 90.00% | 110-111 |
 | `inventory_service.ts` | 98.30% | 94.11% | 159-161 |
 | `users_service.ts` | 100% | 88.88% | 72, 128 |
 
 ### Coverage Limitations
 
-The module-level coverage percentages include files such as `types.ts`, which contain type definitions and are reported as having zero coverage. Consequently, module-level percentages are lower than those of the corresponding executable service implementations.
+The module-level coverage percentages include files such as `types.ts`, which contain type definitions and are reported as having zero coverage. Consequently, module-level percentages are lower than those of the corresponding executable service implementations. For the statement-criterion modules, the target is that every statement of the implementation files runs: `history_service.ts` reaches 98.76%, `reporting_service.ts` 100%, `live_channel.ts` 93.93%, `presentation.ts` 96.42% and `clock_service.ts` 100%. The statements left are the storage-error path of the Historical Data Store, the channel authorization check and the acknowledgement payload of the live channel, which only a browser subscribing over HTTP exercises, and the default label of the presentation helpers.
 
-Although all 124 tests passed, complete branch coverage was not achieved. Inspection of the reported uncovered lines identifies the following remaining gaps.
+Although all 130 tests passed, complete branch coverage was not achieved. Inspection of the reported uncovered lines identifies the following remaining gaps.
 
 | Implementation file | Uncovered behaviour | Explanation and limitation |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ The existing test suite verifies key safety-related behaviours, including:
 - Low-stock threshold and reachable stock-source selection.
 - Role-based restrictions on alarm acknowledgement.
 
-MC/DC remains a targeted criterion for the compound identifier validation guard in `readDeliveryAnswer()`. The passing functional tests provide evidence of command failure handling, but the aggregate c8 report does not independently establish that both identifier conditions have been exercised in isolation. Full MC/DC achievement is therefore not claimed.
+MC/DC for the compound identifier validation guard in `readDeliveryAnswer()` is demonstrated by T-MON-10 to T-MON-12, implemented in `tests/unit/adc_communication/protocol.spec.ts`: each identifier condition is shown to change the outcome on its own, and all three tests pass.
 
 The measured coverage provides evidence of substantial testing of the Monitoring System's safety-critical behaviour while acknowledging the remaining unverified execution paths.
 
@@ -137,11 +137,13 @@ The Monitoring System is tested independently of the ADC (Part A). Tests use sim
 
 Boundary and off-normal cases are included to exercise safety-critical decisions, particularly communication-loss thresholds, duplicate transaction handling, alarm acknowledgement, inventory availability, and command delivery validation.
 
-The Monitoring System test suite was executed on November 24, 2026, using `npm run test:coverage`. All 124 implemented unit and functional tests passed.
+The Monitoring System test suite was executed on November 24, 2026, using `npm run test:coverage`. All 130 implemented unit and functional tests passed.
 
-Observed results below distinguish verified unit test behaviour from partially verified scenarios and proposed unit tests that have not been independently executed.
+Observed results below distinguish verified unit test behaviour from scenarios that are only partially verified.
 
 ### Unit Test Cases
+
+<div class="test-table">
 
 | ID | Test case (inputs) | Expected result | Traces to | Observed result | Pass/Fail |
 | --- | --- | --- | --- | --- | --- |
@@ -154,13 +156,15 @@ Observed results below distinguish verified unit test behaviour from partially v
 | T-MON-07 | **Alarm Manager (off-normal):** A pharmacist attempts to acknowledge an alarm previously acknowledged by a nurse. | Returns `alreadyAcknowledged` with the original actor and timestamp; original acknowledgement is preserved; no second acknowledgement event or audit entry is created. | SR-MON-03, SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | Original nurse and timestamp were returned; no additional acknowledgement event or audit entry was produced. | Pass |
 | T-MON-08 | **Inventory Supervisor (boundary):** Supply medication quantities of 9 and 10 boxes; retrieve low-stock information. | Quantity 9 is flagged as low stock; quantity 10 is not flagged. | SPEC-INV-01, FR-INV-02, FR-INV-03 | Quantities below 10 were flagged; quantity 10 was not flagged. | Pass |
 | T-MON-09 | **Inventory Supervisor (source boundary):** Supply candidate ADCs with medication quantities at and above 10 boxes; include candidates that are unreachable or on another floor. | Only reachable same-floor ADCs holding more than 10 boxes are eligible sources; if no ADC qualifies, no stock is reported available. | SR-MON-05, SPEC-INV-01, FR-INV-04, FR-INV-05, D-23 | Eligible sources were returned according to the stock threshold and same-floor reachability rules; the no-eligible-source case returned no stock available. Verified across Inventory and Cabinet Health unit tests. | Pass |
-| T-MON-10 | **ADC Communication Manager (MC/DC baseline):** Call `readDeliveryAnswer()` with HTTP 200, the expected message identifier and expected ADC identifier. | Returns `{ kind: 'delivered' }`; both identifier mismatch conditions are false. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Successful delivery was verified by functional tests; the direct unit test was not independently executed. | Not run |
-| T-MON-11 | **ADC Communication Manager (MC/DC condition 1):** Call `readDeliveryAnswer()` with HTTP 200, an incorrect message identifier and the correct ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the first condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | An incorrect identifier produced `ID_MISMATCH` in functional testing; the direct unit test was not independently executed. | Not run |
-| T-MON-12 | **ADC Communication Manager (MC/DC condition 2):** Call `readDeliveryAnswer()` with HTTP 200, the correct message identifier and an incorrect ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the second condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | No independently executed test isolating this condition was identified in the current test suite. | Not run |
-| T-MON-13 | **ADC Communication Manager (off-normal):** Call `readDeliveryAnswer()` with no response, then with a non-200 response containing an error code and message. | Missing response returns `TIMEOUT`; non-200 response returns a failed outcome with the appropriate error information. | SR-MON-04, SPEC-COM-05, FR-COM-06, FR-COM-11, INV-CMD-2 | Timeout and non-200 error outcomes were verified by functional tests; the direct unit test was not independently executed. | Not run |
+| T-MON-10 | **ADC Communication Manager (MC/DC baseline):** Call `readDeliveryAnswer()` with HTTP 200, the expected message identifier and expected ADC identifier. | Returns `{ kind: 'delivered' }`; both identifier mismatch conditions are false. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Returned `{ kind: 'delivered' }`. | Pass |
+| T-MON-11 | **ADC Communication Manager (MC/DC condition 1):** Call `readDeliveryAnswer()` with HTTP 200, an incorrect message identifier and the correct ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the first condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Returned a failed outcome with code `ID_MISMATCH`. | Pass |
+| T-MON-12 | **ADC Communication Manager (MC/DC condition 2):** Call `readDeliveryAnswer()` with HTTP 200, the correct message identifier and an incorrect ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the second condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Returned a failed outcome with code `ID_MISMATCH`. | Pass |
+| T-MON-13 | **ADC Communication Manager (off-normal):** Call `readDeliveryAnswer()` with no response, then with a non-200 response containing an error code and message. | Missing response returns `TIMEOUT`; non-200 response returns a failed outcome with the appropriate error information. | SR-MON-04, SPEC-COM-05, FR-COM-06, FR-COM-11, INV-CMD-2 | No response returned `TIMEOUT`; a 409 response returned `COMMAND_NOT_APPLICABLE` with the ADC's message; a 500 response without error body returned `HTTP_500`. | Pass |
 | T-MON-14 | **User Management (unauthorized action):** Evaluate alarm acknowledgement permissions for an administrator. | Administrator is not permitted to acknowledge alarms. | SR-MON-03, SPEC-USR-01, NFR-SAF-02, D-09 | Administrator acknowledgement permission was denied. | Pass |
 | T-MON-15 | **Historical Data Store (duplicate transaction):** Record a dispensing activity and submit the same transaction identifier again. | First activity is recorded; repeated transaction is identified as a duplicate without creating another record. | SR-MON-02, FR-COM-08, INV-COM-1, D-28 | Dispensing activity was recorded once; the repeated transaction returned a duplicate outcome. | Pass |
 | T-MON-16 | **Alarm Manager (concurrent acknowledgement):** Simulate an acknowledgement attempt using stale information after another user has already acknowledged the alarm. | Returns `alreadyAcknowledged` with the original actor and timestamp; no additional acknowledgement event is generated. | SR-MON-03, SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | The competing acknowledgement returned `alreadyAcknowledged` with the original actor and timestamp; no additional acknowledgement event was generated. | Pass |
+
+</div>
 
 ### Unit Test Implementation Mapping
 
@@ -176,7 +180,7 @@ The following table identifies the existing Japa test files corresponding to the
 | T-MON-07 | `tests/unit/alarms/alarms_service.spec.ts` | `a second acknowledgement changes nothing and names the first one (FR-ALM-06)` |
 | T-MON-08 | `tests/unit/inventory/inventory_service.spec.ts` | `flags a medication below 10 boxes, not at 10` |
 | T-MON-09 | `tests/unit/inventory/inventory_service.spec.ts`; `tests/unit/cabinet_health/cabinet_health_service.spec.ts` | `proposes the reachable same-floor ADCs holding more than 10 boxes`; `answers no stock available when no ADC qualifies`; `same-floor sources: the other reachable ADCs of the floor only` |
-| T-MON-10 to T-MON-13 | No corresponding direct unit test identified | Related behaviour is exercised in `tests/functional/adc_commands.spec.ts`; separate MC/DC verification remains outstanding. |
+| T-MON-10 to T-MON-13 | `tests/unit/adc_communication/protocol.spec.ts` | One test per scenario, named after its ID (`T-MON-10 both identifiers match: delivered`, …); T-MON-13 has three tests |
 | T-MON-14 | `tests/unit/users/users_service.spec.ts` | `administrators cannot acknowledge alarms (D-09)` |
 | T-MON-15 | `tests/unit/history/history_service.spec.ts` | `records a dispensing activity once, then answers duplicate` |
 | T-MON-16 | `tests/unit/alarms/alarms_service.spec.ts` | `an acknowledgement that loses the race answers alreadyAcknowledged` |
@@ -187,6 +191,8 @@ Some safety requirements involve interactions between multiple Monitoring System
 
 The following existing functional tests provide supplementary evidence. These tests use simulated ADC communication and do not depend on integration with Part A. They are not counted toward the minimum six unit tests.
 
+<div class="test-table">
+
 | ID | Test case (inputs) | Expected result | Traces to | Observed result | Pass/Fail |
 | --- | --- | --- | --- | --- | --- |
 | T-MON-F01 | Receive a heartbeat while transaction storage is unavailable. | Return an internal storage error; acknowledge no transactions; do not register the heartbeat as a valid contact. | SR-MON-02, SPEC-COM-03, INV-COM-1 | Storage failure acknowledged nothing and was not counted as a contact. | Pass |
@@ -196,6 +202,8 @@ The following existing functional tests provide supplementary evidence. These te
 | T-MON-F05 | Attempt to send a command to an OFFLINE ADC. | Command is refused; no message is transmitted to the ADC. | SR-MON-04, SPEC-COM-05, INV-CMD-1 | Returned `refusedOffline`; no message was received by the simulated ADC. | Pass |
 | T-MON-F06 | Simulated ADC returns an incorrect identifier, an internal error, an inapplicable-command error, or no response. | Command is reported failed with the corresponding error code. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Failure outcomes included `ID_MISMATCH`, `INTERNAL_ERROR`, `COMMAND_NOT_APPLICABLE`, and `TIMEOUT`. | Pass |
 | T-MON-F07 | Simulated ADC stops sending heartbeats. | ADC becomes UNREACHABLE and then OFFLINE; one communication-loss alarm is raised; subsequent commands are refused. | SR-MON-01, SR-MON-04, SR-MON-05, SPEC-HLT-02 | ADC transitioned through UNREACHABLE and OFFLINE, one alarm was raised, and commands were refused. | Pass |
+
+</div>
 
 ### Functional Test Implementation Mapping
 
@@ -218,7 +226,7 @@ The following matrix summarizes the relationship between the safety requirements
 | SR-MON-01 | F-MON-01 | T-MON-01, T-MON-02, T-MON-03, T-MON-F07 | The 45 s and 75 s thresholds and single communication-loss alarm are verified. The real-time 1 s scheduling bound and alarm persistence before the status transition are not independently verified. |
 | SR-MON-02 | F-MON-02, F-MON-03 | T-MON-05, T-MON-15, T-MON-F01, T-MON-F02 | Duplicate prevention, successful transaction acknowledgement and storage failure behaviour are verified. Persistence ordering under every possible partial storage failure is not exhaustively verified. |
 | SR-MON-03 | F-MON-04 | T-MON-06, T-MON-07, T-MON-14, T-MON-16, T-MON-F03 | Authorized acknowledgement, administrator refusal, actor and timestamp recording, preservation of the original acknowledgement and concurrent acknowledgement handling are verified for the tested cases. |
-| SR-MON-04 | F-MON-05 | T-MON-10 to T-MON-13, T-MON-F04, T-MON-F05, T-MON-F06, T-MON-F07 | Successful delivery, failure reporting, offline refusal and successful-command auditing are verified through functional tests. Independent MC/DC cases, the exact 10 s timeout bound and auditing of every failure outcome remain incompletely verified. |
+| SR-MON-04 | F-MON-05 | T-MON-10 to T-MON-13, T-MON-F04, T-MON-F05, T-MON-F06, T-MON-F07 | Successful delivery, failure reporting, offline refusal and successful-command auditing are verified through functional tests. The exact 10 s timeout bound and auditing of every failure outcome remain incompletely verified. |
 | SR-MON-05 | F-MON-06, F-MON-01 | T-MON-02, T-MON-09, T-MON-F07 | Stale cabinet status, last-contact time and exclusion of unreachable stock sources are verified. Presentation of stale inventory information on the Dashboard is not independently verified by the identified tests. |
 
 Every SR-MON safety requirement is addressed by at least one documented test case. Traceability does not imply that every clause of a safety requirement has been fully verified.
@@ -227,15 +235,14 @@ Every SR-MON safety requirement is addressed by at least one documented test cas
 
 The existing Monitoring System test suite was executed successfully on November 24, 2026.
 
-- Total implemented unit and functional tests executed: 124.
-- Passed: 124.
+- Total implemented unit and functional tests executed: 130.
+- Passed: 130.
 - Failed: 0.
 - Execution time: approximately 3 seconds.
 
 Of the 16 documented unit test scenarios:
 
-- 12 have passing evidence from existing unit tests.
-- 4 proposed direct unit test scenarios have not been independently executed.
+- All 16 have passing evidence from implemented unit tests.
 
 All seven supplementary functional test scenarios have passing evidence from the existing functional test suite.
 
@@ -245,14 +252,13 @@ The documented scenarios do not correspond one-to-one with individual Japa tests
 
 The existing test suite provides evidence for the principal safety-critical behaviours of the Monitoring System. However, the following verification gaps remain:
 
-- Independent MC/DC verification of both identifier mismatch conditions in `readDeliveryAnswer()`.
 - Verification of the exact 10 s command timeout bound.
 - Verification of the real-time 1 s connectivity transition scheduling bound.
 - Explicit verification that the communication-loss alarm is stored before the corresponding offline status transition.
 - Explicit verification of stale inventory presentation on the Dashboard.
 - Verification of auditing across every command failure outcome.
 
-These limitations are recorded rather than reporting unexecuted tests as passing. The proposed direct unit tests remain available for future implementation and execution.
+These limitations are recorded rather than reporting untested behaviour as verified.
 
 
 ## 3.6 Integration testing within the Monitoring System
@@ -304,6 +310,6 @@ The following existing functional test files exercise interactions between Monit
 | `tests/functional/reports_pages.spec.ts` | Report generation, historical data retrieval, audit log presentation, and role-based access restrictions. | Pass |
 | `tests/functional/accounts.spec.ts` | Authentication, account management, role-based permissions, and account deactivation. | Pass |
 
-All listed functional test groups passed during the November 24, 2026 execution of `npm run test:coverage`, in which all 124 implemented unit and functional tests passed.
+All listed functional test groups passed during the November 24, 2026 execution of `npm run test:coverage`, in which all 130 implemented unit and functional tests passed.
 
 These results demonstrate successful testing of the Monitoring System's internal module interactions using real modules and controlled test doubles. They do not establish successful integration with the actual ADC from Part A, which is addressed separately in Section 4.
