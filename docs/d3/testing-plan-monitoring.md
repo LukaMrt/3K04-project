@@ -128,25 +128,131 @@ MC/DC remains a targeted criterion for the compound identifier validation guard 
 
 The measured coverage provides evidence of substantial testing of the Monitoring System's safety-critical behaviour while acknowledging the remaining unverified execution paths.
 
+
 ## 3.5 Unit test cases - Monitoring System
 
-The cases below are proposed unit-level tests derived from the Deliverable 2 function tables and safety-critical specifications. They use the Monitoring System's own modules; they do not call a live ADC from Part A. The `Traces to` column currently references the existing Deliverable 2 specifications and functional requirements. Once the team's SR-MON requirements are finalized, add the corresponding `SR-MON-xx` identifiers to each applicable row.
+The following unit test cases are derived from the Deliverable 2 function tables, functional requirements, safety-critical specifications, and the Monitoring System safety requirements established in Section 2.4.
+
+The Monitoring System is tested independently of the ADC (Part A). Tests use simulated ADC inputs, controlled time through `ManualClock`, and isolated test data where required.
+
+Boundary and off-normal cases are included to exercise safety-critical decisions, particularly communication-loss thresholds, duplicate transaction handling, alarm acknowledgement, inventory availability, and command delivery validation.
+
+The Monitoring System test suite was executed on November 24, 2026, using `npm run test:coverage`. All 124 implemented unit and functional tests passed.
+
+Observed results below distinguish verified unit test behaviour from partially verified scenarios and proposed unit tests that have not been independently executed.
+
+### Unit Test Cases
 
 | ID | Test case (inputs) | Expected result | Traces to | Observed result | Pass/Fail |
 | --- | --- | --- | --- | --- | --- |
-| T-MON-01 | **Cabinet Health:** registered ADC is `Reachable`; last heartbeat was 44 seconds ago; call `checkTimeouts()`. | Connectivity remains `Reachable`; no status-change event and no communication-loss alarm are produced. | SPEC-HLT-01, SPEC-HLT-02, FR-HLT-02 | Pending execution | Pending |
-| T-MON-02 | **Cabinet Health (boundary):** registered ADC is `Reachable`; last heartbeat was exactly 45 seconds ago; call `checkTimeouts()`. | Connectivity changes to `Unreachable`; the status change is recorded and announced; no communication-loss alarm is raised yet. | SPEC-HLT-01, SPEC-HLT-02, FR-HLT-02, FR-HIS-03 | Pending execution | Pending |
-| T-MON-03 | **Cabinet Health (boundary/off-normal):** registered ADC is `Unreachable`; last heartbeat was exactly 75 seconds ago; call `checkTimeouts()` twice. | ADC changes to `Offline`; one communication-loss alarm is stored and announced on entry to `Offline`; the second call does not raise another alarm while it remains offline. | SPEC-HLT-02, FR-HLT-03, FR-HLT-04, INV-HLT-2 | Pending execution | Pending |
-| T-MON-04 | **Cabinet Health (recovery):** ADC is `Offline` and has an unacknowledged communication-loss alarm; record a valid heartbeat. | ADC returns to `Reachable`; last-contact time and reported state are updated; the existing communication-loss alarm remains unacknowledged. | SPEC-HLT-02, FR-HLT-07, INV-HLT-3 | Pending execution | Pending |
-| T-MON-05 | **Alarm Manager:** call `recordFromAdc()` with a valid alarm transaction ID that has not previously been stored, then submit the same alarm again with the same ID. | First call returns `recorded`, stores the alarm as unacknowledged and announces one `raised` event; second call returns `duplicate` and does not store or announce another alarm. | SPEC-COM-03, FR-ALM-01, FR-COM-08, INV-ALM-1, INV-ALM-3 | Pending execution | Pending |
-| T-MON-06 | **Alarm Manager:** call `acknowledge()` for a stored, unacknowledged alarm using an eligible actor. | Acknowledgement is stored with the actor and current time; one audit entry is written; one `acknowledged` event is announced; the alarm is no longer in the unacknowledged list. | SPEC-ALM-01, FR-ALM-05, NFR-SAF-02, NFR-AUD-01, INV-ALM-2 | Pending execution | Pending |
-| T-MON-07 | **Alarm Manager (off-normal):** call `acknowledge()` for an alarm that has already been acknowledged by another user. | Result is `alreadyAcknowledged` and identifies the original user and timestamp; the original acknowledgement is unchanged; no second acknowledgement event or audit entry is created. | SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | Pending execution | Pending |
-| T-MON-08 | **Inventory Supervisor (boundary):** replace an ADC's inventory with one medication at quantity 9, then quantity 10; retrieve its inventory and low-stock list after each update. | Quantity 9 is flagged as low stock; quantity 10 is not flagged. The latest inventory replaces the previous inventory. | SPEC-INV-01, SPEC-INV-02, FR-INV-01, FR-INV-02, FR-INV-03 | Pending execution | Pending |
-| T-MON-09 | **Inventory Supervisor (source boundary):** the target ADC has fewer than 10 boxes; test same-floor candidate ADCs with the medication quantity at 10 and at 11, and include a candidate that is not reachable. | Only reachable same-floor ADCs holding more than 10 boxes are returned as sources. If none qualify, the result is `noStockAvailable`. | SPEC-INV-01, FR-INV-04, FR-INV-05, D-23 | Pending execution | Pending |
-| T-MON-10 | **ADC Communication Manager / MC/DC baseline:** call `readDeliveryAnswer()` with HTTP status 200, the expected message identifier, and the expected ADC identifier. | Returns `{ kind: 'delivered' }`. This is the case where both mismatch conditions are false. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
-| T-MON-11 | **ADC Communication Manager / MC/DC condition 1:** call `readDeliveryAnswer()` with HTTP status 200, a message identifier different from the expected identifier, and the correct ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`. The message-identifier condition independently makes the compound guard true. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
-| T-MON-12 | **ADC Communication Manager / MC/DC condition 2:** call `readDeliveryAnswer()` with HTTP status 200, the correct message identifier, and an ADC identifier different from the expected ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`. The ADC-identifier condition independently makes the compound guard true. | SPEC-COM-05, FR-COM-06, INV-CMD-2 | Pending execution | Pending |
-| T-MON-13 | **ADC Communication Manager (off-normal):** call `readDeliveryAnswer()` once with no response (`null`) and once with a non-200 HTTP response containing an error code and message. | The missing response returns a failed `TIMEOUT` outcome; the non-200 response returns a failed outcome preserving the ADC's error code and message (or the specified fallback when absent). | SPEC-COM-05, FR-COM-06, FR-COM-11, INV-CMD-2 | Pending execution | Pending |
+| T-MON-01 | **Cabinet Health (boundary):** Registered ADC is reachable; last heartbeat was 44 s ago; call `checkTimeouts()`. | ADC remains ONLINE; no premature connectivity transition occurs. | SR-MON-01, SPEC-HLT-01, SPEC-HLT-02, FR-HLT-02 | ADC remained ONLINE at 44 s. | Pass |
+| T-MON-02 | **Cabinet Health (boundary):** Registered ADC is reachable; last heartbeat was exactly 45 s ago; call `checkTimeouts()`. | ADC becomes UNREACHABLE; status is marked stale; last-contact time is retained; status-change event identifies the previous ONLINE state. | SR-MON-01, SR-MON-05, SPEC-HLT-02, FR-HLT-02 | ADC became UNREACHABLE at 45 s, with stale status, original last-contact time and the previous ONLINE state recorded in the event. | Pass |
+| T-MON-03 | **Cabinet Health (boundary/off-normal):** Registered ADC receives no heartbeat for 75 s; repeat timeout checks at 76 s and 300 s. | ADC becomes OFFLINE; exactly one communication-loss alarm is raised with the timestamp of the offline transition; subsequent checks do not raise duplicate alarms. | SR-MON-01, SPEC-HLT-02, FR-HLT-03, FR-HLT-04, INV-HLT-2 | ADC became OFFLINE; exactly one communication-loss alarm was present, timestamped at 75 s; repeated checks produced no additional alarms. | Pass |
+| T-MON-04 | **Cabinet Health (recovery):** ADC is OFFLINE with an unacknowledged communication-loss alarm; receive a valid heartbeat reporting FAULT at 100 s. | Connectivity is restored; displayed status becomes FAULT; stale flag is cleared; last-contact time is updated; existing communication-loss alarm remains unacknowledged. | SPEC-HLT-02, FR-HLT-07, INV-HLT-3 | Status became FAULT, stale was false, last contact was updated to 100 s, and the existing alarm remained unacknowledged. | Pass |
+| T-MON-05 | **Alarm Manager (duplicate transaction):** Submit a valid alarm transaction, then resend an alarm with the same transaction identifier. | First transaction is recorded and announced; duplicate transaction is identified without additional storage or announcement. | SR-MON-02, SPEC-COM-03, FR-ALM-01, FR-COM-08, INV-ALM-1, INV-ALM-3 | First alarm was recorded; the repeated identifier returned `duplicate`; only one stored alarm and one announcement remained. | Pass |
+| T-MON-06 | **Alarm Manager:** An eligible nurse acknowledges a stored, unacknowledged alarm. | Acknowledgement records the actor and current time; one audit entry and acknowledgement event are produced; alarm is removed from the unacknowledged list. | SR-MON-03, SPEC-ALM-01, FR-ALM-05, NFR-SAF-02, NFR-AUD-01, INV-ALM-2 | Acknowledgement returned successfully; the unacknowledged list became empty; actor, timestamp, audit entry and acknowledgement event matched expectations. | Pass |
+| T-MON-07 | **Alarm Manager (off-normal):** A pharmacist attempts to acknowledge an alarm previously acknowledged by a nurse. | Returns `alreadyAcknowledged` with the original actor and timestamp; original acknowledgement is preserved; no second acknowledgement event or audit entry is created. | SR-MON-03, SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | Original nurse and timestamp were returned; no additional acknowledgement event or audit entry was produced. | Pass |
+| T-MON-08 | **Inventory Supervisor (boundary):** Supply medication quantities of 9 and 10 boxes; retrieve low-stock information. | Quantity 9 is flagged as low stock; quantity 10 is not flagged. | SPEC-INV-01, FR-INV-02, FR-INV-03 | Quantities below 10 were flagged; quantity 10 was not flagged. | Pass |
+| T-MON-09 | **Inventory Supervisor (source boundary):** Supply candidate ADCs with medication quantities at and above 10 boxes; include candidates that are unreachable or on another floor. | Only reachable same-floor ADCs holding more than 10 boxes are eligible sources; if no ADC qualifies, no stock is reported available. | SR-MON-05, SPEC-INV-01, FR-INV-04, FR-INV-05, D-23 | Eligible sources were returned according to the stock threshold and same-floor reachability rules; the no-eligible-source case returned no stock available. Verified across Inventory and Cabinet Health unit tests. | Pass |
+| T-MON-10 | **ADC Communication Manager (MC/DC baseline):** Call `readDeliveryAnswer()` with HTTP 200, the expected message identifier and expected ADC identifier. | Returns `{ kind: 'delivered' }`; both identifier mismatch conditions are false. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Successful delivery was verified by functional tests; the direct unit test was not independently executed. | Not run |
+| T-MON-11 | **ADC Communication Manager (MC/DC condition 1):** Call `readDeliveryAnswer()` with HTTP 200, an incorrect message identifier and the correct ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the first condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | An incorrect identifier produced `ID_MISMATCH` in functional testing; the direct unit test was not independently executed. | Not run |
+| T-MON-12 | **ADC Communication Manager (MC/DC condition 2):** Call `readDeliveryAnswer()` with HTTP 200, the correct message identifier and an incorrect ADC identifier. | Returns a failed outcome with code `ID_MISMATCH`; the second condition independently changes the decision outcome. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | No independently executed test isolating this condition was identified in the current test suite. | Not run |
+| T-MON-13 | **ADC Communication Manager (off-normal):** Call `readDeliveryAnswer()` with no response, then with a non-200 response containing an error code and message. | Missing response returns `TIMEOUT`; non-200 response returns a failed outcome with the appropriate error information. | SR-MON-04, SPEC-COM-05, FR-COM-06, FR-COM-11, INV-CMD-2 | Timeout and non-200 error outcomes were verified by functional tests; the direct unit test was not independently executed. | Not run |
+| T-MON-14 | **User Management (unauthorized action):** Evaluate alarm acknowledgement permissions for an administrator. | Administrator is not permitted to acknowledge alarms. | SR-MON-03, SPEC-USR-01, NFR-SAF-02, D-09 | Administrator acknowledgement permission was denied. | Pass |
+| T-MON-15 | **Historical Data Store (duplicate transaction):** Record a dispensing activity and submit the same transaction identifier again. | First activity is recorded; repeated transaction is identified as a duplicate without creating another record. | SR-MON-02, FR-COM-08, INV-COM-1, D-28 | Dispensing activity was recorded once; the repeated transaction returned a duplicate outcome. | Pass |
+| T-MON-16 | **Alarm Manager (concurrent acknowledgement):** Simulate an acknowledgement attempt using stale information after another user has already acknowledged the alarm. | Returns `alreadyAcknowledged` with the original actor and timestamp; no additional acknowledgement event is generated. | SR-MON-03, SPEC-ALM-01, FR-ALM-06, NFR-SAF-02, INV-ALM-2 | The competing acknowledgement returned `alreadyAcknowledged` with the original actor and timestamp; no additional acknowledgement event was generated. | Pass |
+
+### Unit Test Implementation Mapping
+
+The following table identifies the existing Japa test files corresponding to the documented unit test cases. All paths are relative to `monitoring/`.
+
+| Test IDs | Japa test file | Corresponding implemented test(s) |
+| --- | --- | --- |
+| T-MON-01, T-MON-02 | `tests/unit/cabinet_health/cabinet_health_service.spec.ts` | `unreachable at 45 s, stale, with the time of the last contact` |
+| T-MON-03 | `tests/unit/cabinet_health/cabinet_health_service.spec.ts` | `offline at 75 s with one communication loss alarm, never raised again` |
+| T-MON-04 | `tests/unit/cabinet_health/cabinet_health_service.spec.ts` | `the ADC comes back, its alarm stays unacknowledged (FR-HLT-07)` |
+| T-MON-05 | `tests/unit/alarms/alarms_service.spec.ts` | `stores the alarm unacknowledged with the ADC timestamp, then announces it`; `a duplicate is neither stored again nor announced again` |
+| T-MON-06 | `tests/unit/alarms/alarms_service.spec.ts` | `acknowledges, audits and announces an unacknowledged alarm` |
+| T-MON-07 | `tests/unit/alarms/alarms_service.spec.ts` | `a second acknowledgement changes nothing and names the first one (FR-ALM-06)` |
+| T-MON-08 | `tests/unit/inventory/inventory_service.spec.ts` | `flags a medication below 10 boxes, not at 10` |
+| T-MON-09 | `tests/unit/inventory/inventory_service.spec.ts`; `tests/unit/cabinet_health/cabinet_health_service.spec.ts` | `proposes the reachable same-floor ADCs holding more than 10 boxes`; `answers no stock available when no ADC qualifies`; `same-floor sources: the other reachable ADCs of the floor only` |
+| T-MON-10 to T-MON-13 | No corresponding direct unit test identified | Related behaviour is exercised in `tests/functional/adc_commands.spec.ts`; separate MC/DC verification remains outstanding. |
+| T-MON-14 | `tests/unit/users/users_service.spec.ts` | `administrators cannot acknowledge alarms (D-09)` |
+| T-MON-15 | `tests/unit/history/history_service.spec.ts` | `records a dispensing activity once, then answers duplicate` |
+| T-MON-16 | `tests/unit/alarms/alarms_service.spec.ts` | `an acknowledgement that loses the race answers alreadyAcknowledged` |
+
+### Supplementary Functional Test Evidence
+
+Some safety requirements involve interactions between multiple Monitoring System modules and cannot be fully verified through isolated unit tests alone.
+
+The following existing functional tests provide supplementary evidence. These tests use simulated ADC communication and do not depend on integration with Part A. They are not counted toward the minimum six unit tests.
+
+| ID | Test case (inputs) | Expected result | Traces to | Observed result | Pass/Fail |
+| --- | --- | --- | --- | --- | --- |
+| T-MON-F01 | Receive a heartbeat while transaction storage is unavailable. | Return an internal storage error; acknowledge no transactions; do not register the heartbeat as a valid contact. | SR-MON-02, SPEC-COM-03, INV-COM-1 | Storage failure acknowledged nothing and was not counted as a contact. | Pass |
+| T-MON-F02 | Receive valid transactions, then receive a previously stored transaction again. | Valid transactions are stored and acknowledged; repeated transaction is acknowledged without duplicate storage. | SR-MON-02, SPEC-COM-03, FR-COM-08 | Valid transactions were recorded and acknowledged in order; repeated transaction was acknowledged without being recorded twice. | Pass |
+| T-MON-F03 | Administrator attempts to acknowledge an alarm through the Dashboard. | Unauthorized acknowledgement is refused. | SR-MON-03, SPEC-ALM-01, SPEC-USR-01, D-09 | Administrator was not permitted to acknowledge the alarm. | Pass |
+| T-MON-F04 | Send a valid maintenance command to a reachable simulated ADC. | Command is applied and reported delivered; sending and outcome are audited. | SR-MON-04, SPEC-COM-04, SPEC-COM-05, FR-COM-06 | Command was delivered, maintenance state was applied, and both sending and delivery outcome were audited. | Pass |
+| T-MON-F05 | Attempt to send a command to an OFFLINE ADC. | Command is refused; no message is transmitted to the ADC. | SR-MON-04, SPEC-COM-05, INV-CMD-1 | Returned `refusedOffline`; no message was received by the simulated ADC. | Pass |
+| T-MON-F06 | Simulated ADC returns an incorrect identifier, an internal error, an inapplicable-command error, or no response. | Command is reported failed with the corresponding error code. | SR-MON-04, SPEC-COM-05, FR-COM-06, INV-CMD-2 | Failure outcomes included `ID_MISMATCH`, `INTERNAL_ERROR`, `COMMAND_NOT_APPLICABLE`, and `TIMEOUT`. | Pass |
+| T-MON-F07 | Simulated ADC stops sending heartbeats. | ADC becomes UNREACHABLE and then OFFLINE; one communication-loss alarm is raised; subsequent commands are refused. | SR-MON-01, SR-MON-04, SR-MON-05, SPEC-HLT-02 | ADC transitioned through UNREACHABLE and OFFLINE, one alarm was raised, and commands were refused. | Pass |
+
+### Functional Test Implementation Mapping
+
+| Test IDs | Japa test file | Corresponding implemented test(s) |
+| --- | --- | --- |
+| T-MON-F01 | `tests/functional/adc_protocol.spec.ts` | `a storage failure acknowledges nothing and is not a contact` |
+| T-MON-F02 | `tests/functional/adc_protocol.spec.ts` | `records valid transactions and acknowledges them in order`; `acknowledges a resent transaction again without recording it twice` |
+| T-MON-F03 | `tests/functional/dashboard.spec.ts` | `an administrator may not acknowledge (D-09)` |
+| T-MON-F04 | `tests/functional/adc_commands.spec.ts` | `delivers a maintenance command, then audits its sending and outcome` |
+| T-MON-F05 | `tests/functional/adc_commands.spec.ts` | `sends nothing to an offline ADC` |
+| T-MON-F06 | `tests/functional/adc_commands.spec.ts` | `reports each failure of SPEC-COM-05` |
+| T-MON-F07 | `tests/functional/communication_loss.spec.ts` | `a silent ADC goes unreachable, then offline with one alarm; commands are refused` |
+
+### Safety Requirement Traceability
+
+The following matrix summarizes the relationship between the safety requirements derived from the Monitoring System FMEA and the corresponding test cases.
+
+| Safety requirement | Mitigated failure modes | Corresponding test cases | Verification evidence and limitations |
+| --- | --- | --- | --- |
+| SR-MON-01 | F-MON-01 | T-MON-01, T-MON-02, T-MON-03, T-MON-F07 | The 45 s and 75 s thresholds and single communication-loss alarm are verified. The real-time 1 s scheduling bound and alarm persistence before the status transition are not independently verified. |
+| SR-MON-02 | F-MON-02, F-MON-03 | T-MON-05, T-MON-15, T-MON-F01, T-MON-F02 | Duplicate prevention, successful transaction acknowledgement and storage failure behaviour are verified. Persistence ordering under every possible partial storage failure is not exhaustively verified. |
+| SR-MON-03 | F-MON-04 | T-MON-06, T-MON-07, T-MON-14, T-MON-16, T-MON-F03 | Authorized acknowledgement, administrator refusal, actor and timestamp recording, preservation of the original acknowledgement and concurrent acknowledgement handling are verified for the tested cases. |
+| SR-MON-04 | F-MON-05 | T-MON-10 to T-MON-13, T-MON-F04, T-MON-F05, T-MON-F06, T-MON-F07 | Successful delivery, failure reporting, offline refusal and successful-command auditing are verified through functional tests. Independent MC/DC cases, the exact 10 s timeout bound and auditing of every failure outcome remain incompletely verified. |
+| SR-MON-05 | F-MON-06, F-MON-01 | T-MON-02, T-MON-09, T-MON-F07 | Stale cabinet status, last-contact time and exclusion of unreachable stock sources are verified. Presentation of stale inventory information on the Dashboard is not independently verified by the identified tests. |
+
+Every SR-MON safety requirement is addressed by at least one documented test case. Traceability does not imply that every clause of a safety requirement has been fully verified.
+
+### Test Execution Summary
+
+The existing Monitoring System test suite was executed successfully on November 24, 2026.
+
+- Total implemented unit and functional tests executed: 124.
+- Passed: 124.
+- Failed: 0.
+- Execution time: approximately 3 seconds.
+
+Of the 16 documented unit test scenarios:
+
+- 12 have passing evidence from existing unit tests.
+- 4 proposed direct unit test scenarios have not been independently executed.
+
+All seven supplementary functional test scenarios have passing evidence from the existing functional test suite.
+
+The documented scenarios do not correspond one-to-one with individual Japa tests. Some scenarios are verified through multiple implemented tests, while some implemented tests verify multiple documented scenarios.
+
+### Remaining Verification Limitations
+
+The existing test suite provides evidence for the principal safety-critical behaviours of the Monitoring System. However, the following verification gaps remain:
+
+- Independent MC/DC verification of both identifier mismatch conditions in `readDeliveryAnswer()`.
+- Verification of the exact 10 s command timeout bound.
+- Verification of the real-time 1 s connectivity transition scheduling bound.
+- Explicit verification that the communication-loss alarm is stored before the corresponding offline status transition.
+- Explicit verification of stale inventory presentation on the Dashboard.
+- Verification of auditing across every command failure outcome.
+
+These limitations are recorded rather than reporting unexecuted tests as passing. The proposed direct unit tests remain available for future implementation and execution.
 
 ## 3.6 Integration testing within the Monitoring System
 
