@@ -3,25 +3,96 @@
 
 This plan tests the Monitoring System independently of the ADC (Part A). Any communication with an ADC is exercised using a fake ADC, stub, or test driver; the plan does not require the two project parts to be integrated.
 
+
 ## 3.4 Test criterion - Monitoring System
 
-Coverage is selected per module, based on the decisions each module makes and the hazard associated with an incorrect outcome.
+Coverage criteria are selected per module based on the complexity of its decisions, its responsibilities, and the potential safety consequences of incorrect behaviour. Branch coverage is targeted for safety-critical decision-making modules, statement coverage for modules primarily responsible for data handling and presentation, and Modified Condition/Decision Coverage (MC/DC) for the compound identifier validation guard in the ADC Communication Manager.
 
-| Module | Coverage criterion | Where it applies and why it suits the module (hazard) |
+### Coverage Criteria and Justification
+
+| Module | Coverage criterion | Justification |
 | --- | --- | --- |
-| Cabinet Health Monitor (`CabinetHealthService`) | **Branch coverage** | Apply to the `ON_SILENCE` connectivity transitions and the status decisions in `SPEC-HLT-01`/`SPEC-HLT-02`. Each transition determines whether a cabinet remains reachable, becomes unreachable, or becomes offline; missing a branch could leave an unavailable cabinet appearing operational or fail to raise a communication-loss alarm. |
-| Alarm Manager (`AlarmService`) | **Branch coverage** | Apply to alarm recording and acknowledgement outcomes, including new versus duplicate alarms and unacknowledged versus already-acknowledged alarms. Missing a branch could lose an alarm, announce a duplicate, or incorrectly change a final acknowledgement. |
-| ADC Communication Manager (`AdcCommunicationService` and `protocol.ts`) | **Branch coverage, plus MC/DC for the compound identifier check in `readDeliveryAnswer`** | Apply branch coverage to valid/invalid communication outcomes, HTTP errors and timeouts. Apply MC/DC to `answer.body?.[expected.idField] !== expected.id || answer.body?.adcId !== expected.adcId`, because either identifier mismatch must independently cause a command to be reported as failed rather than delivered. Incorrectly accepting an acknowledgement could make staff believe a command was applied when it was not. ADC responses and failures are supplied by a fake ADC/test driver. |
-| Inventory Supervisor (`InventoryService`) | **Branch coverage** | Apply to the low-stock threshold and stock-source decisions in `SPEC-INV-01`. The `< 10` low-stock threshold and `> 10` source threshold must be exercised at and on either side of their boundaries; an incorrect branch could misstate medication availability or suggest an unsuitable source. |
-| Clock (`ClockService`) | **Statement coverage** | Apply to the time-source operation used by other modules. The module provides the current time rather than making a safety decision; statement coverage checks that the time-provision operation executes. |
-| Historical Data Store (`HistoryService`) | **Statement coverage** | Apply to the main record, query, acknowledgement, retention and report-storage operations. This module primarily persists and retrieves records; statement coverage checks that the relevant data-handling operations execute. |
-| User Management (`UserService`) | **Branch coverage** | Apply to role and permission decisions, including which dashboard actions and report types a user may access. Missing a permission branch could allow an unauthorized action or prevent an authorized user from carrying out a required task. |
-| Reporting (`ReportingService`) | **Statement coverage** | Apply to report generation, saving, reopening, filtering and export operations. These operations primarily retrieve, transform and present stored information; statement coverage is an appropriate baseline for this data-processing module. |
-| Operator Dashboard (`LiveChannel`, presentation helpers and controllers) | **Statement coverage** | Apply to the main status/alarm payload, presentation helpers and controller paths under `app/`. The Dashboard primarily converts module data and events into information shown to users; statement coverage checks execution of those data-presentation operations. The current c8 configuration includes `app/**`, so view templates outside that path are not included in this measurement. |
+| Cabinet Health Monitor (`CabinetHealthService`) | Branch coverage | Exercises the `ON_SILENCE` connectivity transitions and status decisions in `SPEC-HLT-01` and `SPEC-HLT-02`. Missing a branch could leave an unavailable cabinet appearing operational or prevent a communication-loss alarm from being raised. |
+| Alarm Manager (`AlarmService`) | Branch coverage | Exercises alarm recording, duplicate detection, and acknowledgement outcomes. Incorrect decisions could result in lost alarms, duplicate notifications, or modification of an existing acknowledgement. |
+| ADC Communication Manager (`AdcCommunicationService` and `protocol.ts`) | Branch coverage and MC/DC | Branch coverage exercises communication outcomes, HTTP errors, and timeouts. MC/DC is applied to the compound identifier check in `readDeliveryAnswer()` because either identifier mismatch must independently prevent a command from being reported as delivered. |
+| Inventory Supervisor (`InventoryService`) | Branch coverage | Exercises the low-stock threshold (`< 10`) and stock-source threshold (`> 10`) in `SPEC-INV-01`, including boundary conditions. Incorrect decisions could misrepresent medication availability or recommend an unsuitable cabinet. |
+| User Management (`UserService`) | Branch coverage | Exercises role-based permission decisions. Missing a branch could permit unauthorized actions or prevent authorized staff from performing required tasks. |
+| Historical Data Store (`HistoryService`) | Statement coverage | Exercises record storage, retrieval, acknowledgement, retention, and report-storage operations. The module primarily handles data persistence and retrieval. |
+| Reporting (`ReportingService`) | Statement coverage | Exercises report generation, saving, reopening, filtering, and export operations. The module primarily retrieves, transforms, and presents stored information. |
+| Operator Dashboard (`LiveChannel`, presentation helpers, and controllers) | Statement coverage | Exercises status and alarm presentation, payload generation, and controller operations. The module primarily presents information generated by other modules. |
+| Clock (`ClockService`) | Statement coverage | Exercises the time-source operation used by other modules. The module supplies time information rather than making safety-critical decisions. |
 
-**MC/DC test design:** For the two-condition identifier guard in `readDeliveryAnswer`, use three successful-HTTP-response cases: (1) both identifiers match, (2) only the message identifier differs, and (3) only the ADC identifier differs. This demonstrates that each condition can independently change the decision. c8 does not measure MC/DC; the test cases provide the evidence for this target.
+### MC/DC Test Design
 
-**Coverage measurement and achieved results:** Run `npm run test:coverage` from the `monitoring/` directory. Record the actual statement and branch coverage for each module above using the generated c8 report in `monitoring/coverage/`. Do not treat the global percentage as the result for every module. c8 reports statement and branch coverage; it does not report MC/DC. Any uncovered branches must be identified and briefly explained (for example, defensive/error paths that the current test setup cannot reliably induce). **Results are pending execution in a Node.js version compatible with the project's `engines` requirement (`>=24.0.0`).** No coverage percentage is claimed in this draft.
+MC/DC is targeted for the compound identifier validation guard in `readDeliveryAnswer()` within the ADC Communication Manager:
+
+`answer.body?.[expected.idField] !== expected.id || answer.body?.adcId !== expected.adcId`
+
+The two conditions are:
+
+- C1: The returned message identifier does not match the expected message identifier.
+- C2: The returned ADC identifier does not match the expected ADC identifier.
+
+Each condition must independently affect the decision outcome. Otherwise, the Monitoring System could incorrectly report that a command was successfully delivered.
+
+| Test ID | C1 | C2 | Decision (C1 OR C2) | Expected outcome |
+| --- | --- | --- | --- | --- |
+| T-MON-10 | False | False | False | Command reported as delivered |
+| T-MON-11 | True | False | True | Command reported as failed (`ID_MISMATCH`) |
+| T-MON-12 | False | True | True | Command reported as failed (`ID_MISMATCH`) |
+
+Comparing T-MON-10 with T-MON-11 demonstrates the independent effect of C1. Comparing T-MON-10 with T-MON-12 demonstrates the independent effect of C2.
+
+The c8 coverage tool does not directly measure MC/DC. Achievement of this criterion must therefore be demonstrated through the corresponding test cases and their observed results in Section 3.5.
+
+### Coverage Measurement
+
+Statement and branch coverage are measured using c8 by executing `npm run test:coverage` from the `monitoring/` directory. The generated coverage report is located in `monitoring/coverage/`.
+
+Coverage is reported individually for each module rather than relying solely on the overall project coverage percentage. ADC communication is exercised using simulated responses and test doubles, allowing the Monitoring System to be tested independently of Part A.
+
+### Measured Coverage
+
+The following results are taken from the archived coverage report generated on November 10, 2026. These results establish a baseline and must be verified against the final implementation before submission.
+
+| Module | Target criterion | Statement coverage | Branch coverage |
+| --- | --- | ---: | ---: |
+| Cabinet Health Monitor | Branch | 85.87% | 96.49% |
+| Alarm Manager | Branch | 81.14% | 89.65% |
+| ADC Communication Manager | Branch and MC/DC | 95.09% | 89.81% |
+| Inventory Supervisor | Branch | 83.33% | 89.28% |
+| User Management | Branch | 81.81% | 85.71% |
+| Historical Data Store | Statement | 74.55% | 97.29% |
+| Reporting | Statement | 83.82% | 94.23% |
+| Operator Dashboard | Statement | 94.28% | 77.77% |
+| Clock | Statement | 100% | 100% |
+
+These percentages represent the corresponding module directories in the c8 report. Nested model directories and controllers are reported separately, and view templates outside the configured coverage scope are excluded.
+
+### Safety-Critical Implementation Coverage
+
+The following file-level results provide additional detail on the coverage achieved within the safety-critical service implementations.
+
+| Implementation file | Statement coverage | Branch coverage |
+| --- | ---: | ---: |
+| `cabinet_health_service.ts` | 98.98% | 98.18% (54/55) |
+| `alarms_service.ts` | 100% | 92.59% (25/27) |
+| `adc_communication_service.ts` | 99.22% | 95.91% (47/49) |
+| `protocol.ts` | 99.13% | 86.20% (50/58) |
+| `inventory_service.ts` | 97.90% | 92.59% (25/27) |
+| `users_service.ts` | 100% | 88.88% (16/18) |
+
+### Coverage Limitations
+
+The module-level coverage percentages include files such as `types.ts`, which contain type definitions and are reported as having zero coverage. Consequently, module-level percentages may be lower than those of the corresponding executable service implementations.
+
+Although the archived results demonstrate substantial coverage of the safety-critical modules, complete branch coverage has not been achieved. The ADC communication protocol has the largest number of uncovered branches among the safety-critical implementation files listed above.
+
+The specific uncovered branches and their explanations will be verified against the final coverage report. Uncovered branches must not be assumed to be unreachable or non-critical without inspection.
+
+MC/DC achievement remains subject to verification of the corresponding test cases and cannot be inferred from the measured branch coverage percentages.
+
+Final coverage measurements and any remaining coverage limitations will be confirmed when the test suite is executed against the final implementation.
 
 ## 3.5 Unit test cases - Monitoring System
 
