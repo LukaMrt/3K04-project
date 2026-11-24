@@ -254,6 +254,56 @@ The existing test suite provides evidence for the principal safety-critical beha
 
 These limitations are recorded rather than reporting unexecuted tests as passing. The proposed direct unit tests remain available for future implementation and execution.
 
+
 ## 3.6 Integration testing within the Monitoring System
 
-Integrate the Monitoring modules **bottom-up along the USES hierarchy**: test the Clock first, then the Historical Data Store, then the Alarm Manager and User Management, followed by the Cabinet Health Monitor, Inventory Supervisor and Reporting, the ADC Communication Manager, and finally the Operator Dashboard. Use the real lower-level Monitoring modules where available, with a controllable clock and isolated test database; use stubs for lower-level modules that are not part of the test and a fake ADC/test driver to supply valid, invalid, delayed and missing protocol responses at the external ADC boundary. The Dashboard's browser/live-channel output can be driven or observed with test doubles, so no Part A integration is required.
+### Integration Approach
+
+The Monitoring System uses a **bottom-up integration testing approach following the USES hierarchy** established in Section 3 of the Deliverable 2 modular decomposition. Since the USES relation is acyclic, each module can be integrated and tested using previously verified lower-level dependencies before progressing to higher-level modules.
+
+### Integration Order
+
+| Level | Module(s) | Dependency levels |
+| --- | --- | --- |
+| 0 | Clock | None |
+| 1 | Historical Data Store | 0 |
+| 2 | Alarm Manager, User Management | 0-1 |
+| 3 | Cabinet Health Monitor | 0-2 |
+| 4 | Inventory Supervisor, Reporting | 0-3 |
+| 5 | ADC Communication Manager | 0-4 |
+| 6 | Operator Dashboard | 2-5 |
+
+At each level, test drivers invoke the module's public interface and verify its outputs, state changes, and interactions with previously tested dependencies. Real lower-level Monitoring modules are used where available, with simulated dependencies substituted where isolation is required.
+
+### Stubs and Drivers
+
+The following existing testing infrastructure supports independent testing of the Monitoring System without requiring integration with the ADC from Part A.
+
+| Stub or driver | Location | Purpose |
+| --- | --- | --- |
+| `ManualClock` | `tests/helpers/manual_clock.ts` | Replaces the real clock with a controllable time source, allowing deterministic testing of timestamps and communication-loss thresholds. |
+| Fake modules | `tests/helpers/fake_modules.ts` | Substitutes internal module dependencies where controlled behaviour or isolated testing is required. |
+| `FakeAdc` | `simulator/fake_adc.ts` | Replaces the external ADC, simulating registration, heartbeats, transactions, command responses, and communication failures. |
+| Japa test runner and HTTP API client | `tests/unit/` and `tests/functional/` | Acts as a test driver by invoking module interfaces, submitting HTTP requests, and verifying responses and state changes. |
+| Isolated test database | Test database configuration and migrations | Supports verification of persistence, transaction deduplication, alarm acknowledgements, and audit records without modifying production data. |
+
+The external ADC boundary is replaced in both directions: simulated ADC messages drive incoming registration, heartbeat, and transaction processing, while the Fake ADC receives outgoing commands and configuration messages and supplies controlled responses.
+
+### Functional Integration Tests
+
+The following existing functional test files exercise interactions between Monitoring System modules independently of Part A.
+
+| Test file | Integration behaviour verified | Observed result |
+| --- | --- | --- |
+| `tests/functional/adc_protocol.spec.ts` | Registration, heartbeat processing, inventory updates, transaction storage, duplicate prevention, invalid messages, and storage failure handling. | Pass |
+| `tests/functional/communication_loss.spec.ts` | Integration of ADC Communication, Cabinet Health, Alarm Manager, Historical Data Store, and Inventory using real Monitoring modules. Verifies alarm processing, communication-loss transitions, and offline command refusal. | Pass |
+| `tests/functional/adc_commands.spec.ts` | Command and configuration delivery, response validation, offline refusal, failure handling, and auditing using a Fake ADC and controlled internal dependencies. | Pass |
+| `tests/functional/fake_adc.spec.ts` | Simulated ADC registration, transaction acknowledgement, communication recovery, maintenance commands, and inventory updates. | Pass |
+| `tests/functional/dashboard.spec.ts` | Dashboard presentation of cabinet statuses and alarms, role-based access, and alarm acknowledgement. | Pass |
+| `tests/functional/adc_page.spec.ts` | Inventory presentation, stock-source selection, role-based access, and command delivery outcomes. | Pass |
+| `tests/functional/reports_pages.spec.ts` | Report generation, historical data retrieval, audit log presentation, and role-based access restrictions. | Pass |
+| `tests/functional/accounts.spec.ts` | Authentication, account management, role-based permissions, and account deactivation. | Pass |
+
+All listed functional test groups passed during the November 24, 2026 execution of `npm run test:coverage`, in which all 124 implemented unit and functional tests passed.
+
+These results demonstrate successful testing of the Monitoring System's internal module interactions using real modules and controlled test doubles. They do not establish successful integration with the actual ADC from Part A, which is addressed separately in Section 4.
